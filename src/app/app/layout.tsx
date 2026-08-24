@@ -1,4 +1,4 @@
-import { Raio } from "@/components/raio";
+import { Logo } from "@/components/logo";
 
 export default function LayoutApp({
   children,
@@ -7,10 +7,7 @@ export default function LayoutApp({
     <div className="min-h-dvh">
       <header className="sticky top-0 z-40 border-b border-linha bg-tinta/85 backdrop-blur">
         <div className="mx-auto flex max-w-3xl items-center gap-2.5 px-5 py-3.5">
-          <Raio className="h-5 w-5 text-raio" />
-          <span className="font-display text-lg uppercase tracking-wide">
-            ARS Team
-          </span>
+          <Logo className="h-6 w-auto text-papel" />
           <form action="/auth/sair" method="post" className="ml-auto">
             <button
               type="submit"

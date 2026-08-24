@@ -1,15 +1,21 @@
 import type { Metadata, Viewport } from "next";
-import { Anton, Hanken_Grotesk } from "next/font/google";
+import localFont from "next/font/local";
+import { Hanken_Grotesk } from "next/font/google";
 import "./globals.css";
 
-// Anton entra como substituta da Tanker, que e a fonte oficial de titulos da marca.
-// Para trocar pela Tanker de verdade, use next/font/local apontando para Tanker-Regular.otf.
-const display = Anton({
+// Tanker e a fonte oficial de titulos da ARS Team. O arquivo mora em
+// src/fonts e vem do mesmo .otf usado no site arsteam.vercel.app.
+const display = localFont({
+  src: "../fonts/Tanker-Regular.woff2",
   weight: "400",
-  subsets: ["latin"],
+  style: "normal",
+  display: "swap",
   variable: "--fonte-display",
+  fallback: ["Impact", "sans-serif"],
 });
 
+// Corpo: a marca usa Asterisk Sans (Typekit). Hanken Grotesk fica como
+// substituta aprovada, por ser gratuita e de desenho proximo.
 const corpo = Hanken_Grotesk({
   subsets: ["latin"],
   variable: "--fonte-corpo",
@@ -17,7 +23,7 @@ const corpo = Hanken_Grotesk({
 
 export const metadata: Metadata = {
   title: "ARS Team",
-  description: "Area do aluno e painel do treinador da ARS Team.",
+  description: "Área do aluno e painel do treinador da ARS Team.",
   manifest: "/manifest.webmanifest",
   appleWebApp: { capable: true, statusBarStyle: "black-translucent", title: "ARS Team" },
 };

@@ -9,12 +9,12 @@ export type EstadoForm = { erro?: string; aviso?: string };
 /** Deixa as mensagens do Supabase em portugues e sem jargao. */
 function traduzir(mensagem: string): string {
   const m = mensagem.toLowerCase();
-  if (m.includes("invalid login credentials")) return "E-mail ou senha nao conferem.";
-  if (m.includes("email not confirmed")) return "Confirme o e-mail antes de entrar. O link foi enviado para voce.";
+  if (m.includes("invalid login credentials")) return "E-mail ou senha não conferem.";
+  if (m.includes("email not confirmed")) return "Confirme o e-mail antes de entrar. O link foi enviado para você.";
   if (m.includes("user already registered")) return "Ja existe uma conta com esse e-mail. Tente entrar.";
   if (m.includes("password should be at least")) return "A senha precisa de pelo menos 6 caracteres.";
   if (m.includes("rate limit") || m.includes("too many")) return "Muitas tentativas seguidas. Espere um minuto e tente de novo.";
-  return "Nao deu para concluir agora. Tente de novo em instantes.";
+  return "Não deu para concluir agora. Tente de novo em instantes.";
 }
 
 export async function entrar(
@@ -67,7 +67,7 @@ export async function cadastrar(
   } = await supabase.auth.getUser();
 
   if (!quemPede) {
-    return { erro: "Cadastro fechado. Peca para o Allisson liberar seu acesso." };
+    return { erro: "Cadastro fechado. Peça para o Allisson liberar seu acesso." };
   }
 
   const { data: perfilDeQuemPede } = await supabase
@@ -77,7 +77,7 @@ export async function cadastrar(
     .single();
 
   if (perfilDeQuemPede?.tipo !== "admin") {
-    return { erro: "Cadastro fechado. Peca para o Allisson liberar seu acesso." };
+    return { erro: "Cadastro fechado. Peça para o Allisson liberar seu acesso." };
   }
 
   const { data, error } = await supabase.auth.signUp({

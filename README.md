@@ -104,10 +104,23 @@ Regras que valem para sempre neste projeto:
 
 ## Fontes
 
-Títulos usam **Anton** como substituta da **Tanker**, que é a fonte oficial da
-marca. Para trocar pela real, coloque `Tanker-Regular.otf` em `src/fontes/` e
-use `next/font/local` em `src/app/layout.tsx`. O corpo usa **Hanken Grotesk**,
-que é o fallback já decidido para a Asterisk Sans.
+Títulos usam a **Tanker** de verdade, a fonte oficial da marca. O arquivo fica
+em `src/fonts/Tanker-Regular.woff2` e é carregado com `next/font/local` no
+`src/app/layout.tsx`. É o mesmo desenho usado no site `arsteam.vercel.app`,
+convertido de `.otf` para `.woff2` (metade do peso, mesma cobertura de acentos).
+
+O corpo usa **Hanken Grotesk**, que é o fallback já decidido para a Asterisk
+Sans (Typekit), então não precisa de licença nova.
+
+## Logo
+
+`src/components/logo.tsx` tem o logotipo oficial em SVG (raio vermelho mais a
+tipografia da marca). O raio fica travado em `#f23026` e as letras seguem
+`currentColor`, então o mesmo componente serve em fundo escuro e claro. Use
+sempre ele no lugar de escrever "ARS Team" como texto.
+
+`src/components/raio.tsx` tem só o raio, para ícone e favicon. Os PNGs do PWA
+em `public/` e `src/app/` são gerados a partir dele.
 
 ## Estrutura
 

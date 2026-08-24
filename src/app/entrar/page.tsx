@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
-import { Raio } from "@/components/raio";
+import { Logo } from "@/components/logo";
 import { entrar, type EstadoForm } from "./acoes";
 
 const INICIAL: EstadoForm = {};
@@ -20,11 +20,9 @@ export default function Entrar() {
     <main className="flex min-h-dvh flex-col items-center justify-center px-5 py-12">
       <div className="w-full max-w-sm">
         <div className="mb-9 flex flex-col items-center text-center">
-          <Raio className="mb-3 h-11 w-11 text-raio" />
-          <h1 className="font-display text-4xl uppercase tracking-wide text-papel">
-            ARS Team
-          </h1>
-          <p className="mt-2 text-sm text-nevoa">
+          <h1 className="sr-only">ARS Team</h1>
+          <Logo className="h-14 w-auto text-papel" />
+          <p className="mt-4 text-sm text-nevoa">
             Entre para ver seu treino da semana.
           </p>
         </div>
@@ -78,7 +76,7 @@ export default function Entrar() {
         </form>
 
         <p className="mt-6 text-center text-xs leading-relaxed text-nevoa">
-          Ainda nao tem acesso? Fale com o Allisson para receber seu convite.
+          Ainda não tem acesso? Fale com o Allisson para receber seu convite.
         </p>
 
         <p className="mt-8 text-center text-xs leading-relaxed text-nevoa">
