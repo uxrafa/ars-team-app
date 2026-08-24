@@ -55,6 +55,31 @@ export async function cadastrar(
   if (senha.length < 6) return { erro: "A senha precisa de pelo menos 6 caracteres." };
 
   const supabase = await criarClienteServidor();
+
+  // Cadastro publico fica fechado: so um admin logado pode criar conta para
+  // outra pessoa. Isso protege mesmo que alguem chame esta acao direto, sem
+  // passar pela tela (a tela nem mostra mais este formulario para quem nao
+  // esta logado). Ate a entrega 2A ter tela de convite, a conta do aluno
+  // nasce pelo painel da Supabase (Authentication > Users > Add user) ou
+  // por SQL, e a pessoa so define a senha no primeiro acesso.
+  const {
+    data: { user: quemPede },
+  } = await supabase.auth.getUser();
+
+  if (!quemPede) {
+    return { erro: "Cadastro fechado. Peca para o Allisson liberar seu acesso." };
+  }
+
+  const { data: perfilDeQuemPede } = await supabase
+    .from("perfis")
+    .select("tipo")
+    .eq("id", quemPede.id)
+    .single();
+
+  if (perfilDeQuemPede?.tipo !== "admin") {
+    return { erro: "Cadastro fechado. Peca para o Allisson liberar seu acesso." };
+  }
+
   const { data, error } = await supabase.auth.signUp({
     email,
     password: senha,

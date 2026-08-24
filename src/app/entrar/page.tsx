@@ -1,8 +1,8 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState } from "react";
 import { Raio } from "@/components/raio";
-import { cadastrar, entrar, type EstadoForm } from "./acoes";
+import { entrar, type EstadoForm } from "./acoes";
 
 const INICIAL: EstadoForm = {};
 
@@ -14,13 +14,7 @@ const campo =
 const rotulo = "mb-1.5 block text-xs font-semibold uppercase tracking-widest text-nevoa";
 
 export default function Entrar() {
-  const [modo, setModo] = useState<"entrar" | "cadastrar">("entrar");
-  const [estadoEntrar, acaoEntrar, entrando] = useActionState(entrar, INICIAL);
-  const [estadoCadastro, acaoCadastro, cadastrando] = useActionState(cadastrar, INICIAL);
-
-  const ehCadastro = modo === "cadastrar";
-  const estado = ehCadastro ? estadoCadastro : estadoEntrar;
-  const ocupado = ehCadastro ? cadastrando : entrando;
+  const [estado, acaoEntrar, entrando] = useActionState(entrar, INICIAL);
 
   return (
     <main className="flex min-h-dvh flex-col items-center justify-center px-5 py-12">
@@ -31,50 +25,11 @@ export default function Entrar() {
             ARS Team
           </h1>
           <p className="mt-2 text-sm text-nevoa">
-            {ehCadastro
-              ? "Crie seu acesso para comecar."
-              : "Entre para ver seu treino da semana."}
+            Entre para ver seu treino da semana.
           </p>
         </div>
 
-        <div className="mb-6 grid grid-cols-2 gap-1 rounded-xl border border-linha bg-tinta-2 p-1">
-          {(["entrar", "cadastrar"] as const).map((valor) => (
-            <button
-              key={valor}
-              type="button"
-              onClick={() => setModo(valor)}
-              className={`rounded-lg px-3 py-2 text-sm font-semibold transition ${
-                modo === valor
-                  ? "bg-raio text-papel"
-                  : "text-nevoa hover:text-papel"
-              }`}
-            >
-              {valor === "entrar" ? "Entrar" : "Criar conta"}
-            </button>
-          ))}
-        </div>
-
-        <form
-          key={modo}
-          action={ehCadastro ? acaoCadastro : acaoEntrar}
-          className="flex flex-col gap-4"
-        >
-          {ehCadastro && (
-            <div>
-              <label className={rotulo} htmlFor="nome">
-                Nome
-              </label>
-              <input
-                id="nome"
-                name="nome"
-                type="text"
-                autoComplete="name"
-                placeholder="Como voce quer ser chamado"
-                className={campo}
-              />
-            </div>
-          )}
-
+        <form action={acaoEntrar} className="flex flex-col gap-4">
           <div>
             <label className={rotulo} htmlFor="email">
               E-mail
@@ -98,8 +53,8 @@ export default function Entrar() {
               id="senha"
               name="senha"
               type="password"
-              autoComplete={ehCadastro ? "new-password" : "current-password"}
-              placeholder={ehCadastro ? "Pelo menos 6 caracteres" : "Sua senha"}
+              autoComplete="current-password"
+              placeholder="Sua senha"
               className={campo}
             />
           </div>
@@ -113,23 +68,18 @@ export default function Entrar() {
             </p>
           )}
 
-          {estado.aviso && (
-            <p
-              role="status"
-              className="rounded-xl border border-linha bg-tinta-2 px-4 py-3 text-sm text-papel"
-            >
-              {estado.aviso}
-            </p>
-          )}
-
           <button
             type="submit"
-            disabled={ocupado}
+            disabled={entrando}
             className="mt-1 rounded-xl bg-raio px-4 py-3.5 font-display text-lg uppercase tracking-wider text-papel transition hover:bg-raio-forte disabled:opacity-60"
           >
-            {ocupado ? "Aguarde" : ehCadastro ? "Criar acesso" : "Entrar"}
+            {entrando ? "Aguarde" : "Entrar"}
           </button>
         </form>
+
+        <p className="mt-6 text-center text-xs leading-relaxed text-nevoa">
+          Ainda nao tem acesso? Fale com o Allisson para receber seu convite.
+        </p>
 
         <p className="mt-8 text-center text-xs leading-relaxed text-nevoa">
           Consultoria ARS Team · Allisson Santos · CREF 205331-G/SP
