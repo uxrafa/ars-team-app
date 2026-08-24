@@ -1,0 +1,30 @@
+@import "tailwindcss";
+
+@theme {
+  /* Identidade ARS Team */
+  --color-tinta: #0b0b0c;
+  --color-tinta-2: #161517;
+  --color-tinta-3: #232025;
+  --color-papel: #ffffff;
+  --color-raio: #f23026;
+  --color-raio-forte: #ff5343;
+  --color-nevoa: #8f8785;
+  --color-linha: #2a272b;
+
+  --font-display: var(--fonte-display), Impact, sans-serif;
+  --font-sans: var(--fonte-corpo), system-ui, sans-serif;
+}
+
+html,
+body {
+  background-color: var(--color-tinta);
+  color: var(--color-papel);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Evita o zoom automatico do iOS ao focar um campo */
+input,
+select,
+textarea {
+  font-size: 16px;
+}

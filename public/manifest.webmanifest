@@ -1,0 +1,11 @@
+{
+  "name": "ARS Team",
+  "short_name": "ARS Team",
+  "description": "Area do aluno e painel do treinador da ARS Team.",
+  "start_url": "/app",
+  "display": "standalone",
+  "background_color": "#0b0b0c",
+  "theme_color": "#0b0b0c",
+  "orientation": "portrait",
+  "icons": []
+}
