@@ -14,6 +14,8 @@ novo e numerado, para o banco poder ser reconstruido do zero.
 | `0005_execucao_e_evolucao.sql` | `sessao_treino` (que e o check-in), `serie_registrada`, `medida_corporal`, `foto_evolucao`. |
 | `0006_storage_evolucao.sql` | Bucket privado `evolucao` e as policies de storage. |
 | `0007_acesso_ate_no_perfil.sql` | `perfis.acesso_ate`, para o painel montar a fila de cobranca. |
+| `0008_mensalidade_no_perfil.sql` | `perfis.mensalidade`, para o painel somar quanto esta em aberto. |
+| `0009_travar_campos_sensiveis_do_perfil.sql` | **Correcao de seguranca.** Impede o aluno de mudar o proprio plano, status, vencimento ou mensalidade. |
 
 ## Como o modelo se encaixa
 
@@ -62,6 +64,27 @@ caminho. Servir sempre por link temporario, nunca URL publica.
 
 **Video de exercicio e URL generica.** `exercicio.video_url` e so texto. Hoje
 aponta para YouTube nao listado. Trocar de provedor nao pede migration.
+
+## A falha que a 0009 corrigiu
+
+RLS decide **quais linhas**, nao **quais colunas**. A policy de UPDATE em `perfis`
+deixa o dono atualizar a propria linha, o que e certo para nome e whatsapp, mas
+valia para a linha inteira. Na pratica o aluno podia rodar
+
+```sql
+update perfis set tipo = 'admin' where id = <o proprio id>;
+```
+
+direto na API e virar treinador. Confirmado com teste em 25/08/2026.
+
+Grant por coluna nao resolve, porque aluno e admin sao os dois o mesmo papel do
+Postgres (`authenticated`). A saida foi um gatilho `before update` que compara
+`old` e `new` e recusa se um nao-admin mexeu em `tipo`, `status`, `acesso_ate`,
+`mensalidade`, `email`, `id` ou `criado_em`.
+
+**Regra que fica:** quando a policy diz "o dono pode editar a propria linha",
+perguntar sempre quais colunas dessa linha o dono **nao** pode editar. Se houver
+alguma, precisa de gatilho.
 
 ## Teste de RLS
 

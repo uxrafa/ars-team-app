@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { criarClienteServidor } from "@/lib/supabase/server";
 
 type Perfil = {
@@ -61,6 +62,9 @@ export default async function Painel() {
     .eq("id", user?.id ?? "")
     .single<Perfil>();
 
+  // O treinador tem casa propria.
+  if (perfil?.tipo === "admin") redirect("/painel");
+
   const { data: anamnese } = await supabase
     .from("anamnese")
     .select("status")
@@ -73,7 +77,9 @@ export default async function Painel() {
   // Prova da RLS: pedimos a tabela inteira. Um aluno so pode receber a propria linha.
   const { data: visiveis } = await supabase.from("perfis").select("id");
   const quantos = visiveis?.length ?? 0;
-  const rlsOk = perfil?.tipo === "admin" ? quantos >= 1 : quantos === 1;
+  // O admin ja foi redirecionado acima, entao aqui so passa aluno:
+  // tem que enxergar exatamente a propria linha.
+  const rlsOk = quantos === 1;
 
   const primeiroNome = (perfil?.nome || user?.email || "").split(" ")[0];
 
