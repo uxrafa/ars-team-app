@@ -1,18 +1,67 @@
 @import "tailwindcss";
 
-@theme {
-  /* Identidade ARS Team */
-  --color-tinta: #0b0b0c;
-  --color-tinta-2: #161517;
-  --color-tinta-3: #232025;
-  --color-papel: #ffffff;
-  --color-raio: #f23026;
-  --color-raio-forte: #ff5343;
-  --color-nevoa: #8f8785;
-  --color-linha: #2a272b;
+/* ===================================================================
+   Identidade ARS Team
 
+   As cores vieram do site publicado (arsteam.vercel.app), que e a marca
+   aplicada de verdade, e nao de uma paleta inventada aqui. Onde o valor
+   da marca nao passava em contraste, entrou um vizinho de mesmo matiz,
+   com o numero anotado ao lado.
+
+   Referencia: WCAG 2.1 AA. Texto normal pede 4.5:1, texto grande 3:1,
+   e borda de componente clicavel 3:1 (criterio 1.4.11).
+   =================================================================== */
+
+@theme {
+  /* --- superficies --- */
+  --color-tinta: #000000;    /* o preto da marca */
+  --color-tinta-2: #101013;  /* cartao */
+  --color-tinta-3: #1a191e;  /* campo dentro de cartao, cabecalho de tabela */
+
+  /* --- texto --- */
+  --color-papel: #ffffff;         /* 21:1 sobre o fundo */
+  --color-nevoa: #a9a5a2;         /* secundario. 8.6:1 sobre o fundo.
+                                     E o --mut do site da marca. O tom que
+                                     estava aqui antes (#8f8785) dava 5.6:1
+                                     e ficava apertado em texto pequeno. */
+  --color-nevoa-fraca: #807b78;   /* so placeholder. 4.65:1 */
+
+  /* --- linhas --- */
+  --color-linha: #2a2a2e;     /* divisoria e borda de cartao (decorativa) */
+  --color-contorno: #605e60;  /* borda de QUALQUER coisa clicavel.
+                                 3.02:1 sobre o cartao. E o que faz um botao
+                                 secundario parecer um botao, e nao um texto
+                                 solto com um risco em volta. */
+
+  /* --- vermelho da marca --- */
+  --color-raio: #f23026;         /* o vermelho oficial. Acento, icone, borda,
+                                    texto grande. 4.90:1 sobre o fundo. */
+  --color-raio-solido: #db2b22;  /* fundo de botao com rotulo branco.
+                                    O oficial da 4.02:1 com branco em cima e
+                                    REPROVA em AA. Este da 4.79:1, mesmo
+                                    matiz (2.9 graus), so tres passos mais
+                                    escuro. A olho nu nao se distingue. */
+  --color-raio-fundo: #c1211a;   /* estado pressionado e hover do solido.
+                                    6.00:1 com branco. Escurece, nao clareia:
+                                    clarear piorava o contraste. */
+  --color-raio-forte: #ff5343;   /* acento em texto sobre fundo escuro.
+                                    6.16:1. Nunca como fundo de botao. */
+
+  /* --- estado, separado do vermelho da marca --- */
+  --color-ok: #3ecf8e;      /* 9.1:1 */
+  --color-alerta: #f2b330;  /* 9.8:1 */
+
+  /* --- tipografia --- */
   --font-display: var(--fonte-display), Impact, sans-serif;
   --font-sans: var(--fonte-corpo), system-ui, sans-serif;
+  --font-mono: var(--fonte-mono), ui-monospace, monospace;
+
+  /* --- altura minima de alvo de toque ---
+     44px e o piso da WCAG. Usamos 48 no que e primario, porque o publico
+     vai de adolescente a idoso e boa parte usa o celular na academia,
+     de pe, com a mao suada. */
+  --spacing-alvo: 3rem;      /* 48px */
+  --spacing-alvo-min: 2.75rem; /* 44px */
 }
 
 html,
@@ -20,6 +69,13 @@ body {
   background-color: var(--color-tinta);
   color: var(--color-papel);
   -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+body {
+  /* 16px e o corpo. Nao encolher: quem tem 55 anos le nisto. */
+  font-size: 1rem;
+  line-height: 1.55;
 }
 
 /* Evita o zoom automatico do iOS ao focar um campo */
@@ -27,4 +83,35 @@ input,
 select,
 textarea {
   font-size: 16px;
+}
+
+/* Foco sempre visivel, e com folga suficiente para enxergar */
+:focus-visible {
+  outline: 2px solid var(--color-raio-forte);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Ninguem deveria ver movimento que nao pediu */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Titulo nunca quebra deixando uma palavra orfa */
+h1,
+h2,
+h3 {
+  text-wrap: balance;
+}
+
+/* Numero em coluna alinha */
+.tabular {
+  font-variant-numeric: tabular-nums;
 }

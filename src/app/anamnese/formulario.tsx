@@ -13,15 +13,12 @@ import {
   PERIODOS,
   type DadosAnamnese,
 } from "@/lib/anamnese";
+import { Aviso, Botao, CLASSE_CAMPO, Rotulo } from "@/components/ui";
 import { enviarAnamnese, salvarRascunho } from "./acoes";
 
 type Foto = { blob: Blob; previa: string };
 
-const rotulo =
-  "block font-mono text-[10.5px] uppercase tracking-[0.11em] text-nevoa";
-const campo =
-  "w-full rounded-xl border border-linha bg-tinta-2 px-3.5 py-3 text-base text-papel " +
-  "outline-none transition placeholder:text-nevoa focus:border-raio focus:ring-[3px] focus:ring-raio/25";
+const campo = CLASSE_CAMPO;
 
 /** Reduz a foto antes de subir. Sem isto, 25 alunos estouram o storage. */
 async function comprimir(arquivo: File): Promise<Blob> {
@@ -165,22 +162,22 @@ export function Formulario({
             type="button"
             onClick={voltar}
             aria-label="Voltar"
-            className="-m-2 p-2 text-papel transition hover:text-raio-forte"
+            className="-ml-3 flex h-11 w-11 items-center justify-center rounded-xl text-papel transition-colors hover:bg-tinta-3 hover:text-raio-forte"
           >
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
               <path d="m15 6-6 6 6 6" />
             </svg>
           </button>
-          <span className="font-mono text-[11px] uppercase tracking-[0.1em] text-nevoa">
+          <span className="font-mono text-[13px] font-medium uppercase tracking-[0.06em] text-nevoa">
             Etapa {etapa} de 3
           </span>
-          <span className="ml-auto font-mono text-[11px] text-nevoa">
+          <span className="ml-auto font-mono text-[13px] text-nevoa">
             {etapa === 1 ? "Perfil e rotina" : etapa === 2 ? "Saúde" : "Ponto de partida"}
           </span>
         </div>
         <div className="flex gap-1.5" role="progressbar" aria-valuenow={etapa} aria-valuemin={1} aria-valuemax={3}>
           {[1, 2, 3].map((n) => (
-            <div key={n} className={`h-1 flex-1 rounded-full ${n <= etapa ? "bg-raio" : "bg-linha"}`} />
+            <div key={n} className={`h-1.5 flex-1 rounded-full ${n <= etapa ? "bg-raio" : "bg-tinta-3"}`} />
           ))}
         </div>
       </div>
@@ -189,21 +186,21 @@ export function Formulario({
         {etapa === 1 && (
           <>
             <header className="flex flex-col gap-1.5">
-              <h1 className="font-display text-[27px] uppercase leading-none tracking-wide">
+              <h1 className="font-display text-[30px] uppercase leading-[1.05] tracking-wide">
                 Vamos te conhecer
               </h1>
-              <p className="max-w-[33ch] text-[13.5px] leading-relaxed text-nevoa">
+              <p className="max-w-[36ch] text-[15px] leading-relaxed text-nevoa">
                 O Allisson monta seu treino a partir daqui. Leva uns 4 minutos e você só responde uma vez.
               </p>
             </header>
 
             <section className="flex flex-col gap-3">
-              <span className="font-mono text-[11px] font-bold uppercase tracking-[0.12em] text-nevoa">
+              <span className="text-xs font-semibold uppercase tracking-[0.07em] text-nevoa">
                 Sobre você
               </span>
               <div className="grid grid-cols-2 gap-3">
                 <label className="flex flex-col gap-1.5">
-                  <span className={rotulo}>Peso atual</span>
+                  <Rotulo>Peso atual</Rotulo>
                   <div className="relative">
                     <input
                       inputMode="decimal"
@@ -216,7 +213,7 @@ export function Formulario({
                   </div>
                 </label>
                 <label className="flex flex-col gap-1.5">
-                  <span className={rotulo}>Altura</span>
+                  <Rotulo>Altura</Rotulo>
                   <div className="relative">
                     <input
                       inputMode="numeric"
@@ -230,7 +227,7 @@ export function Formulario({
                 </label>
               </div>
               <label className="flex flex-col gap-1.5">
-                <span className={rotulo}>Data de nascimento</span>
+                <Rotulo>Data de nascimento</Rotulo>
                 <input
                   type="date"
                   value={dados.nascimento}
@@ -241,7 +238,7 @@ export function Formulario({
             </section>
 
             <section className="flex flex-col gap-3">
-              <span className="font-mono text-[11px] font-bold uppercase tracking-[0.12em] text-nevoa">
+              <span className="text-xs font-semibold uppercase tracking-[0.07em] text-nevoa">
                 Objetivo principal
               </span>
               <div className="flex flex-wrap gap-2">
@@ -251,10 +248,10 @@ export function Formulario({
                     type="button"
                     onClick={() => mudar("objetivo", valor)}
                     aria-pressed={dados.objetivo === valor}
-                    className={`rounded-full px-4 py-2.5 text-[13.5px] transition ${
+                    className={`inline-flex min-h-11 items-center rounded-full border px-5 text-[15px] transition-colors ${
                       dados.objetivo === valor
-                        ? "bg-raio font-semibold text-papel"
-                        : "border border-linha text-nevoa hover:border-nevoa"
+                        ? "border-raio-solido bg-raio-solido font-semibold text-papel"
+                        : "border-contorno text-nevoa hover:border-nevoa hover:text-papel"
                     }`}
                   >
                     {nome}
@@ -264,7 +261,7 @@ export function Formulario({
             </section>
 
             <section className="flex flex-col gap-3">
-              <span className="font-mono text-[11px] font-bold uppercase tracking-[0.12em] text-nevoa">
+              <span className="text-xs font-semibold uppercase tracking-[0.07em] text-nevoa">
                 Onde você treina
               </span>
               <div className="grid grid-cols-3 gap-2">
@@ -274,10 +271,10 @@ export function Formulario({
                     type="button"
                     onClick={() => mudar("local_treino", valor)}
                     aria-pressed={dados.local_treino === valor}
-                    className={`rounded-xl px-2 py-3.5 text-[12.5px] transition ${
+                    className={`min-h-14 rounded-xl border px-2 text-[15px] transition-colors ${
                       dados.local_treino === valor
-                        ? "border border-raio bg-raio/10 font-semibold text-papel"
-                        : "border border-linha bg-tinta-2 text-nevoa hover:border-nevoa"
+                        ? "border-raio bg-raio/15 font-semibold text-papel"
+                        : "border-contorno bg-tinta-3 text-nevoa hover:border-nevoa hover:text-papel"
                     }`}
                   >
                     {nome}
@@ -287,7 +284,7 @@ export function Formulario({
             </section>
 
             <section className="flex flex-col gap-3">
-              <span className="font-mono text-[11px] font-bold uppercase tracking-[0.12em] text-nevoa">
+              <span className="text-xs font-semibold uppercase tracking-[0.07em] text-nevoa">
                 Sua experiência
               </span>
               <div className="flex flex-col gap-2">
@@ -299,25 +296,25 @@ export function Formulario({
                       type="button"
                       onClick={() => mudar("nivel", valor)}
                       aria-pressed={ativo}
-                      className={`flex items-center gap-3 rounded-xl px-4 py-3.5 text-left transition ${
-                        ativo ? "border border-raio bg-raio/10" : "border border-linha bg-tinta-2 hover:border-nevoa"
+                      className={`flex min-h-16 items-center gap-3 rounded-xl border px-4 py-3.5 text-left transition-colors ${
+                        ativo ? "border-raio bg-raio/15" : "border-contorno bg-tinta-3 hover:border-nevoa"
                       }`}
                     >
                       <span className="flex-1">
-                        <span className={`block text-sm ${ativo ? "font-bold text-papel" : "font-semibold text-nevoa"}`}>
+                        <span className={`block text-[15px] ${ativo ? "font-bold text-papel" : "font-semibold text-papel"}`}>
                           {nome}
                         </span>
-                        <span className={`mt-0.5 block text-xs ${ativo ? "text-papel/75" : "text-nevoa"}`}>
+                        <span className="mt-1 block text-sm text-nevoa">
                           {detalhe}
                         </span>
                       </span>
                       <span
                         aria-hidden="true"
-                        className={`flex h-[19px] w-[19px] flex-none items-center justify-center rounded-full border-[1.5px] ${
-                          ativo ? "border-raio" : "border-linha"
+                        className={`flex h-6 w-6 flex-none items-center justify-center rounded-full border-2 ${
+                          ativo ? "border-raio" : "border-contorno"
                         }`}
                       >
-                        {ativo && <span className="h-2.5 w-2.5 rounded-full bg-raio" />}
+                        {ativo && <span className="h-3 w-3 rounded-full bg-raio" />}
                       </span>
                     </button>
                   );
@@ -327,10 +324,10 @@ export function Formulario({
 
             <section className="flex flex-col gap-3">
               <div className="flex items-baseline justify-between">
-                <span className="font-mono text-[11px] font-bold uppercase tracking-[0.12em] text-nevoa">
+                <span className="text-xs font-semibold uppercase tracking-[0.07em] text-nevoa">
                   Dias disponíveis
                 </span>
-                <span className="font-mono text-[11px] text-raio-forte">
+                <span className="font-mono text-[13px] text-raio-forte">
                   {dados.dias_disponiveis.length} por semana
                 </span>
               </div>
@@ -344,13 +341,15 @@ export function Formulario({
                         onClick={() => alternarDia(dia)}
                         aria-pressed={ativo}
                         aria-label={nome}
-                        className={`flex h-[38px] w-[38px] items-center justify-center rounded-full text-[13px] font-bold transition ${
-                          ativo ? "bg-raio text-papel" : "border border-linha text-nevoa hover:border-nevoa"
+                        className={`flex h-11 w-11 items-center justify-center rounded-full border text-[15px] font-bold transition-colors ${
+                          ativo
+                            ? "border-raio-solido bg-raio-solido text-papel"
+                            : "border-contorno text-nevoa hover:border-nevoa hover:text-papel"
                         }`}
                       >
                         {letra}
                       </button>
-                      <span className="text-[9px] text-nevoa">{nome}</span>
+                      <span className="text-[11px] text-nevoa">{nome}</span>
                     </span>
                   );
                 })}
@@ -362,16 +361,16 @@ export function Formulario({
         {etapa === 2 && (
           <>
             <header className="flex flex-col gap-1.5">
-              <h1 className="font-display text-[27px] uppercase leading-none tracking-wide">
+              <h1 className="font-display text-[30px] uppercase leading-[1.05] tracking-wide">
                 Sua saúde
               </h1>
-              <p className="max-w-[33ch] text-[13.5px] leading-relaxed text-nevoa">
+              <p className="max-w-[36ch] text-[15px] leading-relaxed text-nevoa">
                 Responder com sinceridade aqui é o que deixa o treino seguro. Só o Allisson vê estas respostas.
               </p>
             </header>
 
             <section className="flex flex-col gap-3.5">
-              <span className="font-mono text-[11px] font-bold uppercase tracking-[0.12em] text-nevoa">
+              <span className="text-xs font-semibold uppercase tracking-[0.07em] text-nevoa">
                 Histórico
               </span>
               {PERGUNTAS_SAUDE.map((p, i) => {
@@ -379,14 +378,14 @@ export function Formulario({
                 return (
                   <div key={p.campo} className={`flex flex-col gap-2.5 ${i > 0 ? "border-t border-linha pt-3.5" : ""}`}>
                     <div className="flex items-center gap-3">
-                      <p className="flex-1 text-[13.5px] leading-snug">{p.texto}</p>
-                      <div className={`flex flex-none overflow-hidden rounded-[9px] border ${valor === true ? "border-raio" : "border-linha"}`}>
+                      <p className="flex-1 text-[15px] leading-snug">{p.texto}</p>
+                      <div className={`flex flex-none overflow-hidden rounded-xl border ${valor === true ? "border-raio" : "border-contorno"}`}>
                         <button
                           type="button"
                           onClick={() => mudar(p.campo, true)}
                           aria-pressed={valor === true}
-                          className={`px-3.5 py-2 text-[12.5px] transition ${
-                            valor === true ? "bg-raio font-bold text-papel" : "text-nevoa hover:text-papel"
+                          className={`min-h-11 min-w-14 px-4 text-[15px] transition-colors ${
+                            valor === true ? "bg-raio-solido font-bold text-papel" : "text-nevoa hover:text-papel"
                           }`}
                         >
                           Sim
@@ -395,7 +394,7 @@ export function Formulario({
                           type="button"
                           onClick={() => mudar(p.campo, false)}
                           aria-pressed={valor === false}
-                          className={`border-l border-linha px-3.5 py-2 text-[12.5px] transition ${
+                          className={`min-h-11 min-w-14 border-l border-contorno px-4 text-[15px] transition-colors ${
                             valor === false ? "bg-tinta-3 font-bold text-papel" : "text-nevoa hover:text-papel"
                           }`}
                         >
@@ -409,7 +408,7 @@ export function Formulario({
                           value={dados[p.detalhe]}
                           onChange={(e) => mudar(p.detalhe, e.target.value)}
                           placeholder={p.dica}
-                          className={`${campo} py-2.5 text-[13.5px]`}
+                          className={campo}
                         />
                       </div>
                     )}
@@ -419,7 +418,7 @@ export function Formulario({
             </section>
 
             <section className="flex flex-col gap-3">
-              <span className="font-mono text-[11px] font-bold uppercase tracking-[0.12em] text-nevoa">
+              <span className="text-xs font-semibold uppercase tracking-[0.07em] text-nevoa">
                 Lesões ou limitações
               </span>
               <textarea
@@ -435,14 +434,14 @@ export function Formulario({
               type="button"
               onClick={() => mudar("consentiu", !dados.consentiu)}
               aria-pressed={dados.consentiu}
-              className={`flex gap-3 rounded-2xl border p-4 text-left transition ${
-                dados.consentiu ? "border-raio/60 bg-raio/[0.09]" : "border-linha bg-tinta-2 hover:border-nevoa"
+              className={`flex gap-3.5 rounded-2xl border p-5 text-left transition-colors ${
+                dados.consentiu ? "border-raio bg-raio/[0.12]" : "border-contorno bg-tinta-3 hover:border-nevoa"
               }`}
             >
               <span
                 aria-hidden="true"
-                className={`mt-0.5 flex h-[22px] w-[22px] flex-none items-center justify-center rounded-md ${
-                  dados.consentiu ? "bg-raio" : "border border-linha"
+                className={`mt-0.5 flex h-7 w-7 flex-none items-center justify-center rounded-lg ${
+                  dados.consentiu ? "bg-raio-solido" : "border-2 border-contorno"
                 }`}
               >
                 {dados.consentiu && (
@@ -452,11 +451,11 @@ export function Formulario({
                 )}
               </span>
               <span className="flex-1">
-                <span className="block text-[12.5px] leading-relaxed text-papel/90">
+                <span className="block text-[15px] leading-relaxed text-papel">
                   Autorizo o uso dos meus dados de saúde (peso, lesões e fotos de evolução) para o meu
                   acompanhamento com o Allisson Santos, conforme a Política de Privacidade da ARS Team.
                 </span>
-                <span className="mt-2 block text-[11.5px] leading-relaxed text-nevoa">
+                <span className="mt-2.5 block text-sm leading-relaxed text-nevoa">
                   Você pode pedir a exclusão desses dados quando quiser, direto no seu perfil.
                 </span>
               </span>
@@ -467,20 +466,20 @@ export function Formulario({
         {etapa === 3 && (
           <>
             <header className="flex flex-col gap-1.5">
-              <h1 className="font-display text-[27px] uppercase leading-none tracking-wide">
+              <h1 className="font-display text-[30px] uppercase leading-[1.05] tracking-wide">
                 Seu ponto de partida
               </h1>
-              <p className="max-w-[33ch] text-[13.5px] leading-relaxed text-nevoa">
+              <p className="max-w-[36ch] text-[15px] leading-relaxed text-nevoa">
                 É com isso que a gente compara daqui a 30 dias. Só o Allisson vê estas fotos.
               </p>
             </header>
 
             <section className="flex flex-col gap-3">
               <div className="flex items-baseline justify-between">
-                <span className="font-mono text-[11px] font-bold uppercase tracking-[0.12em] text-nevoa">
+                <span className="text-xs font-semibold uppercase tracking-[0.07em] text-nevoa">
                   Fotos de hoje
                 </span>
-                <span className="font-mono text-[10.5px] text-raio-forte">
+                <span className="font-mono text-[13px] text-raio-forte">
                   {Object.keys(fotos).length} de 3
                 </span>
               </div>
@@ -505,8 +504,8 @@ export function Formulario({
                       <button
                         type="button"
                         onClick={() => entradas.current[valor]?.click()}
-                        className={`relative flex h-[148px] w-full items-center justify-center overflow-hidden rounded-xl transition ${
-                          foto ? "border border-raio" : "border border-dashed border-linha hover:border-nevoa"
+                        className={`relative flex h-[160px] w-full items-center justify-center overflow-hidden rounded-xl border-2 transition-colors ${
+                          foto ? "border-raio" : "border-dashed border-contorno hover:border-nevoa"
                         }`}
                       >
                         {foto ? (
@@ -525,11 +524,11 @@ export function Formulario({
                               <path d="M4 8.5h3l1.5-2.5h7L17 8.5h3a1 1 0 0 1 1 1V18a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9.5a1 1 0 0 1 1-1z" />
                               <circle cx="12" cy="13.5" r="3.2" />
                             </svg>
-                            <span className="text-[11px]">Tirar</span>
+                            <span className="text-sm font-semibold">Tirar</span>
                           </span>
                         )}
                       </button>
-                      <p className="mt-1.5 text-center font-mono text-[9.5px] uppercase text-nevoa">{nome}</p>
+                      <p className="mt-2 text-center text-xs font-semibold uppercase tracking-[0.06em] text-nevoa">{nome}</p>
                     </div>
                   );
                 })}
@@ -538,10 +537,10 @@ export function Formulario({
 
             <section className="flex flex-col gap-3">
               <div className="flex items-baseline justify-between">
-                <span className="font-mono text-[11px] font-bold uppercase tracking-[0.12em] text-nevoa">
+                <span className="text-xs font-semibold uppercase tracking-[0.07em] text-nevoa">
                   Medidas
                 </span>
-                <span className="text-[11px] text-nevoa">opcional</span>
+                <span className="text-sm text-nevoa">opcional</span>
               </div>
               <div className="grid grid-cols-2 gap-3">
                 {([
@@ -551,7 +550,7 @@ export function Formulario({
                   ["coxa_cm", "Coxa", "58"],
                 ] as const).map(([chave, nome, exemplo]) => (
                   <label key={chave} className="flex flex-col gap-1.5">
-                    <span className={rotulo}>{nome}</span>
+                    <Rotulo>{nome}</Rotulo>
                     <div className="relative">
                       <input
                         inputMode="decimal"
@@ -568,7 +567,7 @@ export function Formulario({
             </section>
 
             <section className="flex flex-col gap-3">
-              <span className="font-mono text-[11px] font-bold uppercase tracking-[0.12em] text-nevoa">
+              <span className="text-xs font-semibold uppercase tracking-[0.07em] text-nevoa">
                 Horário que costuma treinar
               </span>
               <div className="grid grid-cols-3 gap-2">
@@ -578,10 +577,10 @@ export function Formulario({
                     type="button"
                     onClick={() => mudar("periodo_treino", valor)}
                     aria-pressed={dados.periodo_treino === valor}
-                    className={`rounded-xl py-3 text-[13px] transition ${
+                    className={`min-h-12 rounded-xl border text-[15px] transition-colors ${
                       dados.periodo_treino === valor
-                        ? "bg-raio font-bold text-papel"
-                        : "border border-linha bg-tinta-2 text-nevoa hover:border-nevoa"
+                        ? "border-raio-solido bg-raio-solido font-bold text-papel"
+                        : "border-contorno bg-tinta-3 text-nevoa hover:border-nevoa hover:text-papel"
                     }`}
                   >
                     {nome}
@@ -590,12 +589,12 @@ export function Formulario({
               </div>
             </section>
 
-            <div className="flex gap-3 rounded-2xl border border-linha bg-tinta-2 p-4">
+            <div className="flex gap-3 rounded-2xl border border-linha bg-tinta-2 p-5">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mt-0.5 flex-none text-nevoa" aria-hidden="true">
                 <circle cx="12" cy="12" r="9" />
                 <path d="M12 16v-4M12 8h.01" />
               </svg>
-              <p className="text-[12.5px] leading-relaxed text-nevoa">
+              <p className="text-[15px] leading-relaxed text-nevoa">
                 Pode pular as fotos agora e enviar depois pela aba Evolução. A ficha não fica travada por causa disso.
               </p>
             </div>
@@ -606,16 +605,13 @@ export function Formulario({
       {/* barra fixa */}
       <div className="fixed inset-x-0 bottom-0 bg-gradient-to-t from-tinta from-[68%] to-transparent px-5 pb-6 pt-4">
         <div className="mx-auto max-w-md">
-          {erro && (
-            <p role="alert" className="mb-3 rounded-xl border border-raio/40 bg-raio/10 px-4 py-3 text-sm text-raio-forte">
-              {erro}
-            </p>
-          )}
-          <button
+          {erro && <div className="mb-3"><Aviso>{erro}</Aviso></div>}
+          <Botao
             type="button"
             onClick={etapa === 3 ? enviar : avancar}
             disabled={ocupado}
-            className="w-full rounded-xl bg-raio px-4 py-4 font-display text-[17px] uppercase tracking-wider text-papel transition hover:bg-raio-forte disabled:opacity-60"
+            largura="cheia"
+            className="min-h-14 text-[17px]"
           >
             {ocupado
               ? subindo
@@ -624,7 +620,7 @@ export function Formulario({
               : etapa === 3
                 ? "Enviar para o Allisson"
                 : "Continuar"}
-          </button>
+          </Botao>
         </div>
       </div>
     </div>

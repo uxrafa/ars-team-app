@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { emReais, iniciais, linkWhatsapp, quandoFoi } from "@/lib/painel";
+import { Aviso, Botao, CLASSE_CAMPO, LinkIcone, Pilula, Rotulo, type Tom } from "@/components/ui";
 import { salvarCobranca, type DadosCobranca } from "./acoes";
 
 export type AlunoNaTela = {
@@ -23,31 +24,14 @@ export type AlunoNaTela = {
   anamnese: "nenhuma" | "rascunho" | "enviada";
 };
 
-const PILULA = {
-  ok: "border-[#3ecf8e]/35 bg-[#3ecf8e]/10 text-[#3ecf8e]",
-  aviso: "border-[#f2b330]/35 bg-[#f2b330]/10 text-[#f2b330]",
-  ruim: "border-raio/40 bg-raio/[0.14] text-raio-forte",
-  neutro: "border-linha text-nevoa",
-} as const;
+const campo = CLASSE_CAMPO;
 
-const campo =
-  "w-full rounded-lg border border-linha bg-tinta px-3 py-2 text-[13px] text-papel outline-none " +
-  "transition focus:border-raio focus:ring-[3px] focus:ring-raio/25";
-
-function Pilula({ tom, children }: { tom: keyof typeof PILULA; children: React.ReactNode }) {
-  return (
-    <span className={`inline-block rounded-full border px-2.5 py-1 text-[11.5px] font-bold ${PILULA[tom]}`}>
-      {children}
-    </span>
-  );
-}
-
-function estadoDoPagamento(a: AlunoNaTela): { tom: keyof typeof PILULA; texto: string } {
-  if (a.status === "suspenso") return { tom: "ruim", texto: "Suspenso" };
+function estadoDoPagamento(a: AlunoNaTela): { tom: Tom; texto: string } {
+  if (a.status === "suspenso") return { tom: "urgente", texto: "Suspenso" };
   if (a.status === "carencia") return { tom: "aviso", texto: "Em carência" };
   if (a.acesso_ate === null) return { tom: "neutro", texto: "Sem data" };
   if (a.diasVencido !== null && a.diasVencido > 0) {
-    return { tom: "ruim", texto: `Venceu faz ${a.diasVencido}d` };
+    return { tom: "urgente", texto: `Venceu faz ${a.diasVencido} dias` };
   }
   return { tom: "ok", texto: "Em dia" };
 }
@@ -90,16 +74,16 @@ export function LinhaAluno({ aluno, hoje }: { aluno: AlunoNaTela; hoje: string }
         <div className="flex items-center gap-3">
           <span
             aria-hidden="true"
-            className="flex h-9 w-9 flex-none items-center justify-center rounded-full border border-linha bg-tinta-3 text-[11.5px] font-bold"
+            className="flex h-11 w-11 flex-none items-center justify-center rounded-full border border-contorno bg-tinta-3 text-sm font-bold"
           >
             {iniciais(aluno.nome)}
           </span>
-          <p className="text-[14px] font-semibold">{aluno.nome}</p>
+          <p className="text-base font-semibold">{aluno.nome}</p>
         </div>
 
         <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
           <label className="flex flex-col gap-1.5">
-            <span className="font-mono text-[9.5px] uppercase tracking-[0.09em] text-nevoa">WhatsApp</span>
+            <Rotulo>WhatsApp</Rotulo>
             <input
               value={form.whatsapp}
               onChange={(e) => setForm({ ...form, whatsapp: e.target.value })}
@@ -108,7 +92,7 @@ export function LinhaAluno({ aluno, hoje }: { aluno: AlunoNaTela; hoje: string }
             />
           </label>
           <label className="flex flex-col gap-1.5">
-            <span className="font-mono text-[9.5px] uppercase tracking-[0.09em] text-nevoa">Plano</span>
+            <Rotulo>Plano</Rotulo>
             <select
               value={form.tipo}
               onChange={(e) => setForm({ ...form, tipo: e.target.value as DadosCobranca["tipo"] })}
@@ -119,7 +103,7 @@ export function LinhaAluno({ aluno, hoje }: { aluno: AlunoNaTela; hoje: string }
             </select>
           </label>
           <label className="flex flex-col gap-1.5">
-            <span className="font-mono text-[9.5px] uppercase tracking-[0.09em] text-nevoa">Situação</span>
+            <Rotulo>Situação</Rotulo>
             <select
               value={form.status}
               onChange={(e) => setForm({ ...form, status: e.target.value as DadosCobranca["status"] })}
@@ -131,7 +115,7 @@ export function LinhaAluno({ aluno, hoje }: { aluno: AlunoNaTela; hoje: string }
             </select>
           </label>
           <label className="flex flex-col gap-1.5">
-            <span className="font-mono text-[9.5px] uppercase tracking-[0.09em] text-nevoa">Pago até</span>
+            <Rotulo>Pago até</Rotulo>
             <input
               type="date"
               value={form.acesso_ate}
@@ -140,7 +124,7 @@ export function LinhaAluno({ aluno, hoje }: { aluno: AlunoNaTela; hoje: string }
             />
           </label>
           <label className="flex flex-col gap-1.5">
-            <span className="font-mono text-[9.5px] uppercase tracking-[0.09em] text-nevoa">Mensalidade</span>
+            <Rotulo>Mensalidade</Rotulo>
             <input
               inputMode="decimal"
               value={form.mensalidade}
@@ -151,73 +135,65 @@ export function LinhaAluno({ aluno, hoje }: { aluno: AlunoNaTela; hoje: string }
           </label>
         </div>
 
-        {erro && (
-          <p role="alert" className="mt-3 rounded-lg border border-raio/40 bg-raio/10 px-3.5 py-2.5 text-[13px] text-raio-forte">
-            {erro}
-          </p>
-        )}
+        {erro && <div className="mt-4"><Aviso>{erro}</Aviso></div>}
 
         <div className="mt-4 flex gap-2.5">
-          <button
-            type="button"
-            onClick={salvar}
-            disabled={pendente}
-            className="rounded-lg bg-raio px-5 py-2 text-[13px] font-semibold text-papel transition hover:bg-raio-forte disabled:opacity-60"
-          >
+          <Botao type="button" onClick={salvar} disabled={pendente} tamanho="sm">
             {pendente ? "Salvando" : "Salvar"}
-          </button>
-          <button
+          </Botao>
+          <Botao
             type="button"
+            aparencia="fantasma"
+            tamanho="sm"
             onClick={() => {
               setEditando(false);
               setErro(null);
             }}
-            className="rounded-lg border border-linha px-5 py-2 text-[13px] font-semibold text-nevoa transition hover:text-papel"
           >
             Cancelar
-          </button>
+          </Botao>
         </div>
       </li>
     );
   }
 
   return (
-    <li className="grid grid-cols-[1fr_auto] items-center gap-3 border-t border-linha px-5 py-3.5 lg:grid-cols-[1.7fr_0.8fr_1fr_1.3fr_0.9fr_auto] lg:gap-4">
+    <li className="grid grid-cols-[1fr_auto] items-center gap-3 border-t border-linha px-5 py-4 hover:bg-tinta-3/40 lg:grid-cols-[1.7fr_0.8fr_1fr_1.3fr_0.9fr_auto] lg:gap-4">
       <div className="flex min-w-0 items-center gap-3">
         <span
           aria-hidden="true"
-          className="flex h-9 w-9 flex-none items-center justify-center rounded-full border border-linha bg-tinta-3 text-[11.5px] font-bold"
+          className="flex h-11 w-11 flex-none items-center justify-center rounded-full border border-contorno bg-tinta-3 text-sm font-bold"
         >
           {iniciais(aluno.nome)}
         </span>
         <div className="min-w-0">
-          <p className="truncate text-[14px] font-semibold">{aluno.nome}</p>
-          <p className="truncate text-[12px] text-nevoa">{aluno.whatsapp || aluno.email}</p>
+          <p className="truncate text-base font-semibold">{aluno.nome}</p>
+          <p className="mt-0.5 truncate text-sm text-nevoa">{aluno.whatsapp || aluno.email}</p>
         </div>
       </div>
 
-      <div className="hidden text-[13px] text-nevoa lg:block">
+      <div className="hidden text-[15px] text-nevoa lg:block">
         {aluno.tipo === "consultoria" ? "Consultoria" : "Planilha"}
       </div>
 
       <div className="hidden lg:block">
         <Pilula tom={pagamento.tom}>{pagamento.texto}</Pilula>
         {aluno.mensalidade !== null && (
-          <p className="mt-1 font-mono text-[10.5px] text-nevoa">{emReais(aluno.mensalidade)}/mês</p>
+          <p className="mt-1.5 font-mono text-[13px] text-nevoa">{emReais(aluno.mensalidade)}/mês</p>
         )}
       </div>
 
       <div className="hidden lg:block">
-        <p className={`text-[13px] ${aluno.ficha ? "" : "text-nevoa"}`}>{aluno.ficha ?? "Sem ficha"}</p>
+        <p className={`text-[15px] ${aluno.ficha ? "" : "text-nevoa"}`}>{aluno.ficha ?? "Sem ficha"}</p>
         {aluno.fichaDetalhe && (
-          <p className={`mt-0.5 font-mono text-[10.5px] uppercase ${aluno.fichaAlerta ? "text-[#f2b330]" : "text-nevoa"}`}>
+          <p className={`mt-1 font-mono text-[13px] uppercase ${aluno.fichaAlerta ? "text-alerta" : "text-nevoa"}`}>
             {aluno.fichaDetalhe}
           </p>
         )}
       </div>
 
       <div
-        className={`hidden text-[13px] lg:block ${
+        className={`hidden text-[15px] lg:block ${
           aluno.diasSemTreino !== null && aluno.diasSemTreino >= 7 ? "text-raio-forte" : "text-nevoa"
         }`}
       >
@@ -226,25 +202,21 @@ export function LinhaAluno({ aluno, hoje }: { aluno: AlunoNaTela; hoje: string }
 
       <div className="flex flex-none items-center gap-2">
         {zap && (
-          <a
+          <LinkIcone
             href={zap}
             target="_blank"
             rel="noreferrer"
-            aria-label={`Abrir WhatsApp de ${aluno.nome}`}
-            className="rounded-lg border border-linha p-2 text-nevoa transition hover:border-[#3ecf8e]/50 hover:text-[#3ecf8e]"
+            rotulo={`Abrir WhatsApp de ${aluno.nome}`}
+            className="hover:border-ok/60 hover:text-ok"
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
               <path d="M21 11.5a8.38 8.38 0 0 1-8.5 8.5 8.7 8.7 0 0 1-4-1L3 20l1.1-3.4a8.7 8.7 0 0 1-1-4A8.38 8.38 0 0 1 11.5 4a8.5 8.5 0 0 1 9.5 7.5z" />
             </svg>
-          </a>
+          </LinkIcone>
         )}
-        <button
-          type="button"
-          onClick={() => setEditando(true)}
-          className="rounded-lg border border-linha px-3 py-2 text-[12.5px] font-semibold text-nevoa transition hover:border-raio hover:text-papel"
-        >
+        <Botao type="button" aparencia="secundario" tamanho="sm" onClick={() => setEditando(true)}>
           Editar
-        </button>
+        </Botao>
       </div>
     </li>
   );

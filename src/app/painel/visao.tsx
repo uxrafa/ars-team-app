@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { BotaoLink, Pilula, type Tom } from "@/components/ui";
 import {
   ACAO_MOTIVO,
   ROTULO_MOTIVO,
@@ -12,19 +12,12 @@ import {
   type Resumo,
 } from "@/lib/painel";
 
-/** Cor de estado, separada do vermelho da marca. */
-const TOM = {
-  urgente: "border-raio/40 bg-raio/[0.12] text-raio-forte",
-  aviso: "border-[#f2b330]/35 bg-[#f2b330]/10 text-[#f2b330]",
-  neutro: "border-linha text-nevoa",
-} as const;
-
-const TOM_DO_MOTIVO = {
-  pagamento: TOM.urgente,
-  sem_ficha: TOM.urgente,
-  ficha_vencendo: TOM.aviso,
-  sumido: TOM.neutro,
-} as const;
+const TOM_DO_MOTIVO: Record<string, Tom> = {
+  pagamento: "urgente",
+  sem_ficha: "urgente",
+  ficha_vencendo: "aviso",
+  sumido: "neutro",
+};
 
 function Cartao({
   rotulo,
@@ -41,18 +34,18 @@ function Cartao({
     tom === "urgente"
       ? "border-raio/40 bg-gradient-to-br from-raio/[0.12] to-raio/[0.03]"
       : tom === "aviso"
-        ? "border-[#f2b330]/35 bg-[#f2b330]/[0.06]"
+        ? "border-alerta/40 bg-alerta/[0.07]"
         : "border-linha bg-tinta-2";
   const cor =
-    tom === "urgente" ? "text-raio-forte" : tom === "aviso" ? "text-[#f2b330]" : "text-papel";
+    tom === "urgente" ? "text-raio-forte" : tom === "aviso" ? "text-alerta" : "text-papel";
 
   return (
     <div className={`rounded-2xl border p-5 ${moldura}`}>
-      <p className={`font-mono text-[10.5px] uppercase tracking-[0.1em] ${tom === "normal" ? "text-nevoa" : cor}`}>
+      <p className={`text-xs font-semibold uppercase tracking-[0.07em] ${tom === "normal" ? "text-nevoa" : cor}`}>
         {rotulo}
       </p>
-      <p className={`mt-2 font-display text-4xl leading-none tabular-nums ${cor}`}>{valor}</p>
-      <p className="mt-1.5 text-[12.5px] text-nevoa">{detalhe}</p>
+      <p className={`mt-3 font-display text-[42px] leading-none tabular ${cor}`}>{valor}</p>
+      <p className="mt-2 text-sm leading-snug text-nevoa">{detalhe}</p>
     </div>
   );
 }
@@ -61,7 +54,7 @@ function Avatar({ nome }: { nome: string }) {
   return (
     <span
       aria-hidden="true"
-      className="flex h-10 w-10 flex-none items-center justify-center rounded-full border border-linha bg-tinta-3 text-[12.5px] font-bold"
+      className="flex h-11 w-11 flex-none items-center justify-center rounded-full border border-contorno bg-tinta-3 text-sm font-bold"
     >
       {iniciais(nome)}
     </span>
@@ -81,32 +74,25 @@ function LinhaAtencao({ item }: { item: ItemAtencao }) {
   const acionavelPorZap = motivo === "pagamento" || motivo === "sumido";
 
   return (
-    <li className="flex items-center gap-4 border-t border-linha px-5 py-4 first:border-t-0">
+    <li className="flex items-center gap-4 border-t border-linha px-5 py-4 first:border-t-0 hover:bg-tinta-3/40">
       <Avatar nome={aluno.nome} />
       <div className="min-w-0 flex-1">
-        <p className="truncate text-[14.5px] font-semibold">{aluno.nome}</p>
-        <p className="mt-0.5 truncate text-[12.5px] text-nevoa">
+        <p className="truncate text-base font-semibold">{aluno.nome}</p>
+        <p className="mt-1 truncate text-sm text-nevoa">
           {aluno.tipo === "consultoria" ? "Consultoria" : "Planilha"} · {detalhe}
         </p>
       </div>
-      <span
-        className={`hidden flex-none rounded-full border px-3 py-1 text-[11.5px] font-bold sm:block ${TOM_DO_MOTIVO[motivo]}`}
-      >
-        {ROTULO_MOTIVO[motivo]}
+      <span className="hidden flex-none sm:block">
+        <Pilula tom={TOM_DO_MOTIVO[motivo]}>{ROTULO_MOTIVO[motivo]}</Pilula>
       </span>
       {acionavelPorZap && zap ? (
-        <a
-          href={zap}
-          target="_blank"
-          rel="noreferrer"
-          className="flex-none rounded-lg bg-raio px-4 py-2 text-[13px] font-semibold text-papel transition hover:bg-raio-forte"
-        >
+        <BotaoLink href={zap} target="_blank" rel="noreferrer" tamanho="sm" className="flex-none">
           {ACAO_MOTIVO[motivo]}
-        </a>
+        </BotaoLink>
       ) : acionavelPorZap ? (
-        <span className="flex-none text-[12px] text-nevoa">Sem WhatsApp</span>
+        <span className="flex-none text-sm text-nevoa">Sem WhatsApp</span>
       ) : (
-        <span className="flex-none rounded-lg border border-linha px-3 py-2 text-[12px] text-nevoa">
+        <span className="flex-none rounded-xl border border-dashed border-contorno px-3.5 py-2.5 text-sm text-nevoa">
           Editor em breve
         </span>
       )}
@@ -136,18 +122,15 @@ export function VisaoDoPainel({ saudacao, hoje, atencao, r, alunos, checkinsRece
           <h1 className="font-display text-3xl uppercase leading-none tracking-wide">
             {saudacao}, Allisson
           </h1>
-          <p className="mt-2 text-[13.5px] text-nevoa">
+          <p className="mt-2.5 text-[15px] text-nevoa">
             {atencao.length === 0
               ? "Nada pendente por aqui. Bom sinal."
               : `${atencao.length} ${atencao.length === 1 ? "coisa precisa" : "coisas precisam"} de você hoje.`}
           </p>
         </div>
-        <Link
-          href="/painel/alunos"
-          className="ml-auto rounded-lg border border-linha bg-tinta-2 px-5 py-2.5 text-[13.5px] font-semibold transition hover:border-raio"
-        >
+        <BotaoLink href="/painel/alunos" aparencia="secundario" className="ml-auto">
           Ver alunos
-        </Link>
+        </BotaoLink>
       </div>
 
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
@@ -193,13 +176,13 @@ export function VisaoDoPainel({ saudacao, hoje, atencao, r, alunos, checkinsRece
       <div className="grid gap-5 lg:grid-cols-[1.75fr_1fr]">
         <section className="flex flex-col overflow-hidden rounded-2xl border border-linha bg-tinta-2">
           <div className="flex items-center gap-3 border-b border-linha px-5 py-4">
-            <h2 className="text-[15px] font-bold">Precisa da sua atenção</h2>
+            <h2 className="text-lg font-bold">Precisa da sua atenção</h2>
             {atencao.length > 0 && (
-              <span className="rounded-full bg-raio px-2.5 py-0.5 text-[11.5px] font-bold text-papel">
+              <span className="rounded-full bg-raio-solido px-3 py-1 text-[13px] font-bold text-papel">
                 {atencao.length}
               </span>
             )}
-            <span className="ml-auto hidden font-mono text-[11px] text-nevoa sm:block">
+            <span className="ml-auto hidden text-sm text-nevoa sm:block">
               ordenado por urgência
             </span>
           </div>
@@ -210,7 +193,7 @@ export function VisaoDoPainel({ saudacao, hoje, atencao, r, alunos, checkinsRece
                 <circle cx="12" cy="12" r="9" />
                 <path d="M8.5 12.5 11 15l4.5-5" />
               </svg>
-              <p className="max-w-[38ch] text-[13px] text-nevoa">
+              <p className="max-w-[40ch] text-[15px] leading-relaxed text-nevoa">
                 {r.total === 0
                   ? "Nenhum aluno cadastrado ainda. Assim que o primeiro entrar, ele aparece aqui."
                   : "Todo mundo com pagamento em dia, ficha válida e check-in recente."}
@@ -228,31 +211,31 @@ export function VisaoDoPainel({ saudacao, hoje, atencao, r, alunos, checkinsRece
         <div className="flex flex-col gap-5">
           <section className="rounded-2xl border border-linha bg-tinta-2 p-5">
             <div className="flex items-baseline">
-              <p className="font-mono text-[10.5px] uppercase tracking-[0.1em] text-nevoa">
+              <p className="text-xs font-semibold uppercase tracking-[0.07em] text-nevoa">
                 Mensalidades
               </p>
-              <p className="ml-auto font-mono text-[10.5px] text-nevoa">
+              <p className="ml-auto font-mono text-[13px] text-nevoa">
                 {percentualRecebido}% recebido
               </p>
             </div>
-            <p className="mt-2 font-display text-3xl leading-none tabular-nums">
+            <p className="mt-3 font-display text-[34px] leading-none tabular">
               {emReais(r.recebidoNoMes)}
             </p>
-            <div className="mt-3.5 flex h-[7px] overflow-hidden rounded-full bg-tinta-3">
-              <div className="bg-[#3ecf8e]" style={{ width: `${percentualRecebido}%` }} />
+            <div className="mt-4 flex h-2.5 overflow-hidden rounded-full bg-tinta-3">
+              <div className="bg-ok" style={{ width: `${percentualRecebido}%` }} />
               <div className="bg-raio" style={{ width: `${100 - percentualRecebido}%` }} />
             </div>
             <div className="mt-3 flex flex-wrap gap-4">
-              <span className="flex items-center gap-1.5 text-[12px] text-nevoa">
-                <span className="h-2 w-2 rounded-[2px] bg-[#3ecf8e]" /> Em dia
+              <span className="flex items-center gap-2 text-sm text-nevoa">
+                <span className="h-2.5 w-2.5 rounded-[3px] bg-ok" /> Em dia
               </span>
-              <span className="flex items-center gap-1.5 text-[12px] text-nevoa">
-                <span className="h-2 w-2 rounded-[2px] bg-raio" />
+              <span className="flex items-center gap-2 text-sm text-nevoa">
+                <span className="h-2.5 w-2.5 rounded-[3px] bg-raio" />
                 {r.emAberto > 0 ? `${emReais(r.emAberto)} em aberto` : "nada em aberto"}
               </span>
             </div>
             {r.semValor && (
-              <p className="mt-3 text-[11.5px] leading-relaxed text-nevoa">
+              <p className="mt-3 text-sm leading-relaxed text-nevoa">
                 Algum aluno está sem mensalidade cadastrada, então o total ainda não fecha.
               </p>
             )}
@@ -260,10 +243,10 @@ export function VisaoDoPainel({ saudacao, hoje, atencao, r, alunos, checkinsRece
 
           <section className="flex flex-1 flex-col overflow-hidden rounded-2xl border border-linha bg-tinta-2">
             <div className="border-b border-linha px-5 py-4">
-              <h2 className="text-[14.5px] font-bold">Últimos check-ins</h2>
+              <h2 className="text-lg font-bold">Últimos check-ins</h2>
             </div>
             {checkinsRecentes.length === 0 ? (
-              <p className="flex-1 px-5 py-10 text-center text-[13px] text-nevoa">
+              <p className="flex-1 px-5 py-10 text-center text-[15px] text-nevoa">
                 Nenhum treino registrado ainda.
               </p>
             ) : (
@@ -272,13 +255,13 @@ export function VisaoDoPainel({ saudacao, hoje, atencao, r, alunos, checkinsRece
                   <li key={sessao.id} className="flex items-center gap-3 border-t border-linha px-5 py-3 first:border-t-0">
                     <span
                       aria-hidden="true"
-                      className="flex h-8 w-8 flex-none items-center justify-center rounded-full border border-linha bg-tinta-3 text-[11px] font-bold"
+                      className="flex h-10 w-10 flex-none items-center justify-center rounded-full border border-contorno bg-tinta-3 text-[13px] font-bold"
                     >
                       {iniciais(aluno!.nome)}
                     </span>
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-[13px] font-semibold">{aluno!.nome}</p>
-                      <p className="mt-0.5 font-mono text-[11px] uppercase text-nevoa">
+                      <p className="truncate text-[15px] font-semibold">{aluno!.nome}</p>
+                      <p className="mt-1 font-mono text-[13px] uppercase text-nevoa">
                         {[
                           sessao.peso_kg ? `${sessao.peso_kg} kg` : null,
                           sessao.esforco ? `esforço ${sessao.esforco}` : null,
@@ -287,7 +270,7 @@ export function VisaoDoPainel({ saudacao, hoje, atencao, r, alunos, checkinsRece
                           .join(" · ") || "sem detalhes"}
                       </p>
                     </div>
-                    <span className="flex-none font-mono text-[10.5px] uppercase text-nevoa">
+                    <span className="flex-none font-mono text-[13px] uppercase text-nevoa">
                       {quandoFoi(sessao.data, hoje)}
                     </span>
                   </li>
@@ -299,7 +282,7 @@ export function VisaoDoPainel({ saudacao, hoje, atencao, r, alunos, checkinsRece
       </div>
 
       {r.total > 0 && alunos.every((a) => a.mensalidade === null && a.acesso_ate === null) && (
-        <p className="rounded-2xl border border-linha bg-tinta-2 px-5 py-4 text-[13px] leading-relaxed text-nevoa">
+        <p className="rounded-2xl border border-linha bg-tinta-2 px-5 py-4 text-[15px] leading-relaxed text-nevoa">
           Nenhum aluno tem data de vencimento nem mensalidade preenchida ainda, então a fila de
           cobrança e o total do mês ficam vazios. Isso se preenche na tela de alunos, e na entrega 2B
           o pagamento passa a atualizar sozinho.{" "}

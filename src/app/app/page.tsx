@@ -1,6 +1,6 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { criarClienteServidor } from "@/lib/supabase/server";
+import { BotaoLink } from "@/components/ui";
 
 type Perfil = {
   id: string;
@@ -37,12 +37,12 @@ function Item({
         }`}
       />
       <span className="min-w-0 flex-1">
-        <span className="block text-sm font-semibold text-papel">{titulo}</span>
+        <span className="block text-[15px] font-semibold text-papel">{titulo}</span>
         {detalhe && (
-          <span className="mt-0.5 block text-xs text-nevoa">{detalhe}</span>
+          <span className="mt-1 block text-sm text-nevoa">{detalhe}</span>
         )}
       </span>
-      <span className="flex-none text-right text-sm text-nevoa tabular-nums">
+      <span className="flex-none text-right text-[15px] text-nevoa tabular">
         {valor}
       </span>
     </li>
@@ -86,13 +86,13 @@ export default async function Painel() {
   return (
     <div className="flex flex-col gap-8">
       <div>
-        <p className="text-xs font-semibold uppercase tracking-widest text-raio">
+        <p className="text-xs font-semibold uppercase tracking-[0.07em] text-raio-forte">
           Ambiente no ar
         </p>
         <h1 className="mt-2 font-display text-3xl uppercase leading-none tracking-wide sm:text-4xl">
           Fala, {primeiroNome || "atleta"}
         </h1>
-        <p className="mt-3 max-w-prose text-sm leading-relaxed text-nevoa">
+        <p className="mt-3 max-w-prose text-[15px] leading-relaxed text-nevoa">
           Esta tela existe para provar que o encanamento funciona ponta a ponta:
           login, sessao, leitura no banco e as travas de acesso. Ela sai do ar
           assim que a area do aluno de verdade entrar no lugar.
@@ -101,7 +101,7 @@ export default async function Painel() {
 
       <section className="overflow-hidden rounded-2xl border border-linha bg-tinta-2">
         <div className="border-b border-linha bg-tinta-3 px-4 py-3">
-          <h2 className="text-sm font-bold">Diagnostico da infraestrutura</h2>
+          <h2 className="text-base font-bold">Diagnostico da infraestrutura</h2>
         </div>
         <ul>
           <Item
@@ -142,31 +142,28 @@ export default async function Painel() {
       </section>
 
       {ehAluno && !anamneseEnviada && (
-        <section className="rounded-2xl border border-raio/40 bg-gradient-to-br from-raio/12 to-raio/[0.03] p-5">
-          <p className="font-mono text-[10.5px] uppercase tracking-[0.11em] text-raio-forte">
+        <section className="rounded-2xl border border-raio/50 bg-gradient-to-br from-raio/[0.14] to-raio/[0.04] p-6">
+          <p className="text-xs font-semibold uppercase tracking-[0.07em] text-raio-forte">
             {anamnese ? "Voce parou no meio" : "Primeiro passo"}
           </p>
-          <h2 className="mt-2 font-display text-2xl uppercase leading-none tracking-wide">
+          <h2 className="mt-2.5 font-display text-[26px] uppercase leading-none tracking-wide">
             Sua ficha inicial
           </h2>
-          <p className="mt-2.5 max-w-prose text-sm leading-relaxed text-papel/75">
+          <p className="mt-2.5 max-w-prose text-[15px] leading-relaxed text-nevoa">
             {anamnese
               ? "Suas respostas ficaram guardadas. Continue de onde parou para o Allisson montar seu treino."
               : "Antes do primeiro treino o Allisson precisa te conhecer melhor. Leva uns 4 minutos e voce so responde uma vez."}
           </p>
-          <Link
-            href="/anamnese"
-            className="mt-4 inline-block rounded-xl bg-raio px-5 py-3 font-display text-base uppercase tracking-wider text-papel transition hover:bg-raio-forte"
-          >
-            {anamnese ? "Continuar" : "Comecar"}
-          </Link>
+          <BotaoLink href="/anamnese" className="mt-5">
+            {anamnese ? "Continuar de onde parei" : "Começar minha ficha"}
+          </BotaoLink>
         </section>
       )}
 
       {ehAluno && anamneseEnviada && (
         <section className="rounded-2xl border border-linha bg-tinta-2 p-5">
-          <h2 className="text-sm font-bold">Anamnese enviada</h2>
-          <p className="mt-2 max-w-prose text-sm leading-relaxed text-nevoa">
+          <h2 className="text-base font-bold">Anamnese enviada</h2>
+          <p className="mt-2 max-w-prose text-[15px] leading-relaxed text-nevoa">
             O Allisson ja recebeu suas respostas. Assim que ele montar sua ficha,
             o treino da semana aparece aqui.
           </p>
@@ -174,8 +171,8 @@ export default async function Painel() {
       )}
 
       <section className="rounded-2xl border border-linha bg-tinta-2 p-5">
-        <h2 className="text-sm font-bold">Proximo passo</h2>
-        <p className="mt-2 max-w-prose text-sm leading-relaxed text-nevoa">
+        <h2 className="text-base font-bold">Proximo passo</h2>
+        <p className="mt-2 max-w-prose text-[15px] leading-relaxed text-nevoa">
           Com a infra e o banco provados, o que falta da 2A e a biblioteca de
           exercicios, o editor de ficha e as telas de treino do aluno.
         </p>

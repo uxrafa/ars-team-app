@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { criarClienteServidor } from "@/lib/supabase/server";
 import {
   DIAS_DE_AVISO_DE_FICHA,
@@ -10,6 +9,7 @@ import {
   type LinhaProtocolo,
   type LinhaSessao,
 } from "@/lib/painel";
+import { BotaoLink } from "@/components/ui";
 import { LinhaAluno, type AlunoNaTela } from "./linha";
 
 export const metadata = { title: "Alunos · ARS Team" };
@@ -86,22 +86,19 @@ export default async function Alunos() {
       <div className="flex flex-wrap items-end gap-4">
         <div>
           <h1 className="font-display text-3xl uppercase leading-none tracking-wide">Alunos</h1>
-          <p className="mt-2 text-[13.5px] text-nevoa">
+          <p className="mt-2.5 text-[15px] text-nevoa">
             {naTela.length === 0
               ? "Ninguém cadastrado ainda."
               : `${naTela.length} ${naTela.length === 1 ? "aluno" : "alunos"} · ${consultoria} na consultoria, ${planilha} com planilha`}
           </p>
         </div>
-        <Link
-          href="/painel"
-          className="ml-auto rounded-lg border border-linha bg-tinta-2 px-5 py-2.5 text-[13.5px] font-semibold transition hover:border-raio"
-        >
+        <BotaoLink href="/painel" aparencia="secundario" className="ml-auto">
           Voltar ao painel
-        </Link>
+        </BotaoLink>
       </div>
 
       {semDados > 0 && (
-        <p className="rounded-xl border border-[#f2b330]/35 bg-[#f2b330]/[0.07] px-4 py-3 text-[13px] leading-relaxed text-[#f2b330]">
+        <p className="rounded-xl border border-alerta/40 bg-alerta/[0.08] px-5 py-4 text-[15px] leading-relaxed text-alerta">
           {semDados === 1
             ? "1 aluno está sem data de vencimento ou mensalidade."
             : `${semDados} alunos estão sem data de vencimento ou mensalidade.`}{" "}
@@ -116,7 +113,7 @@ export default async function Alunos() {
           {["Aluno", "Plano", "Pagamento", "Ficha atual", "Check-in", ""].map((t, i) => (
             <span
               key={i}
-              className="font-mono text-[10px] uppercase tracking-[0.1em] text-nevoa"
+              className="text-xs font-semibold uppercase tracking-[0.07em] text-nevoa"
             >
               {t}
             </span>
@@ -124,7 +121,7 @@ export default async function Alunos() {
         </div>
 
         {naTela.length === 0 ? (
-          <p className="px-6 py-16 text-center text-[13.5px] leading-relaxed text-nevoa">
+          <p className="px-6 py-16 text-center text-[15px] leading-relaxed text-nevoa">
             Nenhum aluno ainda. Enquanto a tela de convite não existe, criar conta é pelo
             painel da Supabase, e depois o aluno aparece aqui sozinho.
           </p>

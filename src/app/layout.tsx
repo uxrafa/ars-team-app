@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
-import { Hanken_Grotesk } from "next/font/google";
+import { Hanken_Grotesk, IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
 
 // Tanker e a fonte oficial de titulos da ARS Team. O arquivo mora em
@@ -21,6 +21,13 @@ const corpo = Hanken_Grotesk({
   variable: "--fonte-corpo",
 });
 
+// So para dado: peso, data, contagem. Nunca para prosa.
+const dado = IBM_Plex_Mono({
+  weight: ["400", "500"],
+  subsets: ["latin"],
+  variable: "--fonte-mono",
+});
+
 export const metadata: Metadata = {
   title: "ARS Team",
   description: "Área do aluno e painel do treinador da ARS Team.",
@@ -29,7 +36,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#0b0b0c",
+  themeColor: "#000000",
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
@@ -40,7 +47,7 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="pt-BR">
-      <body className={`${display.variable} ${corpo.variable} font-sans antialiased`}>
+      <body className={`${display.variable} ${corpo.variable} ${dado.variable} font-sans antialiased`}>
         {children}
       </body>
     </html>
