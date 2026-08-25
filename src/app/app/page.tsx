@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { criarClienteServidor } from "@/lib/supabase/server";
 
 type Perfil = {
@@ -59,6 +60,15 @@ export default async function Painel() {
     .select("id, nome, email, tipo, status, criado_em")
     .eq("id", user?.id ?? "")
     .single<Perfil>();
+
+  const { data: anamnese } = await supabase
+    .from("anamnese")
+    .select("status")
+    .eq("aluno_id", user?.id ?? "")
+    .maybeSingle<{ status: "rascunho" | "enviada" }>();
+
+  const ehAluno = perfil?.tipo === "consultoria";
+  const anamneseEnviada = anamnese?.status === "enviada";
 
   // Prova da RLS: pedimos a tabela inteira. Um aluno so pode receber a propria linha.
   const { data: visiveis } = await supabase.from("perfis").select("id");
@@ -125,11 +135,43 @@ export default async function Painel() {
         </ul>
       </section>
 
+      {ehAluno && !anamneseEnviada && (
+        <section className="rounded-2xl border border-raio/40 bg-gradient-to-br from-raio/12 to-raio/[0.03] p-5">
+          <p className="font-mono text-[10.5px] uppercase tracking-[0.11em] text-raio-forte">
+            {anamnese ? "Voce parou no meio" : "Primeiro passo"}
+          </p>
+          <h2 className="mt-2 font-display text-2xl uppercase leading-none tracking-wide">
+            Sua ficha inicial
+          </h2>
+          <p className="mt-2.5 max-w-prose text-sm leading-relaxed text-papel/75">
+            {anamnese
+              ? "Suas respostas ficaram guardadas. Continue de onde parou para o Allisson montar seu treino."
+              : "Antes do primeiro treino o Allisson precisa te conhecer melhor. Leva uns 4 minutos e voce so responde uma vez."}
+          </p>
+          <Link
+            href="/anamnese"
+            className="mt-4 inline-block rounded-xl bg-raio px-5 py-3 font-display text-base uppercase tracking-wider text-papel transition hover:bg-raio-forte"
+          >
+            {anamnese ? "Continuar" : "Comecar"}
+          </Link>
+        </section>
+      )}
+
+      {ehAluno && anamneseEnviada && (
+        <section className="rounded-2xl border border-linha bg-tinta-2 p-5">
+          <h2 className="text-sm font-bold">Anamnese enviada</h2>
+          <p className="mt-2 max-w-prose text-sm leading-relaxed text-nevoa">
+            O Allisson ja recebeu suas respostas. Assim que ele montar sua ficha,
+            o treino da semana aparece aqui.
+          </p>
+        </section>
+      )}
+
       <section className="rounded-2xl border border-linha bg-tinta-2 p-5">
         <h2 className="text-sm font-bold">Proximo passo</h2>
         <p className="mt-2 max-w-prose text-sm leading-relaxed text-nevoa">
-          Com a infra provada, o proximo bloco e a entrega 2A: anamnese,
-          biblioteca de exercicios, editor de ficha e a area do aluno no celular.
+          Com a infra e o banco provados, o que falta da 2A e a biblioteca de
+          exercicios, o editor de ficha e as telas de treino do aluno.
         </p>
       </section>
     </div>
