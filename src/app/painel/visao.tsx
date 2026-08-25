@@ -128,9 +128,14 @@ export function VisaoDoPainel({ saudacao, hoje, atencao, r, alunos, checkinsRece
               : `${atencao.length} ${atencao.length === 1 ? "coisa precisa" : "coisas precisam"} de você hoje.`}
           </p>
         </div>
-        <BotaoLink href="/painel/alunos" aparencia="secundario" className="ml-auto">
-          Ver alunos
-        </BotaoLink>
+        <div className="ml-auto flex flex-wrap gap-2.5">
+          <BotaoLink href="/painel/alunos" aparencia="secundario">
+            Ver alunos
+          </BotaoLink>
+          <BotaoLink href="/painel/convites" aparencia="secundario">
+            Convidar aluno
+          </BotaoLink>
+        </div>
       </div>
 
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">

@@ -9,6 +9,7 @@ export const metadata = { title: "Painel · ARS Team" };
 const ABAS = [
   { href: "/painel", nome: "Painel" },
   { href: "/painel/alunos", nome: "Alunos" },
+  { href: "/painel/convites", nome: "Convites" },
 ] as const;
 
 /** Ainda nao existem, mas o Allisson precisa ver para onde a coisa vai. */

@@ -92,9 +92,12 @@ export default async function Alunos() {
               : `${naTela.length} ${naTela.length === 1 ? "aluno" : "alunos"} · ${consultoria} na consultoria, ${planilha} com planilha`}
           </p>
         </div>
-        <BotaoLink href="/painel" aparencia="secundario" className="ml-auto">
-          Voltar ao painel
-        </BotaoLink>
+        <div className="ml-auto flex flex-wrap gap-2.5">
+          <BotaoLink href="/painel" aparencia="secundario">
+            Voltar ao painel
+          </BotaoLink>
+          <BotaoLink href="/painel/convites">Convidar aluno</BotaoLink>
+        </div>
       </div>
 
       {semDados > 0 && (
@@ -121,10 +124,15 @@ export default async function Alunos() {
         </div>
 
         {naTela.length === 0 ? (
-          <p className="px-6 py-16 text-center text-[15px] leading-relaxed text-nevoa">
-            Nenhum aluno ainda. Enquanto a tela de convite não existe, criar conta é pelo
-            painel da Supabase, e depois o aluno aparece aqui sozinho.
-          </p>
+          <div className="px-6 py-16 text-center">
+            <p className="text-[15px] leading-relaxed text-nevoa">
+              Nenhum aluno ainda. Cadastre em Convites e mande o link pelo WhatsApp: quando o
+              aluno escolher a senha, ele aparece aqui sozinho, já com plano e vencimento.
+            </p>
+            <div className="mt-5 flex justify-center">
+              <BotaoLink href="/painel/convites">Convidar o primeiro aluno</BotaoLink>
+            </div>
+          </div>
         ) : (
           <ul>
             {naTela.map((a) => (

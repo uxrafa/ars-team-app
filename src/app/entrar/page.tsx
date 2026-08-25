@@ -1,35 +1,15 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState } from "react";
 import { Logo } from "@/components/logo";
 import { Aviso, Botao, CLASSE_CAMPO, Rotulo } from "@/components/ui";
+import { CampoSenha } from "@/components/campo-senha";
 import { entrar, type EstadoForm } from "./acoes";
 
 const INICIAL: EstadoForm = {};
 
-function OlhoAberto() {
-  return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M2 12s3.6-6.5 10-6.5S22 12 22 12s-3.6 6.5-10 6.5S2 12 2 12z" />
-      <circle cx="12" cy="12" r="3" />
-    </svg>
-  );
-}
-
-function OlhoFechado() {
-  return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M3 3l18 18" />
-      <path d="M10.6 6.1A9.7 9.7 0 0 1 12 6c6.4 0 10 6 10 6a17 17 0 0 1-3.3 3.9" />
-      <path d="M6.3 8.2A16.7 16.7 0 0 0 2 12s3.6 6 10 6a9.9 9.9 0 0 0 4-.8" />
-      <path d="M9.9 9.9a3 3 0 0 0 4.2 4.2" />
-    </svg>
-  );
-}
-
 export default function Entrar() {
   const [estado, acaoEntrar, entrando] = useActionState(entrar, INICIAL);
-  const [verSenha, setVerSenha] = useState(false);
 
   return (
     <main className="flex min-h-dvh flex-col items-center justify-center px-6 py-12">
@@ -54,30 +34,12 @@ export default function Entrar() {
             />
           </label>
 
-          <label className="flex flex-col gap-2">
-            <Rotulo>Senha</Rotulo>
-            <span className="relative block">
-              <input
-                name="senha"
-                type={verSenha ? "text" : "password"}
-                autoComplete="current-password"
-                placeholder="Sua senha"
-                className={`${CLASSE_CAMPO} pr-14`}
-              />
-              {/* Digitar senha às cegas no celular é o que mais gera erro de
-                  login. O olho resolve, e não pede nada do servidor. */}
-              <button
-                type="button"
-                onClick={() => setVerSenha((v) => !v)}
-                aria-label={verSenha ? "Esconder a senha" : "Mostrar a senha"}
-                aria-pressed={verSenha}
-                title={verSenha ? "Esconder a senha" : "Mostrar a senha"}
-                className="absolute right-1 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-lg text-nevoa transition-colors hover:text-papel"
-              >
-                {verSenha ? <OlhoFechado /> : <OlhoAberto />}
-              </button>
-            </span>
-          </label>
+          <CampoSenha
+            name="senha"
+            rotulo="Senha"
+            autoComplete="current-password"
+            placeholder="Sua senha"
+          />
 
           {estado.erro && <Aviso>{estado.erro}</Aviso>}
 

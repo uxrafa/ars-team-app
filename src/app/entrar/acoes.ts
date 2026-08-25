@@ -42,60 +42,15 @@ export async function entrar(
   redirect("/app");
 }
 
-export async function cadastrar(
-  _anterior: EstadoForm,
-  dados: FormData,
-): Promise<EstadoForm> {
-  const nome = String(dados.get("nome") ?? "").trim();
-  const email = String(dados.get("email") ?? "").trim();
-  const senha = String(dados.get("senha") ?? "");
-
-  if (!nome) return { erro: "Escreva seu nome." };
-  if (!email || !senha) return { erro: "Preencha e-mail e senha." };
-  if (senha.length < 6) return { erro: "A senha precisa de pelo menos 6 caracteres." };
-
-  const supabase = await criarClienteServidor();
-
-  // Cadastro publico fica fechado: so um admin logado pode criar conta para
-  // outra pessoa. Isso protege mesmo que alguem chame esta acao direto, sem
-  // passar pela tela (a tela nem mostra mais este formulario para quem nao
-  // esta logado). Ate a entrega 2A ter tela de convite, a conta do aluno
-  // nasce pelo painel da Supabase (Authentication > Users > Add user) ou
-  // por SQL, e a pessoa so define a senha no primeiro acesso.
-  const {
-    data: { user: quemPede },
-  } = await supabase.auth.getUser();
-
-  if (!quemPede) {
-    return { erro: "Cadastro fechado. Peça para o Allisson liberar seu acesso." };
-  }
-
-  const { data: perfilDeQuemPede } = await supabase
-    .from("perfis")
-    .select("tipo")
-    .eq("id", quemPede.id)
-    .single();
-
-  if (perfilDeQuemPede?.tipo !== "admin") {
-    return { erro: "Cadastro fechado. Peça para o Allisson liberar seu acesso." };
-  }
-
-  const { data, error } = await supabase.auth.signUp({
-    email,
-    password: senha,
-    options: { data: { nome } },
-  });
-
-  if (error) {
-    console.error("[cadastrar]", error.message);
-    return { erro: traduzir(error.message) };
-  }
-
-  // Com a confirmacao de e-mail ligada, o cadastro nao devolve sessao na hora.
-  if (!data.session) {
-    return { aviso: "Conta criada. Abra o e-mail que enviamos para confirmar o acesso." };
-  }
-
-  revalidatePath("/", "layout");
-  redirect("/app");
-}
+/**
+ * O cadastro publico saiu daqui.
+ *
+ * Ate a migracao 0010 esta acao existia para o admin criar conta de aluno, e
+ * a trava era so na tela: /auth/v1/signup e endpoint publico do GoTrue, entao
+ * qualquer um com a chave publicavel podia criar conta chamando a API direto.
+ *
+ * Agora conta so nasce por convite: o Allisson cadastra o aluno em
+ * /painel/convites, manda o link, e o aluno escolhe a senha em
+ * /convite/[token]. Quem tenta se cadastrar sem convite valido e recusado
+ * pelo gatilho do banco, e nao pela tela.
+ */

@@ -1,8 +1,14 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-/** Rotas que podem ser abertas sem estar logado. */
-const ROTAS_PUBLICAS = ["/entrar", "/auth"];
+/**
+ * Rotas que podem ser abertas sem estar logado.
+ *
+ * `/convite` esta aqui porque o aluno que vai migrar ainda nao tem conta: ele
+ * chega pelo link do WhatsApp. O que protege essa rota nao e o login, e o
+ * token do link, conferido no banco (migracao 0010).
+ */
+const ROTAS_PUBLICAS = ["/entrar", "/auth", "/convite"];
 
 /**
  * Renova a sessao a cada requisicao e protege as rotas privadas.

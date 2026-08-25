@@ -16,6 +16,7 @@ novo e numerado, para o banco poder ser reconstruido do zero.
 | `0007_acesso_ate_no_perfil.sql` | `perfis.acesso_ate`, para o painel montar a fila de cobranca. |
 | `0008_mensalidade_no_perfil.sql` | `perfis.mensalidade`, para o painel somar quanto esta em aberto. |
 | `0009_travar_campos_sensiveis_do_perfil.sql` | **Correcao de seguranca.** Impede o aluno de mudar o proprio plano, status, vencimento ou mensalidade. |
+| `0010_convite_de_aluno.sql` | Tabela `convite` e **fechamento do cadastro publico**: conta so nasce por convite do treinador. |
 
 ## Como o modelo se encaixa
 
@@ -86,6 +87,42 @@ Postgres (`authenticated`). A saida foi um gatilho `before update` que compara
 perguntar sempre quais colunas dessa linha o dono **nao** pode editar. Se houver
 alguma, precisa de gatilho.
 
+## A falha que a 0010 fechou
+
+O cadastro estava fechado **so na tela**. O server action de cadastro conferia se
+quem pedia era admin, mas `/auth/v1/signup` e endpoint publico do GoTrue: qualquer
+pessoa com a chave publicavel (que fica no navegador, por definicao) podia criar
+conta chamando a API direto, e o gatilho `ao_criar_usuario` criava o perfil sem
+perguntar nada. Nao vazava dado de ninguem, porque a RLS segura, mas enchia o
+painel do Allisson de gente estranha.
+
+Agora o gatilho so cria perfil se o metadata do cadastro trouxer um token de
+convite valido, nao usado, nao cancelado, dentro da validade **e do mesmo e-mail**
+do convite. Sem isso, o insert em `auth.users` e recusado pelo banco.
+
+O convite tambem carrega o cadastro que o Allisson preencheu (nome, whatsapp,
+plano, mensalidade e `acesso_ate`), e e o gatilho que copia isso para `perfis`.
+A tela nao manda nenhum desses campos: se mandasse, daria para forjar na chamada.
+
+**Regra que fica:** trava de cadastro em server action nao e trava. Enquanto o
+endpoint do GoTrue estiver de pe, quem decide quem entra e o banco.
+
+**Escape hatch:** para criar conta na mao (a do proprio Allisson, ou recuperar
+alguem), criar antes a linha em `convite` e usar o token no metadata. A excecao
+do "banco vazio" no gatilho existe so para o primeiro admin de um banco novo.
+
+**Excecao proposital de schema:** `public.convite_por_token()` e `SECURITY
+DEFINER` e mora em `public`, ao contrario da regra da 0002. E de proposito: o
+aluno que abre o link ainda nao tem conta, chega como `anon`, e precisa chamar a
+funcao por `/rest/v1/rpc`. Ela devolve so nome, e-mail e plano, e so para quem
+apresenta o token inteiro (24 bytes aleatorios). Na 0002 o erro era expor; aqui
+expor e o objetivo, e quem protege e o segredo do token.
+
+Por causa disso o advisor de seguranca aponta dois WARN novos, os dois sobre
+`convite_por_token` ser executavel por `anon` e por `authenticated`. **Sao
+esperados. Nao revogar o EXECUTE:** revogar quebra a tela de convite, que e a
+unica porta de entrada de aluno novo.
+
 ## Teste de RLS
 
 Em 24/08/2026 as sete migracoes foram validadas com as duas contas reais, com
@@ -99,6 +136,17 @@ Em 24/08/2026 as sete migracoes foram validadas com as duas contas reais, com
 - anamnese incompleta e recusada pelo banco;
 - anamnese enviada gera sozinha o primeiro ponto do grafico de evolucao;
 - admin le anamnese e series de todo mundo, mas **nao** edita anamnese alheia.
+
+Em 25/08/2026 a `0010` foi validada com mais 12 verificacoes, todas passando:
+
+- admin cria convite; aluno **nao** le nem cria convite;
+- `anon` le o convite pelo token e **nao** le a tabela;
+- token errado devolve zero linhas;
+- cadastro **sem** convite e recusado pelo banco;
+- convite valido com e-mail trocado e recusado pelo banco;
+- convite certo cria o perfil ja com plano, whatsapp, mensalidade e vencimento;
+- o convite vira `usado` e aponta para o aluno;
+- o mesmo token **nao** serve duas vezes.
 
 Os dados de teste foram apagados depois. As tabelas estao vazias de proposito:
 a biblioteca de exercicios espera a lista do Allisson.
