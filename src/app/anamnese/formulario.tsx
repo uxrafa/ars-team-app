@@ -11,7 +11,9 @@ import {
   OBJETIVOS,
   PERGUNTAS_SAUDE,
   PERIODOS,
+  primeiraFalta,
   type DadosAnamnese,
+  type Falta,
 } from "@/lib/anamnese";
 import { Aviso, Botao, CLASSE_CAMPO, Rotulo } from "@/components/ui";
 import { enviarAnamnese, salvarRascunho } from "./acoes";
@@ -55,6 +57,8 @@ export function Formulario({
   const [dados, setDados] = useState<DadosAnamnese>(inicial);
   const [etapa, setEtapa] = useState<1 | 2 | 3>(1);
   const [erro, setErro] = useState<string | null>(null);
+  // Qual campo esta faltando, para marcar em vermelho na tela certa.
+  const [emFalta, setEmFalta] = useState<keyof DadosAnamnese | null>(null);
   const [fotos, setFotos] = useState<Record<string, Foto>>({});
   const [pendente, comecar] = useTransition();
   const [subindo, setSubindo] = useState(false);
@@ -65,6 +69,27 @@ export function Formulario({
   function mudar<K extends keyof DadosAnamnese>(chave: K, valor: DadosAnamnese[K]) {
     setDados((d) => ({ ...d, [chave]: valor }));
     setErro(null);
+    if (emFalta === chave) setEmFalta(null);
+  }
+
+  /**
+   * Leva o aluno ate o que falta, em vez de so dizer que falta.
+   *
+   * Muda de etapa se precisar, marca o campo e rola ate ele. O quadro fica
+   * depois da troca de etapa porque o elemento so existe no DOM depois que o
+   * React desenhou a etapa nova.
+   */
+  function irAteAFalta(f: Falta) {
+    setErro(f.mensagem);
+    setEmFalta(f.campo);
+    setEtapa(f.etapa);
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        document
+          .getElementById(`campo-${f.campo}`)
+          ?.scrollIntoView({ block: "center", behavior: "smooth" });
+      });
+    });
   }
 
   function alternarDia(dia: number) {
@@ -79,12 +104,25 @@ export function Formulario({
 
   function voltar() {
     setErro(null);
+    setEmFalta(null);
     if (etapa === 1) router.push("/app");
     else setEtapa((e) => (e === 3 ? 2 : 1));
   }
 
   function avancar() {
     setErro(null);
+    setEmFalta(null);
+
+    // Buraco na etapa atual trava aqui, e nao la no fim. Levar o erro da
+    // etapa 2 para ser descoberto na etapa 3 foi o que travou o primeiro
+    // teste de verdade: a mensagem aparecia numa tela onde a pergunta que
+    // faltava nem existe.
+    const falta = primeiraFalta(dados);
+    if (falta && falta.etapa <= etapa) {
+      irAteAFalta(falta);
+      return;
+    }
+
     comecar(async () => {
       const r = await salvarRascunho(dados);
       if (r.erro) {
@@ -133,6 +171,16 @@ export function Formulario({
 
   function enviar() {
     setErro(null);
+    setEmFalta(null);
+
+    // Confere antes de subir foto: nao faz sentido gastar a conexao do aluno
+    // com upload para depois descobrir que falta uma resposta la atras.
+    const falta = primeiraFalta(dados);
+    if (falta) {
+      irAteAFalta(falta);
+      return;
+    }
+
     setSubindo(true);
     (async () => {
       try {
@@ -182,7 +230,13 @@ export function Formulario({
         </div>
       </div>
 
-      <div className="mx-auto flex max-w-md flex-col gap-7 px-5 pb-40 pt-6">
+      {/* A folga de baixo cresce quando aparece erro, senao a barra fixa
+          cobre o ultimo campo da etapa. */}
+      <div
+        className={`mx-auto flex max-w-md flex-col gap-7 px-5 pt-6 ${
+          erro ? "pb-64" : "pb-40"
+        }`}
+      >
         {etapa === 1 && (
           <>
             <header className="flex flex-col gap-1.5">
@@ -199,7 +253,7 @@ export function Formulario({
                 Sobre você
               </span>
               <div className="grid grid-cols-2 gap-3">
-                <label className="flex flex-col gap-1.5">
+                <label id="campo-peso_kg" className="flex flex-col gap-1.5">
                   <Rotulo>Peso atual</Rotulo>
                   <div className="relative">
                     <input
@@ -212,7 +266,7 @@ export function Formulario({
                     <span className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 text-[13px] text-nevoa">kg</span>
                   </div>
                 </label>
-                <label className="flex flex-col gap-1.5">
+                <label id="campo-altura_cm" className="flex flex-col gap-1.5">
                   <Rotulo>Altura</Rotulo>
                   <div className="relative">
                     <input
@@ -237,7 +291,7 @@ export function Formulario({
               </label>
             </section>
 
-            <section className="flex flex-col gap-3">
+            <section id="campo-objetivo" className="flex flex-col gap-3">
               <span className="text-xs font-semibold uppercase tracking-[0.07em] text-nevoa">
                 Objetivo principal
               </span>
@@ -260,7 +314,7 @@ export function Formulario({
               </div>
             </section>
 
-            <section className="flex flex-col gap-3">
+            <section id="campo-local_treino" className="flex flex-col gap-3">
               <span className="text-xs font-semibold uppercase tracking-[0.07em] text-nevoa">
                 Onde você treina
               </span>
@@ -283,7 +337,7 @@ export function Formulario({
               </div>
             </section>
 
-            <section className="flex flex-col gap-3">
+            <section id="campo-nivel" className="flex flex-col gap-3">
               <span className="text-xs font-semibold uppercase tracking-[0.07em] text-nevoa">
                 Sua experiência
               </span>
@@ -322,7 +376,7 @@ export function Formulario({
               </div>
             </section>
 
-            <section className="flex flex-col gap-3">
+            <section id="campo-dias_disponiveis" className="flex flex-col gap-3">
               <div className="flex items-baseline justify-between">
                 <span className="text-xs font-semibold uppercase tracking-[0.07em] text-nevoa">
                   Dias disponíveis
@@ -375,11 +429,24 @@ export function Formulario({
               </span>
               {PERGUNTAS_SAUDE.map((p, i) => {
                 const valor = dados[p.campo];
+                const falta = emFalta === p.campo;
                 return (
-                  <div key={p.campo} className={`flex flex-col gap-2.5 ${i > 0 ? "border-t border-linha pt-3.5" : ""}`}>
+                  <div
+                    key={p.campo}
+                    id={`campo-${p.campo}`}
+                    className={`flex flex-col gap-2.5 ${i > 0 ? "border-t border-linha pt-3.5" : ""}`}
+                  >
                     <div className="flex items-center gap-3">
                       <p className="flex-1 text-[15px] leading-snug">{p.texto}</p>
-                      <div className={`flex flex-none overflow-hidden rounded-xl border ${valor === true ? "border-raio" : "border-contorno"}`}>
+                      <div
+                        className={`flex flex-none overflow-hidden rounded-xl border ${
+                          falta
+                            ? "border-raio-forte ring-[3px] ring-raio/30"
+                            : valor === true
+                              ? "border-raio"
+                              : "border-contorno"
+                        }`}
+                      >
                         <button
                           type="button"
                           onClick={() => mudar(p.campo, true)}
@@ -402,6 +469,11 @@ export function Formulario({
                         </button>
                       </div>
                     </div>
+                    {falta && (
+                      <p className="text-sm font-semibold text-raio-forte">
+                        Falta responder esta.
+                      </p>
+                    )}
                     {valor === true && (
                       <div className="border-l-2 border-raio pl-3.5">
                         <input
@@ -432,10 +504,15 @@ export function Formulario({
 
             <button
               type="button"
+              id="campo-consentiu"
               onClick={() => mudar("consentiu", !dados.consentiu)}
               aria-pressed={dados.consentiu}
               className={`flex gap-3.5 rounded-2xl border p-5 text-left transition-colors ${
-                dados.consentiu ? "border-raio bg-raio/[0.12]" : "border-contorno bg-tinta-3 hover:border-nevoa"
+                dados.consentiu
+                  ? "border-raio bg-raio/[0.12]"
+                  : emFalta === "consentiu"
+                    ? "border-raio-forte bg-tinta-3 ring-[3px] ring-raio/30"
+                    : "border-contorno bg-tinta-3 hover:border-nevoa"
               }`}
             >
               <span
@@ -602,8 +679,16 @@ export function Formulario({
         )}
       </div>
 
-      {/* barra fixa */}
-      <div className="fixed inset-x-0 bottom-0 bg-gradient-to-t from-tinta from-[68%] to-transparent px-5 pb-6 pt-4">
+      {/* Barra fixa.
+          O fundo e solido, e o esfumado virou uma faixa ACIMA dela. Com o
+          gradiente na propria barra, a mensagem de erro caia na parte
+          transparente e ficava escrita por cima do campo de tras quando
+          quebrava em duas linhas. */}
+      <div className="fixed inset-x-0 bottom-0 bg-tinta px-5 pb-6 pt-4">
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-x-0 bottom-full h-10 bg-gradient-to-t from-tinta to-transparent"
+        />
         <div className="mx-auto max-w-md">
           {erro && <div className="mb-3"><Aviso>{erro}</Aviso></div>}
           <Botao

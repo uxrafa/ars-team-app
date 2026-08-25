@@ -3,9 +3,9 @@
 import { revalidatePath } from "next/cache";
 import { criarClienteServidor } from "@/lib/supabase/server";
 import {
-  PERGUNTAS_SAUDE,
   VERSAO_CONSENTIMENTO,
   paraNumero,
+  primeiraFalta,
   type DadosAnamnese,
 } from "@/lib/anamnese";
 
@@ -46,37 +46,6 @@ function montarLinha(alunoId: string, dados: DadosAnamnese) {
     coxa_cm: paraNumero(dados.coxa_cm),
     periodo_treino: dados.periodo_treino || null,
   };
-}
-
-/**
- * Repete na tela as regras que o banco ja garante por constraint.
- * Nao e a trava de seguranca, e a mensagem em portugues: sem isto o aluno
- * levaria um erro cru de constraint sem saber o que faltou.
- */
-function faltaAlgumaCoisa(dados: DadosAnamnese): string | null {
-  const peso = paraNumero(dados.peso_kg);
-  const altura = paraNumero(dados.altura_cm);
-
-  if (peso === null) return "Escreva seu peso atual.";
-  if (peso < 25 || peso > 400) return "Confira o peso: o valor parece fora do normal.";
-  if (altura === null) return "Escreva sua altura.";
-  if (altura < 100 || altura > 250) return "Confira a altura: o valor parece fora do normal.";
-  if (!dados.objetivo) return "Escolha seu objetivo principal.";
-  if (!dados.local_treino) return "Diga onde você treina.";
-  if (!dados.nivel) return "Escolha sua experiência com treino.";
-  if (!dados.dias_disponiveis.length) return "Marque pelo menos um dia disponível na semana.";
-
-  for (const p of PERGUNTAS_SAUDE) {
-    if (dados[p.campo] === null) {
-      return "Responda todas as perguntas de saúde antes de enviar.";
-    }
-  }
-
-  if (!dados.consentiu) {
-    return "Para enviar, você precisa autorizar o uso dos seus dados de saúde.";
-  }
-
-  return null;
 }
 
 async function pegarAluno() {
@@ -121,8 +90,11 @@ export async function enviarAnamnese(dados: DadosAnamnese): Promise<Resultado> {
   const { supabase, alunoId } = await pegarAluno();
   if (!alunoId) return { erro: "Sua sessão expirou. Entre de novo." };
 
-  const problema = faltaAlgumaCoisa(dados);
-  if (problema) return { erro: problema };
+  // Mesma regra que a tela usa para bloquear a troca de etapa. Aqui ela e a
+  // ultima checagem antes do banco, que ainda valida por cima na constraint
+  // anamnese_minimo_para_enviar.
+  const falta = primeiraFalta(dados);
+  if (falta) return { erro: falta.mensagem };
 
   const agora = new Date().toISOString();
 

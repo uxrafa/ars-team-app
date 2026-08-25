@@ -159,3 +159,79 @@ export function paraTexto(valor: number | null | undefined): string {
   if (valor === null || valor === undefined) return "";
   return String(valor).replace(".", ",");
 }
+
+/* ------------------------------------------------------------------ */
+/* O que ainda falta responder                                         */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Uma regra so, usada em tres lugares: a tela usa para nao deixar avancar de
+ * etapa com buraco, o botao de enviar usa para voltar ate o campo que falta,
+ * e o server action usa para recusar o envio.
+ *
+ * Antes desta funcao a validacao so existia no envio, no fim da etapa 3. Quem
+ * pulasse uma das cinco perguntas de saude levava "Responda todas as perguntas
+ * de saude" numa tela onde nenhuma delas aparece, sem saber qual faltou nem
+ * como voltar. Foi exatamente o que aconteceu no primeiro teste de verdade.
+ *
+ * A ordem daqui e a ordem da tela, entao a primeira falta encontrada e sempre
+ * a mais acima, e mandar o aluno para ela nunca pula nada no meio.
+ */
+export type Falta = {
+  etapa: 1 | 2 | 3;
+  /** Chave do campo, que a tela usa como ancora para rolar ate ele. */
+  campo: keyof DadosAnamnese;
+  mensagem: string;
+};
+
+export function primeiraFalta(d: DadosAnamnese): Falta | null {
+  const peso = paraNumero(d.peso_kg);
+  const altura = paraNumero(d.altura_cm);
+
+  if (peso === null) {
+    return { etapa: 1, campo: "peso_kg", mensagem: "Escreva seu peso atual." };
+  }
+  if (peso < 25 || peso > 400) {
+    return { etapa: 1, campo: "peso_kg", mensagem: "Confira o peso: o valor parece fora do normal." };
+  }
+  if (altura === null) {
+    return { etapa: 1, campo: "altura_cm", mensagem: "Escreva sua altura." };
+  }
+  if (altura < 100 || altura > 250) {
+    return { etapa: 1, campo: "altura_cm", mensagem: "Confira a altura: o valor parece fora do normal." };
+  }
+  if (!d.objetivo) {
+    return { etapa: 1, campo: "objetivo", mensagem: "Escolha seu objetivo principal." };
+  }
+  if (!d.local_treino) {
+    return { etapa: 1, campo: "local_treino", mensagem: "Diga onde você treina." };
+  }
+  if (!d.nivel) {
+    return { etapa: 1, campo: "nivel", mensagem: "Escolha sua experiência com treino." };
+  }
+  if (!d.dias_disponiveis.length) {
+    return {
+      etapa: 1,
+      campo: "dias_disponiveis",
+      mensagem: "Marque pelo menos um dia disponível na semana.",
+    };
+  }
+
+  for (const p of PERGUNTAS_SAUDE) {
+    if (d[p.campo] === null) {
+      // A mensagem repete a pergunta. "Responda todas as perguntas de saude"
+      // nao ajuda ninguem a achar qual das cinco ficou em branco.
+      return { etapa: 2, campo: p.campo, mensagem: `Falta responder: ${p.texto}` };
+    }
+  }
+
+  if (!d.consentiu) {
+    return {
+      etapa: 2,
+      campo: "consentiu",
+      mensagem: "Para enviar, você precisa autorizar o uso dos seus dados de saúde.",
+    };
+  }
+
+  return null;
+}
