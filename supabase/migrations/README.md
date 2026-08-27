@@ -18,6 +18,7 @@ novo e numerado, para o banco poder ser reconstruido do zero.
 | `0009_travar_campos_sensiveis_do_perfil.sql` | **Correcao de seguranca.** Impede o aluno de mudar o proprio plano, status, vencimento ou mensalidade. |
 | `0010_convite_de_aluno.sql` | Tabela `convite` e **fechamento do cadastro publico**: conta so nasce por convite do treinador. |
 | `0011_biblioteca_de_exercicios.sql` | Os 121 exercicios que o Allisson mandou. E dado, nao estrutura, mas entra numerado para o banco poder ser reconstruido do zero. |
+| `0012_salvar_ficha.sql` | Funcao que regrava blocos e itens de uma ficha numa transacao so, preservando os ids dos itens. |
 
 ## Como o modelo se encaixa
 
@@ -173,6 +174,37 @@ mostrar rapido o que ainda falta.
 
 `on conflict do nothing` deixa reaplicar a migracao sem estrago, porque o
 indice unico e em `lower(btrim(nome))`.
+
+## Por que `salvar_ficha` existe (0012)
+
+O editor manda a ficha inteira de uma vez. Fazer isso pelo cliente seria uma
+sequencia de delete, update e insert **sem transacao**, e um erro no meio
+deixaria a ficha pela metade. Numa ficha ATIVA, isso e o aluno abrir o app e
+nao achar o treino.
+
+Duas decisoes dentro dela:
+
+**`security invoker`, nao `definer`.** Quem chama e o Allisson logado, e as
+policies da 0003 ja dizem que so admin escreve em protocolo, bloco e item. Com
+invoker a RLS continua valendo dentro da funcao, entao nao precisa de checagem
+de admin no corpo e ela nao entra na lista de `security definer` exposto do
+advisor. **E o contrario da `convite_por_token`:** la o chamador nao tem conta
+e precisa de definer; aqui o chamador e admin e invoker basta. A pergunta que
+decide sempre e "quem precisa chamar isso".
+
+**Os ids dos itens sao preservados.** `serie_registrada.item_id` aponta para o
+item com `on delete set null`. Apagar tudo e recriar a cada gravacao cortaria o
+vinculo entre o que o aluno treinou e a linha da ficha toda vez que o Allisson
+mexesse numa virgula. Por isso a funcao faz upsert por id e so apaga o que
+sumiu da tela.
+
+E por isso tambem a action **devolve a ficha relida**: os itens que acabaram de
+nascer precisam voltar para a tela com id, senao a gravacao seguinte criaria
+tudo de novo. Foi um bug real, pego antes de subir.
+
+Testado em 27/08/2026 com 8 verificacoes: cria blocos e itens, remove bloco que
+saiu da tela, preserva id de item que ficou, atualiza series, reordena sem
+quebrar o unique deferrable, e **recusa aluno** que tente chamar a funcao.
 
 ## Nota sobre o banco atual
 

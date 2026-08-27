@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { emReais, iniciais, linkWhatsapp, quandoFoi } from "@/lib/painel";
-import { Aviso, Botao, CLASSE_CAMPO, LinkIcone, Pilula, Rotulo, type Tom } from "@/components/ui";
+import { Aviso, Botao, BotaoLink, CLASSE_CAMPO, LinkIcone, Pilula, Rotulo, type Tom } from "@/components/ui";
 import { salvarCobranca, type DadosCobranca } from "./acoes";
 
 export type AlunoNaTela = {
@@ -214,6 +214,9 @@ export function LinhaAluno({ aluno, hoje }: { aluno: AlunoNaTela; hoje: string }
             </svg>
           </LinkIcone>
         )}
+        <BotaoLink href={`/painel/alunos/${aluno.id}/ficha`} aparencia="secundario" tamanho="sm">
+          {aluno.ficha ? "Ficha" : "Montar ficha"}
+        </BotaoLink>
         <Botao type="button" aparencia="secundario" tamanho="sm" onClick={() => setEditando(true)}>
           Editar
         </Botao>

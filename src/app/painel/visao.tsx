@@ -92,9 +92,15 @@ function LinhaAtencao({ item }: { item: ItemAtencao }) {
       ) : acionavelPorZap ? (
         <span className="flex-none text-sm text-nevoa">Sem WhatsApp</span>
       ) : (
-        <span className="flex-none rounded-xl border border-dashed border-contorno px-3.5 py-2.5 text-sm text-nevoa">
-          Editor em breve
-        </span>
+        // "Sem ficha" e "Renovar" levam direto para o editor daquele aluno.
+        <BotaoLink
+          href={`/painel/alunos/${aluno.id}/ficha`}
+          aparencia="secundario"
+          tamanho="sm"
+          className="flex-none"
+        >
+          {ACAO_MOTIVO[motivo]}
+        </BotaoLink>
       )}
     </li>
   );
