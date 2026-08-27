@@ -10,10 +10,11 @@ const ABAS = [
   { href: "/painel", nome: "Painel" },
   { href: "/painel/alunos", nome: "Alunos" },
   { href: "/painel/convites", nome: "Convites" },
+  { href: "/painel/biblioteca", nome: "Biblioteca" },
 ] as const;
 
 /** Ainda nao existem, mas o Allisson precisa ver para onde a coisa vai. */
-const EM_BREVE = ["Biblioteca", "Financeiro"] as const;
+const EM_BREVE = ["Financeiro"] as const;
 
 export default async function LayoutPainel({
   children,
