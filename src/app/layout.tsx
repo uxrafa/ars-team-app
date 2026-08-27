@@ -46,10 +46,20 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="pt-BR">
-      <body className={`${display.variable} ${corpo.variable} ${dado.variable} font-sans antialiased`}>
-        {children}
-      </body>
+    // As variaveis das fontes vao no <html>, e NAO no <body>.
+    //
+    // O bloco `@theme` do globals.css declara, no `:root`:
+    //     --font-display: var(--fonte-display), Impact, sans-serif;
+    //
+    // `var()` e resolvido no elemento onde a propriedade e DECLARADA. Com as
+    // classes do next/font no <body>, o `:root` nunca enxergava
+    // `--fonte-display`, entao `--font-display` virava valor invalido, e
+    // `font-family: var(--font-display)` caia no padrao do navegador.
+    //
+    // Resultado: o app inteiro rodou em Arial desde o comeco. Tanker, Hanken
+    // Grotesk e IBM Plex Mono carregavam e nao eram usadas por ninguem.
+    <html lang="pt-BR" className={`${display.variable} ${corpo.variable} ${dado.variable}`}>
+      <body className="font-sans antialiased">{children}</body>
     </html>
   );
 }
