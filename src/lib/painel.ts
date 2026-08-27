@@ -258,11 +258,24 @@ export const ROTULO_MOTIVO: Record<MotivoAtencao, string> = {
   sumido: "Sumido",
 };
 
+/** Rotulo curto do botao. Cabe na linha e nao empurra a pilula para fora. */
 export const ACAO_MOTIVO: Record<MotivoAtencao, string> = {
   pagamento: "Cobrar",
-  sem_ficha: "Montar ficha",
+  sem_ficha: "Montar",
   ficha_vencendo: "Atualizar",
-  sumido: "Mandar mensagem",
+  sumido: "Mensagem",
+};
+
+/**
+ * Quais motivos merecem botao vermelho cheio. Dinheiro parado e aluno sem
+ * treino sao os dois que travam o negocio; renovar e sumido podem esperar o
+ * fim do dia, entao sao contorno.
+ */
+export const URGENTE: Record<MotivoAtencao, boolean> = {
+  pagamento: true,
+  sem_ficha: true,
+  ficha_vencendo: false,
+  sumido: false,
 };
 
 /** Link de WhatsApp com a mensagem ja escrita. */
@@ -279,4 +292,47 @@ export function iniciais(nome: string): string {
   if (!partes.length) return "?";
   if (partes.length === 1) return partes[0].slice(0, 2).toUpperCase();
   return (partes[0][0] + partes[partes.length - 1][0]).toUpperCase();
+}
+
+/* ------------------------------------------------------------------ */
+/* O que o painel mostra do dia                                        */
+/* ------------------------------------------------------------------ */
+
+/**
+ * "12 min", "2 h", "ontem". O painel mostra o que aconteceu HOJE, e "hoje"
+ * repetido em seis linhas nao informa nada: o que o Allisson quer saber e se
+ * o check-in foi agora ou de manha.
+ */
+export function haQuantoTempo(iso: string | null, agora: Date = new Date()): string {
+  if (!iso) return "";
+  const minutos = Math.max(0, Math.round((agora.getTime() - Date.parse(iso)) / 60000));
+  if (minutos < 1) return "agora";
+  if (minutos < 60) return `${minutos} min`;
+  const horas = Math.round(minutos / 60);
+  if (horas < 24) return `${horas} h`;
+  const dias = Math.round(horas / 24);
+  return dias === 1 ? "ontem" : `${dias} d`;
+}
+
+/** Quantas PESSOAS precisam de atencao, e nao quantos itens tem na fila. */
+export function quantosAlunosNaFila(atencao: ItemAtencao[]): number {
+  return new Set(atencao.map((i) => i.aluno.id)).size;
+}
+
+export type EventoDoDia = {
+  id: string;
+  aluno: string;
+  /** Linha em caixa alta, no estilo "TREINO B · 82,1 KG · ESFORCO 8". */
+  detalhe: string;
+  /** Ja formatado: "12 min", "2 h". */
+  quando: string;
+  /** Carimbo cru, so para ordenar. A tela nao mostra. */
+  em: string;
+  chegada: boolean;
+};
+
+/** Peso com virgula, que e como se le em portugues. */
+export function emQuilos(valor: number | null): string | null {
+  if (valor === null || valor === undefined) return null;
+  return `${String(valor).replace(".", ",")} kg`;
 }

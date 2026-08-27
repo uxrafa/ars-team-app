@@ -3,14 +3,17 @@ import { redirect } from "next/navigation";
 import { Logo } from "@/components/logo";
 import { criarClienteServidor } from "@/lib/supabase/server";
 import { Botao } from "@/components/ui";
+import { Abas } from "./abas";
 
 export const metadata = { title: "Painel · ARS Team" };
 
+// A ordem é a do desenho aprovado: Painel, Alunos, Biblioteca. Convites veio
+// depois e entra ao lado, antes do Financeiro que ainda não existe.
 const ABAS = [
   { href: "/painel", nome: "Painel" },
   { href: "/painel/alunos", nome: "Alunos" },
-  { href: "/painel/convites", nome: "Convites" },
   { href: "/painel/biblioteca", nome: "Biblioteca" },
+  { href: "/painel/convites", nome: "Convites" },
 ] as const;
 
 /** Ainda nao existem, mas o Allisson precisa ver para onde a coisa vai. */
@@ -36,13 +39,20 @@ export default async function LayoutPainel({
 
   if (perfil?.tipo !== "admin") redirect("/app");
 
-  const hoje = new Intl.DateTimeFormat("pt-BR", {
+  const agora = new Date();
+  const diaDaSemana = new Intl.DateTimeFormat("pt-BR", {
     timeZone: "America/Sao_Paulo",
     weekday: "short",
+  })
+    .format(agora)
+    .replace(/\./g, "")
+    .toUpperCase();
+  const diaEMes = new Intl.DateTimeFormat("pt-BR", {
+    timeZone: "America/Sao_Paulo",
     day: "2-digit",
     month: "short",
   })
-    .format(new Date())
+    .format(agora)
     .replace(/\./g, "")
     .toUpperCase();
 
@@ -54,30 +64,15 @@ export default async function LayoutPainel({
             <Logo className="h-5 w-auto text-papel" />
           </Link>
 
-          <nav className="flex items-center gap-1 self-stretch text-[15px]">
-            {ABAS.map((aba) => (
-              <Link
-                key={aba.href}
-                href={aba.href}
-                className="flex items-center rounded-lg px-3 py-2 font-semibold text-nevoa transition-colors hover:bg-tinta-3 hover:text-papel"
-              >
-                {aba.nome}
-              </Link>
-            ))}
-            {EM_BREVE.map((nome) => (
-              <span
-                key={nome}
-                title="Ainda nao construido"
-                className="hidden cursor-not-allowed items-center px-3 py-2 text-nevoa/45 sm:flex"
-              >
-                {nome}
-              </span>
-            ))}
-          </nav>
+          <Abas abas={ABAS} emBreve={EM_BREVE} />
 
           <div className="ml-auto flex items-center gap-4">
-            <span className="hidden font-mono text-[13px] tracking-wide text-nevoa sm:block">
-              {hoje}
+            {/* Duas linhas, igual ao desenho: a data fica compacta e não
+                empurra o avatar. */}
+            <span className="hidden text-right font-mono text-[13px] uppercase leading-tight tracking-wide text-nevoa sm:block">
+              {diaDaSemana},
+              <br />
+              {diaEMes}
             </span>
             <span
               aria-hidden="true"

@@ -1,14 +1,16 @@
+import Link from "next/link";
 import { BotaoLink, Pilula, type Tom } from "@/components/ui";
 import {
   ACAO_MOTIVO,
   ROTULO_MOTIVO,
+  URGENTE,
   emReais,
   iniciais,
   linkWhatsapp,
-  quandoFoi,
+  quantosAlunosNaFila,
   type Aluno,
+  type EventoDoDia,
   type ItemAtencao,
-  type LinhaSessao,
   type Resumo,
 } from "@/lib/painel";
 
@@ -82,22 +84,29 @@ function LinhaAtencao({ item }: { item: ItemAtencao }) {
           {aluno.tipo === "consultoria" ? "Consultoria" : "Planilha"} · {detalhe}
         </p>
       </div>
-      <span className="hidden flex-none sm:block">
+      <span className="flex-none">
         <Pilula tom={TOM_DO_MOTIVO[motivo]}>{ROTULO_MOTIVO[motivo]}</Pilula>
       </span>
       {acionavelPorZap && zap ? (
-        <BotaoLink href={zap} target="_blank" rel="noreferrer" tamanho="sm" className="flex-none">
+        <BotaoLink
+          href={zap}
+          target="_blank"
+          rel="noreferrer"
+          aparencia={URGENTE[motivo] ? "primario" : "secundario"}
+          tamanho="sm"
+          className="w-[112px] flex-none"
+        >
           {ACAO_MOTIVO[motivo]}
         </BotaoLink>
       ) : acionavelPorZap ? (
-        <span className="flex-none text-sm text-nevoa">Sem WhatsApp</span>
+        <span className="w-[112px] flex-none text-center text-sm text-nevoa">Sem WhatsApp</span>
       ) : (
         // "Sem ficha" e "Renovar" levam direto para o editor daquele aluno.
         <BotaoLink
           href={`/painel/alunos/${aluno.id}/ficha`}
-          aparencia="secundario"
+          aparencia={URGENTE[motivo] ? "primario" : "secundario"}
           tamanho="sm"
-          className="flex-none"
+          className="w-[112px] flex-none"
         >
           {ACAO_MOTIVO[motivo]}
         </BotaoLink>
@@ -108,18 +117,23 @@ function LinhaAtencao({ item }: { item: ItemAtencao }) {
 
 export type DadosDaVisao = {
   saudacao: string;
-  hoje: string;
+  mes: string;
   atencao: ItemAtencao[];
   r: Resumo;
   alunos: Aluno[];
-  checkinsRecentes: { sessao: LinhaSessao; aluno: Aluno | undefined }[];
+  eventos: EventoDoDia[];
 };
 
-export function VisaoDoPainel({ saudacao, hoje, atencao, r, alunos, checkinsRecentes }: DadosDaVisao) {
+export function VisaoDoPainel({ saudacao, mes, atencao, r, alunos, eventos }: DadosDaVisao) {
   const percentualRecebido =
     r.recebidoNoMes + r.emAberto > 0
       ? Math.round((r.recebidoNoMes / (r.recebidoNoMes + r.emAberto)) * 100)
       : 100;
+
+  // A frase conta PESSOAS. Um aluno pode estar na fila por dois motivos, e
+  // "5 coisas precisam de voce" nao e o que ele quer saber.
+  const naFila = quantosAlunosNaFila(atencao);
+  const emDia = Math.max(0, r.total - naFila);
 
   return (
     <div className="flex flex-col gap-6">
@@ -129,15 +143,12 @@ export function VisaoDoPainel({ saudacao, hoje, atencao, r, alunos, checkinsRece
             {saudacao}, Allisson
           </h1>
           <p className="mt-2.5 text-[15px] text-nevoa">
-            {atencao.length === 0
+            {naFila === 0
               ? "Nada pendente por aqui. Bom sinal."
-              : `${atencao.length} ${atencao.length === 1 ? "coisa precisa" : "coisas precisam"} de você hoje.`}
+              : `${naFila} ${naFila === 1 ? "aluno precisa" : "alunos precisam"} de você hoje.`}
           </p>
         </div>
-        <div className="ml-auto flex flex-wrap gap-2.5">
-          <BotaoLink href="/painel/alunos" aparencia="secundario">
-            Ver alunos
-          </BotaoLink>
+        <div className="ml-auto">
           <BotaoLink href="/painel/convites" aparencia="secundario">
             Convidar aluno
           </BotaoLink>
@@ -193,7 +204,7 @@ export function VisaoDoPainel({ saudacao, hoje, atencao, r, alunos, checkinsRece
                 {atencao.length}
               </span>
             )}
-            <span className="ml-auto hidden text-sm text-nevoa sm:block">
+            <span className="ml-auto hidden text-xs font-semibold uppercase tracking-[0.07em] text-nevoa sm:block">
               ordenado por urgência
             </span>
           </div>
@@ -211,11 +222,38 @@ export function VisaoDoPainel({ saudacao, hoje, atencao, r, alunos, checkinsRece
               </p>
             </div>
           ) : (
-            <ul className="flex-1">
-              {atencao.map((item, i) => (
-                <LinhaAtencao key={`${item.aluno.id}-${item.motivo}-${i}`} item={item} />
-              ))}
-            </ul>
+            <>
+              <ul className="flex-1">
+                {atencao.map((item, i) => (
+                  <LinhaAtencao key={`${item.aluno.id}-${item.motivo}-${i}`} item={item} />
+                ))}
+              </ul>
+
+              {/* O contraponto da fila: quem NAO precisa de nada. Sem isto a
+                  tela so mostra problema e some com a parte que esta indo bem. */}
+              {emDia > 0 && (
+                <div className="flex flex-col items-center gap-2 border-t border-linha px-6 py-6 text-center">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="text-nevoa" aria-hidden="true">
+                    <circle cx="12" cy="12" r="9" />
+                    <path d="M8.5 12.5 11 15l4.5-5" />
+                  </svg>
+                  <p className="max-w-[46ch] text-[15px] leading-relaxed text-nevoa">
+                    {emDia === 1
+                      ? "O outro aluno está em dia, com ficha válida e check-in recente."
+                      : `Os outros ${emDia} alunos estão em dia, com ficha válida e check-in recente.`}
+                  </p>
+                </div>
+              )}
+            </>
+          )}
+
+          {r.total > 0 && (
+            <Link
+              href="/painel/alunos"
+              className="border-t border-linha px-5 py-4 text-[15px] font-semibold text-raio-forte transition-colors hover:bg-tinta-3/40"
+            >
+              Ver todos os {r.total} alunos
+            </Link>
           )}
         </section>
 
@@ -223,7 +261,7 @@ export function VisaoDoPainel({ saudacao, hoje, atencao, r, alunos, checkinsRece
           <section className="rounded-2xl border border-linha bg-tinta-2 p-5">
             <div className="flex items-baseline">
               <p className="text-xs font-semibold uppercase tracking-[0.07em] text-nevoa">
-                Mensalidades
+                {mes}
               </p>
               <p className="ml-auto font-mono text-[13px] text-nevoa">
                 {percentualRecebido}% recebido
@@ -238,7 +276,7 @@ export function VisaoDoPainel({ saudacao, hoje, atencao, r, alunos, checkinsRece
             </div>
             <div className="mt-3 flex flex-wrap gap-4">
               <span className="flex items-center gap-2 text-sm text-nevoa">
-                <span className="h-2.5 w-2.5 rounded-[3px] bg-ok" /> Em dia
+                <span className="h-2.5 w-2.5 rounded-[3px] bg-ok" /> Recebido
               </span>
               <span className="flex items-center gap-2 text-sm text-nevoa">
                 <span className="h-2.5 w-2.5 rounded-[3px] bg-raio" />
@@ -254,35 +292,35 @@ export function VisaoDoPainel({ saudacao, hoje, atencao, r, alunos, checkinsRece
 
           <section className="flex flex-1 flex-col overflow-hidden rounded-2xl border border-linha bg-tinta-2">
             <div className="border-b border-linha px-5 py-4">
-              <h2 className="text-lg font-bold">Últimos check-ins</h2>
+              <h2 className="text-lg font-bold">Check-ins de hoje</h2>
             </div>
-            {checkinsRecentes.length === 0 ? (
-              <p className="flex-1 px-5 py-10 text-center text-[15px] text-nevoa">
-                Nenhum treino registrado ainda.
+            {eventos.length === 0 ? (
+              <p className="flex-1 px-5 py-10 text-center text-[15px] leading-relaxed text-nevoa">
+                Ninguém treinou nem chegou hoje ainda.
               </p>
             ) : (
-              <ul>
-                {checkinsRecentes.map(({ sessao, aluno }) => (
-                  <li key={sessao.id} className="flex items-center gap-3 border-t border-linha px-5 py-3 first:border-t-0">
+              <ul className="flex-1">
+                {eventos.map((e) => (
+                  <li
+                    key={e.id}
+                    className="flex items-center gap-3 border-t border-linha px-5 py-3 first:border-t-0"
+                  >
                     <span
                       aria-hidden="true"
-                      className="flex h-10 w-10 flex-none items-center justify-center rounded-full border border-contorno bg-tinta-3 text-[13px] font-bold"
+                      className={`flex h-10 w-10 flex-none items-center justify-center rounded-full border bg-tinta-3 text-[13px] font-bold ${
+                        e.chegada ? "border-ok/50 text-ok" : "border-contorno"
+                      }`}
                     >
-                      {iniciais(aluno!.nome)}
+                      {iniciais(e.aluno)}
                     </span>
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-[15px] font-semibold">{aluno!.nome}</p>
-                      <p className="mt-1 font-mono text-[13px] uppercase text-nevoa">
-                        {[
-                          sessao.peso_kg ? `${sessao.peso_kg} kg` : null,
-                          sessao.esforco ? `esforço ${sessao.esforco}` : null,
-                        ]
-                          .filter(Boolean)
-                          .join(" · ") || "sem detalhes"}
+                      <p className="truncate text-[15px] font-semibold">{e.aluno}</p>
+                      <p className="mt-1 truncate font-mono text-[13px] uppercase text-nevoa">
+                        {e.detalhe}
                       </p>
                     </div>
                     <span className="flex-none font-mono text-[13px] uppercase text-nevoa">
-                      {quandoFoi(sessao.data, hoje)}
+                      {e.quando}
                     </span>
                   </li>
                 ))}
