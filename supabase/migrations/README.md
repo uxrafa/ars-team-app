@@ -17,6 +17,7 @@ novo e numerado, para o banco poder ser reconstruido do zero.
 | `0008_mensalidade_no_perfil.sql` | `perfis.mensalidade`, para o painel somar quanto esta em aberto. |
 | `0009_travar_campos_sensiveis_do_perfil.sql` | **Correcao de seguranca.** Impede o aluno de mudar o proprio plano, status, vencimento ou mensalidade. |
 | `0010_convite_de_aluno.sql` | Tabela `convite` e **fechamento do cadastro publico**: conta so nasce por convite do treinador. |
+| `0011_biblioteca_de_exercicios.sql` | Os 121 exercicios que o Allisson mandou. E dado, nao estrutura, mas entra numerado para o banco poder ser reconstruido do zero. |
 
 ## Como o modelo se encaixa
 
@@ -150,6 +151,28 @@ Em 25/08/2026 a `0010` foi validada com mais 12 verificacoes, todas passando:
 
 Os dados de teste foram apagados depois. As tabelas estao vazias de proposito:
 a biblioteca de exercicios espera a lista do Allisson.
+
+## A biblioteca de exercicios (0011)
+
+O Allisson mandou a lista em 27/08/2026, pelo WhatsApp, com 123 linhas. Foram
+para o banco **121**, depois de tirar `demada` (palavra incompleta) e
+`remada curvada sulinads` (typo de "supinada", que ja estava na lista).
+`Rosca direta banco 45` saiu de ombro para biceps. `hit` virou HIIT.
+
+Distribuicao: pernas 36, costas 24, peito 19, triceps 12, ombro 11, biceps 7,
+abdomen 7, cardio 5.
+
+`equipamento` foi preenchido so onde o nome do exercicio diz qual e (halter,
+barra, polia, maquina, Smith): 88 de 121. Os outros 33 o Allisson completa pela
+tela da biblioteca, e ficar nulo nao atrapalha nada.
+
+`video_url` esta nulo em todos, de proposito. A decisao (27/08/2026) e anexar
+depois, como link de YouTube nao listado, quando ele terminar de gravar e subir
+tudo. O indice parcial `exercicio_sem_video_idx` existe justamente para a tela
+mostrar rapido o que ainda falta.
+
+`on conflict do nothing` deixa reaplicar a migracao sem estrago, porque o
+indice unico e em `lower(btrim(nome))`.
 
 ## Nota sobre o banco atual
 
