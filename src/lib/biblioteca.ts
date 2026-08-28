@@ -138,3 +138,26 @@ export function limparVideo(url: string): string | null {
     return limpo;
   }
 }
+
+/**
+ * O id do vídeo, quando é YouTube.
+ *
+ * A tela de execução mostra o vídeo dentro do app, e o player embutido pede o
+ * id, não o endereço. Vale para os três formatos que o YouTube devolve ao
+ * compartilhar: `watch?v=`, `youtu.be/` e `/shorts/`.
+ */
+export function idDoYoutube(url: string | null): string | null {
+  if (!url) return null;
+  try {
+    const u = new URL(url.trim());
+    if (u.hostname.includes("youtu.be")) return u.pathname.slice(1).split("/")[0] || null;
+    if (u.hostname.includes("youtube.com")) {
+      if (u.pathname.startsWith("/embed/")) return u.pathname.slice(7).split("/")[0] || null;
+      if (u.pathname.startsWith("/shorts/")) return u.pathname.slice(8).split("/")[0] || null;
+      return u.searchParams.get("v");
+    }
+  } catch {
+    return null;
+  }
+  return null;
+}

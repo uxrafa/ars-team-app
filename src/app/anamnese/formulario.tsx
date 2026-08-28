@@ -3,6 +3,7 @@
 import { useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { criarClienteNavegador } from "@/lib/supabase/client";
+import { caminhoDaFoto, comprimir } from "@/lib/foto";
 import {
   ANGULOS,
   DIAS,
@@ -21,30 +22,6 @@ import { enviarAnamnese, salvarRascunho } from "./acoes";
 type Foto = { blob: Blob; previa: string };
 
 const campo = CLASSE_CAMPO;
-
-/** Reduz a foto antes de subir. Sem isto, 25 alunos estouram o storage. */
-async function comprimir(arquivo: File): Promise<Blob> {
-  try {
-    const bitmap = await createImageBitmap(arquivo);
-    const escala = Math.min(1, 1280 / Math.max(bitmap.width, bitmap.height));
-    const largura = Math.round(bitmap.width * escala);
-    const altura = Math.round(bitmap.height * escala);
-    const tela = document.createElement("canvas");
-    tela.width = largura;
-    tela.height = altura;
-    const ctx = tela.getContext("2d");
-    if (!ctx) return arquivo;
-    ctx.drawImage(bitmap, 0, 0, largura, altura);
-    const blob = await new Promise<Blob | null>((ok) =>
-      tela.toBlob(ok, "image/jpeg", 0.82),
-    );
-    return blob ?? arquivo;
-  } catch {
-    // Formato que o navegador nao abre (HEIC antigo, por exemplo).
-    // Sobe o original: o bucket ja limita em 6 MB.
-    return arquivo;
-  }
-}
 
 export function Formulario({
   inicial,
@@ -150,7 +127,7 @@ export function Formulario({
     const hoje = new Date().toISOString().slice(0, 10);
 
     for (const angulo of chaves) {
-      const caminho = `${alunoId}/${hoje}/${angulo}.jpg`;
+      const caminho = caminhoDaFoto(alunoId, hoje, angulo);
       const { error: erroUpload } = await supabase.storage
         .from("evolucao")
         .upload(caminho, fotos[angulo].blob, {

@@ -1,6 +1,6 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { criarClienteServidor } from "@/lib/supabase/server";
+import { BotaoLink } from "@/components/ui";
 import { ANAMNESE_VAZIA, paraTexto, type DadosAnamnese } from "@/lib/anamnese";
 import { Formulario } from "./formulario";
 
@@ -85,12 +85,12 @@ export default async function PaginaAnamnese() {
           O Allisson já recebeu suas respostas e vai montar sua ficha a partir delas.
           Assim que ela estiver pronta, aparece aqui na sua tela de hoje.
         </p>
-        <Link
-          href="/app"
-          className="mt-2 rounded-xl bg-raio px-6 py-3.5 font-display text-base uppercase tracking-wider text-papel transition hover:bg-raio-forte"
-        >
+        {/* Tanker e fonte de titulo: em rotulo de botao ela vira cartaz. E o
+            fundo aqui era `--raio`, que reprova em contraste com texto branco.
+            Os dois problemas somem usando o botao do sistema. */}
+        <BotaoLink href="/app" className="mt-2">
           Voltar
-        </Link>
+        </BotaoLink>
       </main>
     );
   }
