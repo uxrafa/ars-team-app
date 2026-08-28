@@ -8,6 +8,8 @@ export type ProtocoloDoAluno = {
   inicio: string;
   fim: string | null;
   observacoes: string | null;
+  /** Quando o Allisson mexeu na ficha pela última vez. Data o recado. */
+  atualizado_em: string;
 };
 
 type ItemBruto = {
@@ -44,7 +46,7 @@ type BlocoBruto = {
 export async function carregarFichaAtiva(supabase: SupabaseClient, alunoId: string) {
   const { data: protocolo } = await supabase
     .from("protocolo")
-    .select("id, nome, inicio, fim, observacoes")
+    .select("id, nome, inicio, fim, observacoes, atualizado_em")
     .eq("aluno_id", alunoId)
     .eq("status", "ativo")
     .maybeSingle<ProtocoloDoAluno>();
@@ -101,6 +103,48 @@ export async function carregarSessoes(
     .limit(limite);
 
   return (data ?? []) as SessaoDoAluno[];
+}
+
+/**
+ * A carga mais recente de cada exercício.
+ *
+ * É o "última 42 kg" que aparece embaixo do nome na lista do treino. Traz as
+ * séries das últimas sessões e fica com a maior carga do dia mais recente de
+ * cada exercício, porque série de aquecimento no meio do treino não é a carga
+ * daquele dia. A RLS já limita às sessões do próprio aluno.
+ */
+export async function carregarUltimasCargas(
+  supabase: SupabaseClient,
+): Promise<Record<string, number>> {
+  const { data } = await supabase
+    .from("serie_registrada")
+    .select("exercicio_id, carga_kg, sessao_treino!inner (data)")
+    .not("carga_kg", "is", null)
+    .order("concluida_em", { ascending: false })
+    .limit(300);
+
+  const linhas = (data ?? []) as unknown as {
+    exercicio_id: string;
+    carga_kg: number | null;
+    sessao_treino: { data: string } | null;
+  }[];
+
+  const dia: Record<string, string> = {};
+  const carga: Record<string, number> = {};
+
+  for (const l of linhas) {
+    const data = l.sessao_treino?.data;
+    if (!data || l.carga_kg === null) continue;
+    const atual = dia[l.exercicio_id];
+    if (!atual || data > atual) {
+      dia[l.exercicio_id] = data;
+      carga[l.exercicio_id] = Number(l.carga_kg);
+    } else if (data === atual) {
+      carga[l.exercicio_id] = Math.max(carga[l.exercicio_id], Number(l.carga_kg));
+    }
+  }
+
+  return carga;
 }
 
 export async function carregarSeries(

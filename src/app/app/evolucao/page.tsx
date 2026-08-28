@@ -1,5 +1,4 @@
 import { criarClienteServidor } from "@/lib/supabase/server";
-import { hojeSP } from "@/lib/painel";
 import { cargasQueSubiram, type SerieHistorica } from "@/lib/treino";
 import type { Ponto } from "./grafico";
 import type { FotoNaTela } from "./fotos";
@@ -24,26 +23,32 @@ export default async function Evolucao() {
   } = await supabase.auth.getUser();
   const alunoId = user?.id ?? "";
 
-  const [{ data: medidas }, { data: fotos }, { data: series }] = await Promise.all([
-    supabase
-      .from("medida_corporal")
-      .select("data, peso_kg, cintura_cm, quadril_cm, braco_cm, coxa_cm")
-      .eq("aluno_id", alunoId)
-      .order("data")
-      .limit(180),
-    supabase
-      .from("foto_evolucao")
-      .select("data, angulo, caminho")
-      .eq("aluno_id", alunoId)
-      .order("data"),
-    supabase
-      .from("serie_registrada")
-      .select(
-        "exercicio_id, carga_kg, reps, sessao_treino!inner (data, status), exercicio!inner (nome)",
-      )
-      .order("concluida_em", { ascending: false })
-      .limit(400),
-  ]);
+  const [{ data: medidas }, { data: fotos }, { data: series }, { data: anamnese }] =
+    await Promise.all([
+      supabase
+        .from("medida_corporal")
+        .select("data, peso_kg, cintura_cm, quadril_cm, braco_cm, coxa_cm")
+        .eq("aluno_id", alunoId)
+        .order("data")
+        .limit(180),
+      supabase
+        .from("foto_evolucao")
+        .select("data, angulo, caminho")
+        .eq("aluno_id", alunoId)
+        .order("data"),
+      supabase
+        .from("serie_registrada")
+        .select(
+          "exercicio_id, carga_kg, reps, sessao_treino!inner (data, status), exercicio!inner (nome)",
+        )
+        .order("concluida_em", { ascending: false })
+        .limit(400),
+      supabase
+        .from("anamnese")
+        .select("objetivo")
+        .eq("aluno_id", alunoId)
+        .maybeSingle<{ objetivo: string | null }>(),
+    ]);
 
   const linhas = ((medidas ?? []) as LinhaMedida[]).map((m) => ({
     ...m,
@@ -82,12 +87,12 @@ export default async function Evolucao() {
 
   return (
     <VisaoDaEvolucao
-      hoje={hojeSP()}
       pontos={pontos}
       ultimaLinha={linhas[linhas.length - 1] ?? null}
       subiram={cargasQueSubiram(historico, nomes).slice(0, 6)}
       alunoId={alunoId}
       fotos={comUrl}
+      objetivo={anamnese?.objetivo ?? null}
     />
   );
 }

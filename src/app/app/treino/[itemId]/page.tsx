@@ -1,6 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 import { criarClienteServidor } from "@/lib/supabase/server";
 import { idDoYoutube } from "@/lib/biblioteca";
+import { hojeSP, quandoFoi } from "@/lib/painel";
 import { vizinhos } from "@/lib/treino";
 import { carregarFichaAtiva, carregarSeries } from "../../carregar";
 import { Execucao } from "./execucao";
@@ -87,8 +88,10 @@ export default async function PaginaDoExercicio({
       total={bloco.itens.length}
       anteriorId={anterior?.id ?? null}
       proximoId={proximo?.id ?? null}
+      proximoNome={proximo?.nome ?? null}
       feitas={series.filter((s) => s.exercicio_id === item.exercicio_id)}
       ultimaVez={ultimaVez}
+      quandoUltimaVez={ultimaData ? quandoFoi(ultimaData, hojeSP()) : null}
       videoId={idDoYoutube(item.video_url)}
     />
   );

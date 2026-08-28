@@ -76,6 +76,26 @@ export function porExtenso(iso: string): string {
   }).format(new Date(`${iso}T00:00:00Z`));
 }
 
+/** "Terça, 25 de agosto". É a linha de data do topo da tela Hoje. */
+export function comDiaDaSemana(iso: string): string {
+  const dia = new Intl.DateTimeFormat("pt-BR", {
+    timeZone: "UTC",
+    weekday: "long",
+  })
+    .format(new Date(`${iso}T00:00:00Z`))
+    .replace("-feira", "");
+  return `${dia[0].toUpperCase()}${dia.slice(1)}, ${porExtenso(iso)}`;
+}
+
+/** "20/SET", que é como cabe uma data de vencimento numa linha de dado. */
+export function curtaComMes(iso: string): string {
+  const mes = new Intl.DateTimeFormat("pt-BR", { timeZone: "UTC", month: "short" })
+    .format(new Date(`${iso}T00:00:00Z`))
+    .replace(/\./g, "")
+    .toUpperCase();
+  return `${iso.slice(8, 10)}/${mes}`;
+}
+
 /** "12/08". Para eixo de gráfico e legenda de foto, onde não cabe mais. */
 export function curta(iso: string): string {
   return `${iso.slice(8, 10)}/${iso.slice(5, 7)}`;
@@ -157,6 +177,44 @@ export function sequencia(
     if (!agenda || agenda.has(diaDaSemanaDe(dia))) break;
   }
   return total;
+}
+
+export type EstadoDoDia = "feito" | "hoje" | "previsto" | "descanso";
+export type DiaDaFaixa = { data: string; letra: string; estado: EstadoDoDia };
+
+const LETRA_DO_DIA = ["D", "S", "T", "Q", "Q", "S", "S"];
+
+/**
+ * A faixa de sete dias do topo da tela Hoje.
+ *
+ * Começa na segunda, que é como o brasileiro lê semana. Um dia é "descanso"
+ * quando não está entre os dias que o aluno marcou na anamnese: a bolinha
+ * apagada ali não é falta, é folga prevista, e a tela não deve acusar quem
+ * cumpriu o combinado.
+ */
+export function faixaDaSemana(
+  datasTreinadas: string[],
+  diasDisponiveis: number[] | null,
+  hoje: string,
+): DiaDaFaixa[] {
+  const feitos = new Set(datasTreinadas);
+  const agenda = diasDisponiveis?.length ? new Set(diasDisponiveis) : null;
+
+  const dow = diaDaSemanaDe(hoje);
+  const segunda = somarDias(hoje, dow === 0 ? -6 : 1 - dow);
+
+  return Array.from({ length: 7 }, (_, i) => {
+    const data = somarDias(segunda, i);
+    const semana = diaDaSemanaDe(data);
+    const estado: EstadoDoDia = feitos.has(data)
+      ? "feito"
+      : data === hoje
+        ? "hoje"
+        : agenda && !agenda.has(semana)
+          ? "descanso"
+          : "previsto";
+    return { data, letra: LETRA_DO_DIA[semana], estado };
+  });
 }
 
 /* ------------------------------------------------------------------ */

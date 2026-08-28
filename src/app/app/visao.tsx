@@ -1,65 +1,138 @@
-
-import { Raio } from "@/components/raio";
-import { Aviso, Botao, BotaoLink, Cartao, Pilula, Rotulo } from "@/components/ui";
-import { NOME_DO_METODO, emMinutos } from "@/lib/ficha";
-import {
-  duracaoEstimada,
-  porExtenso,
-  progresso,
-  type BlocoDoAluno,
-  type ItemDoTreino,
-  type SerieFeita,
-} from "@/lib/treino";
-import { ComecarTreino } from "./comecar";
+import { Aviso, Botao, BotaoLink, Cartao } from "@/components/ui";
+import { comDiaDaSemana, curtaComMes, type BlocoDoAluno, type DiaDaFaixa } from "@/lib/treino";
+import { CartaoDoTreino } from "./cartao-treino";
+import { CartaoDaPlanilha } from "./cartao-planilha";
+import { Meta, Selo } from "./pecas";
 import type { ProtocoloDoAluno } from "./carregar";
 
 /* ------------------------------------------------------------------ */
 /* Peças                                                               */
 /* ------------------------------------------------------------------ */
 
+/** Título de tela: Tanker, 30px, entrelinha fechada. É o do artboard. */
 export function Titulo({ children }: { children: React.ReactNode }) {
   return (
-    <h1 className="font-display text-[30px] uppercase leading-[0.95] tracking-wide">{children}</h1>
+    <h1 className="font-display text-[30px] uppercase leading-none tracking-wide">{children}</h1>
   );
 }
 
-function Barra({ fracao }: { fracao: number }) {
+const NOME_DO_ESTADO: Record<DiaDaFaixa["estado"], string> = {
+  feito: "treinou",
+  hoje: "hoje",
+  previsto: "dia de treino",
+  descanso: "descanso",
+};
+
+/**
+ * A semana em sete bolinhas.
+ *
+ * Diz em um relance o que a sequência dizia em texto, e diz melhor: mostra
+ * onde estão os buracos. Bolinha apagada em dia que não é de treino é folga
+ * combinada, não falta.
+ */
+function FaixaDaSemana({ dias }: { dias: DiaDaFaixa[] }) {
   return (
-    <div className="h-1.5 overflow-hidden rounded-full bg-tinta-3" aria-hidden="true">
-      <div
-        className="h-full rounded-full bg-raio transition-[width] duration-300"
-        style={{ width: `${Math.round(fracao * 100)}%` }}
-      />
+    <div className="flex justify-between px-0.5" aria-label="Sua semana">
+      {dias.map((d) => (
+        <div key={d.data} className="flex flex-col items-center gap-1.5">
+          <span
+            className={`flex h-[26px] w-[26px] items-center justify-center rounded-full ${
+              d.estado === "feito"
+                ? "bg-raio"
+                : d.estado === "hoje"
+                  ? "border-2 border-raio ring-[3px] ring-raio/15"
+                  : d.estado === "descanso"
+                    ? "bg-tinta-3"
+                    : "border border-linha"
+            }`}
+          >
+            {d.estado === "feito" && (
+              <svg
+                aria-hidden="true"
+                viewBox="0 0 24 24"
+                className="h-[13px] w-[13px] text-papel"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="3.4"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M20 6 9 17l-5-5" />
+              </svg>
+            )}
+            <span className="sr-only">
+              {curtaComMes(d.data)}: {NOME_DO_ESTADO[d.estado]}
+            </span>
+          </span>
+          <span
+            aria-hidden="true"
+            className={`font-mono text-[11px] ${
+              d.estado === "hoje" ? "font-bold text-papel" : "text-nevoa"
+            }`}
+          >
+            {d.letra}
+          </span>
+        </div>
+      ))}
     </div>
   );
 }
 
-function LinhaDoExercicio({ item, feito }: { item: ItemDoTreino; feito?: boolean }) {
+function CartaoDoRecado({ texto, quando }: { texto: string; quando: string }) {
   return (
-    <li className="flex items-baseline gap-3 border-t border-linha py-2.5 first:border-t-0">
+    <section className="flex gap-3 rounded-2xl border border-linha bg-tinta-2 px-[17px] py-[15px]">
       <span
         aria-hidden="true"
-        className={`h-2 w-2 flex-none translate-y-[-2px] rotate-45 rounded-[1px] ${
-          feito ? "bg-ok" : "bg-nevoa/50"
-        }`}
-      />
-      <span className={`min-w-0 flex-1 text-[15px] ${feito ? "text-nevoa" : "text-papel"}`}>
-        {item.nome}
+        className="flex h-[38px] w-[38px] flex-none items-center justify-center rounded-full border border-linha bg-tinta-3 text-xs font-bold"
+      >
+        AS
       </span>
-      <span className="flex-none font-mono text-[13px] tabular text-nevoa">
-        {item.series}x{item.reps}
-      </span>
-    </li>
+      <div className="min-w-0 flex-1">
+        <div className="flex items-center gap-[7px]">
+          <span className="text-[13.5px] font-bold">Allisson</span>
+          <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-raio" />
+          {quando && <Meta className="ml-auto normal-case">{quando}</Meta>}
+        </div>
+        <p className="mt-1 whitespace-pre-line text-[13.5px] leading-[1.45] text-nevoa">{texto}</p>
+      </div>
+    </section>
   );
 }
 
-function Sequencia({ dias }: { dias: number }) {
-  if (dias < 2) return null;
+function CartaoDeCheckin({ feito }: { feito: boolean }) {
   return (
-    <span className="inline-flex items-center gap-2 rounded-full border border-raio/40 bg-raio/12 px-3 py-1.5 text-[13px] font-semibold text-raio-forte">
-      <Raio className="h-3.5 w-auto" />
-      {dias} treinos seguidos
-    </span>
+    <section className="flex items-center gap-3.5 rounded-2xl border border-linha bg-tinta-2 px-[18px] py-4">
+      <span
+        aria-hidden="true"
+        className={`flex h-10 w-10 flex-none items-center justify-center rounded-full border ${
+          feito ? "border-ok/40 bg-ok/10" : "border-linha"
+        }`}
+      >
+        <svg
+          viewBox="0 0 24 24"
+          className={`h-[18px] w-[18px] ${feito ? "text-ok" : "text-nevoa"}`}
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <path d="M9 11l3 3L22 4" />
+          <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
+        </svg>
+      </span>
+      <div className="min-w-0 flex-1">
+        <p className="text-sm font-semibold">Check-in de hoje</p>
+        <p className="mt-0.5 text-xs text-nevoa">Peso, esforço e como você se sentiu</p>
+      </div>
+      <span
+        className={`flex-none rounded-full px-3.5 py-2 text-xs font-semibold ${
+          feito ? "border border-ok/40 bg-ok/12 text-ok" : "border border-contorno text-nevoa"
+        }`}
+      >
+        {feito ? "Feito" : "Pendente"}
+      </span>
+    </section>
   );
 }
 
@@ -68,44 +141,46 @@ function Sequencia({ dias }: { dias: number }) {
 /* ------------------------------------------------------------------ */
 
 export function VisaoDeHoje({
-  saudacao,
   primeiroNome,
   hoje,
-  sequenciaDeDias,
+  dias,
   diaDeTreino,
   treinouHoje,
   protocolo,
-  bloco,
-  outros,
+  blocos,
+  sugerido,
   sessaoAberta,
   seriesFeitas,
+  seriesPrescritas,
+  ultimaCarga,
+  recadoQuando,
   acabouDeConcluir,
 }: {
-  saudacao: string;
   primeiroNome: string;
   hoje: string;
-  sequenciaDeDias: number;
+  dias: DiaDaFaixa[];
   diaDeTreino: boolean;
   treinouHoje: boolean;
   protocolo: ProtocoloDoAluno;
-  bloco: BlocoDoAluno | null;
-  outros: BlocoDoAluno[];
+  blocos: BlocoDoAluno[];
+  sugerido: string;
   sessaoAberta: boolean;
-  seriesFeitas: SerieFeita[];
+  seriesFeitas: number;
+  seriesPrescritas: number;
+  ultimaCarga: Record<string, number>;
+  recadoQuando: string | null;
   acabouDeConcluir: boolean;
 }) {
-  const p = bloco ? progresso(bloco, sessaoAberta ? seriesFeitas : []) : null;
-
   return (
-    <div className="flex flex-col gap-6">
-      <header className="flex flex-col gap-3">
-        <Rotulo>{porExtenso(hoje)}</Rotulo>
-        <Titulo>
-          {saudacao},<br />
-          {primeiroNome}
-        </Titulo>
-        <div className="flex flex-wrap items-center gap-2">
-          <Sequencia dias={sequenciaDeDias} />
+    <div className="flex flex-col gap-3.5">
+      <header>
+        <Meta className="normal-case tracking-[0.07em]">{comDiaDaSemana(hoje)}</Meta>
+        <div className="mt-1.5">
+          <Titulo>Fala, {primeiroNome}</Titulo>
+        </div>
+        <div className="mt-2.5 flex flex-wrap items-center gap-2">
+          <Selo tom="raio">Consultoria</Selo>
+          {protocolo.fim && <Meta>Ficha até {curtaComMes(protocolo.fim)}</Meta>}
         </div>
       </header>
 
@@ -113,7 +188,20 @@ export function VisaoDeHoje({
         <Aviso tom="ok">Treino registrado. O Allisson já vê isso no painel dele.</Aviso>
       )}
 
-      {!bloco && (
+      <FaixaDaSemana dias={dias} />
+
+      {blocos.length > 0 ? (
+        <CartaoDoTreino
+          blocos={blocos}
+          sugerido={sugerido}
+          sessaoAberta={sessaoAberta}
+          seriesFeitas={seriesFeitas}
+          seriesPrescritas={seriesPrescritas}
+          ultimaCarga={ultimaCarga}
+          treinouHoje={treinouHoje}
+          diaDeTreino={diaDeTreino}
+        />
+      ) : (
         <Cartao>
           <h2 className="text-base font-bold">Sua ficha ainda está sendo montada</h2>
           <p className="mt-2 text-[15px] leading-relaxed text-nevoa">
@@ -122,107 +210,11 @@ export function VisaoDeHoje({
         </Cartao>
       )}
 
-      {bloco && (
-        <Cartao className="overflow-hidden" padding={false}>
-          <div className="flex items-start gap-3 border-b border-linha bg-tinta-3 px-5 py-4">
-            <div className="min-w-0 flex-1">
-              <Rotulo>
-                {sessaoAberta
-                  ? "Treino em andamento"
-                  : treinouHoje
-                    ? "Próximo treino"
-                    : diaDeTreino
-                      ? "Treino de hoje"
-                      : "Quando você quiser"}
-              </Rotulo>
-              <h2 className="mt-1.5 font-display text-[26px] uppercase leading-none tracking-wide">
-                {bloco.nome}
-              </h2>
-              {bloco.foco && <p className="mt-1.5 text-[15px] text-nevoa">{bloco.foco}</p>}
-            </div>
-            {treinouHoje && !sessaoAberta && <Pilula tom="ok">Feito hoje</Pilula>}
-          </div>
-
-          <div className="px-5 py-4">
-            <p className="font-mono text-[13px] uppercase tabular tracking-wide text-nevoa">
-              {bloco.itens.length} exercícios · {duracaoEstimada(bloco)} min
-            </p>
-
-            {sessaoAberta && p && (
-              <div className="mt-4 flex flex-col gap-2">
-                <Barra fracao={p.fracao} />
-                <p className="font-mono text-[13px] tabular text-nevoa">
-                  {p.seriesFeitas} de {p.seriesPrescritas} séries
-                </p>
-              </div>
-            )}
-
-            <ul className="mt-4">
-              {bloco.itens.slice(0, 4).map((i) => (
-                <LinhaDoExercicio key={i.id} item={i} />
-              ))}
-            </ul>
-            {bloco.itens.length > 4 && (
-              <p className="mt-1 text-sm text-nevoa">
-                e mais {bloco.itens.length - 4} exercícios
-              </p>
-            )}
-
-            <div className="mt-5">
-              {sessaoAberta ? (
-                <BotaoLink href="/app/treino" largura="cheia">
-                  Continuar treino
-                </BotaoLink>
-              ) : (
-                <ComecarTreino blocoId={bloco.id}>
-                  {treinouHoje ? "Treinar de novo" : "Começar treino"}
-                </ComecarTreino>
-              )}
-            </div>
-          </div>
-        </Cartao>
-      )}
-
-      {!diaDeTreino && !sessaoAberta && !treinouHoje && bloco && (
-        <p className="text-[15px] leading-relaxed text-nevoa">
-          Hoje não é um dos dias que você marcou na anamnese. Descanso faz parte do treino, mas se
-          quiser treinar hoje é só começar.
-        </p>
-      )}
-
       {protocolo.observacoes && (
-        <Cartao className="border-raio/40 bg-raio/[0.07]">
-          <Rotulo className="text-raio-forte">Recado do Allisson</Rotulo>
-          <p className="mt-2 whitespace-pre-line text-[15px] leading-relaxed text-papel">
-            {protocolo.observacoes}
-          </p>
-        </Cartao>
+        <CartaoDoRecado texto={protocolo.observacoes} quando={recadoQuando ?? ""} />
       )}
 
-      {outros.length > 0 && (
-        <section className="flex flex-col gap-3">
-          <Rotulo>Outros treinos da sua ficha</Rotulo>
-          <ul className="flex flex-col gap-2">
-            {outros.map((b) => (
-              <li key={b.id}>
-                <div className="flex items-center gap-3 rounded-xl border border-linha bg-tinta-2 px-4 py-3">
-                  <div className="min-w-0 flex-1">
-                    <p className="font-semibold">{b.nome}</p>
-                    <p className="font-mono text-[13px] tabular text-nevoa">
-                      {b.itens.length} exercícios
-                    </p>
-                  </div>
-                  {!sessaoAberta && (
-                    <ComecarTreino blocoId={b.id} aparencia="secundario" largura="auto">
-                      Treinar
-                    </ComecarTreino>
-                  )}
-                </div>
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
+      <CartaoDeCheckin feito={treinouHoje} />
     </div>
   );
 }
@@ -231,79 +223,44 @@ export function VisaoDeHoje({
 /* Aluno de planilha                                                   */
 /* ------------------------------------------------------------------ */
 
-/**
- * Quem comprou planilha comprou um produto, não acompanhamento: vê a ficha e
- * os vídeos, e não tem check-in nem evolução. A tela é a mesma ficha, aberta.
- */
+/** Sem gateway definido, "conhecer a consultoria" é conversa no WhatsApp. */
+const WHATSAPP_DO_ALLISSON = "https://wa.me/5514997644001";
+
 export function VisaoDaPlanilha({
   primeiroNome,
+  acessoAte,
   protocolo,
   blocos,
 }: {
   primeiroNome: string;
+  acessoAte: string | null;
   protocolo: ProtocoloDoAluno;
   blocos: BlocoDoAluno[];
 }) {
+  const exercicios = blocos.reduce((s, b) => s + b.itens.length, 0);
+  const comVideo = blocos.reduce((s, b) => s + b.itens.filter((i) => i.video_url).length, 0);
+
   return (
-    <div className="flex flex-col gap-6">
-      <header className="flex flex-col gap-3">
-        <Rotulo>Sua planilha</Rotulo>
-        <Titulo>{protocolo.nome}</Titulo>
-        <p className="text-[15px] leading-relaxed text-nevoa">
-          Bom treino, {primeiroNome}. Toque no exercício para ver o vídeo de execução.
-        </p>
+    <div className="flex flex-col gap-5">
+      <header>
+        <Titulo>Fala, {primeiroNome}</Titulo>
+        <div className="mt-2.5 flex flex-wrap items-center gap-2">
+          <Selo tom="neutro">Planilha</Selo>
+          {acessoAte && <Meta>Acesso até {curtaComMes(acessoAte)}</Meta>}
+        </div>
       </header>
 
-      {protocolo.observacoes && (
-        <Cartao className="border-raio/40 bg-raio/[0.07]">
-          <Rotulo className="text-raio-forte">Orientação</Rotulo>
-          <p className="mt-2 whitespace-pre-line text-[15px] leading-relaxed text-papel">
-            {protocolo.observacoes}
-          </p>
-        </Cartao>
-      )}
-
-      {blocos.map((b) => (
-        <Cartao key={b.id} padding={false} className="overflow-hidden">
-          <div className="border-b border-linha bg-tinta-3 px-5 py-3.5">
-            <h2 className="font-display text-[26px] uppercase leading-none tracking-wide">
-              {b.nome}
-            </h2>
-            {b.foco && <p className="mt-1.5 text-[15px] text-nevoa">{b.foco}</p>}
-          </div>
-          <ul className="px-5">
-            {b.itens.map((i) => (
-              <li key={i.id} className="border-t border-linha py-3.5 first:border-t-0">
-                <div className="flex items-baseline gap-3">
-                  <p className="min-w-0 flex-1 font-semibold">{i.nome}</p>
-                  <span className="flex-none font-mono text-[13px] tabular text-nevoa">
-                    {i.series}x{i.reps}
-                  </span>
-                </div>
-                <p className="mt-1 font-mono text-[13px] uppercase tabular tracking-wide text-nevoa">
-                  Descanso {emMinutos(i.descanso_seg)}
-                  {i.metodo !== "normal" && ` · ${NOME_DO_METODO[i.metodo]}`}
-                </p>
-                {i.observacao && (
-                  <p className="mt-1.5 text-[15px] leading-relaxed text-nevoa">{i.observacao}</p>
-                )}
-                {i.video_url && (
-                  <a
-                    href={i.video_url}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="mt-2 inline-flex min-h-11 items-center text-[15px] font-semibold text-raio-forte underline underline-offset-4"
-                  >
-                    Ver vídeo de execução
-                  </a>
-                )}
-              </li>
-            ))}
-          </ul>
-        </Cartao>
-      ))}
-
-      {!blocos.length && (
+      {blocos.length ? (
+        <CartaoDaPlanilha
+          nome={protocolo.nome}
+          resumo={
+            comVideo
+              ? `${exercicios} exercícios, ${comVideo} com vídeo de execução`
+              : `${exercicios} exercícios`
+          }
+          blocos={blocos}
+        />
+      ) : (
         <Cartao>
           <h2 className="text-base font-bold">Sua planilha ainda está sendo montada</h2>
           <p className="mt-2 text-[15px] leading-relaxed text-nevoa">
@@ -311,6 +268,40 @@ export function VisaoDaPlanilha({
           </p>
         </Cartao>
       )}
+
+      {protocolo.observacoes && (
+        <Cartao>
+          <Meta tom="raio">Orientação</Meta>
+          <p className="mt-2 whitespace-pre-line text-[13.5px] leading-relaxed text-nevoa">
+            {protocolo.observacoes}
+          </p>
+        </Cartao>
+      )}
+
+      <section className="rounded-2xl border border-raio/[0.32] bg-gradient-to-br from-raio/[0.13] to-raio/[0.03] p-[18px]">
+        <div className="flex items-center gap-2">
+          <svg viewBox="0 0 24 24" className="h-4 w-4 text-raio-forte" fill="currentColor">
+            <path d="M13.5 2 4 13.5h5.2L8 22l10-12h-5.4l1.9-8z" />
+          </svg>
+          <Meta tom="raio">Consultoria</Meta>
+        </div>
+        <h2 className="mt-2.5 text-base font-bold leading-snug">
+          Quer o Allisson montando pro seu caso?
+        </h2>
+        <p className="mt-2 text-[13.5px] leading-[1.5] text-nevoa">
+          Ficha feita a partir da sua anamnese, ajuste todo mês e o chat aberto com ele para tirar
+          dúvida na hora do treino.
+        </p>
+        <BotaoLink
+          href={WHATSAPP_DO_ALLISSON}
+          target="_blank"
+          rel="noreferrer"
+          largura="cheia"
+          className="mt-3.5"
+        >
+          Conhecer a consultoria
+        </BotaoLink>
+      </section>
     </div>
   );
 }
@@ -327,40 +318,42 @@ export function SemAnamnese({
   comecou: boolean;
 }) {
   return (
-    <div className="flex flex-col gap-6">
-      <header className="flex flex-col gap-3">
-        <Rotulo>{comecou ? "Você parou no meio" : "Primeiro passo"}</Rotulo>
-        <Titulo>Fala, {primeiroNome}</Titulo>
+    <div className="flex flex-col gap-5">
+      <header>
+        <Meta tom="raio">{comecou ? "Você parou no meio" : "Primeiro passo"}</Meta>
+        <div className="mt-1.5">
+          <Titulo>Fala, {primeiroNome}</Titulo>
+        </div>
       </header>
 
-      <Cartao className="border-raio/50 bg-gradient-to-br from-raio/[0.14] to-raio/[0.04]">
-        <h2 className="font-display text-[26px] uppercase leading-none tracking-wide">
-          Sua ficha inicial
-        </h2>
-        <p className="mt-2.5 text-[15px] leading-relaxed text-nevoa">
+      <section className="rounded-2xl border border-raio/50 bg-gradient-to-br from-raio/[0.14] to-raio/[0.04] p-[18px]">
+        <h2 className="text-[17px] font-bold">Sua ficha inicial</h2>
+        <p className="mt-2 text-[13.5px] leading-[1.5] text-nevoa">
           {comecou
             ? "Suas respostas ficaram guardadas. Continue de onde parou para o Allisson montar seu treino."
             : "Antes do primeiro treino o Allisson precisa te conhecer melhor. Leva uns 4 minutos e você só responde uma vez."}
         </p>
-        <BotaoLink href="/anamnese" largura="cheia" className="mt-5">
+        <BotaoLink href="/anamnese" largura="cheia" className="mt-3.5">
           {comecou ? "Continuar de onde parei" : "Começar minha ficha"}
         </BotaoLink>
-      </Cartao>
+      </section>
     </div>
   );
 }
 
 export function EsperandoFicha({ primeiroNome }: { primeiroNome: string }) {
   return (
-    <div className="flex flex-col gap-6">
-      <header className="flex flex-col gap-3">
-        <Rotulo>Anamnese enviada</Rotulo>
-        <Titulo>Fala, {primeiroNome}</Titulo>
+    <div className="flex flex-col gap-5">
+      <header>
+        <Meta>Anamnese enviada</Meta>
+        <div className="mt-1.5">
+          <Titulo>Fala, {primeiroNome}</Titulo>
+        </div>
       </header>
 
       <Cartao>
-        <h2 className="text-base font-bold">O Allisson recebeu suas respostas</h2>
-        <p className="mt-2 text-[15px] leading-relaxed text-nevoa">
+        <h2 className="text-[17px] font-bold">O Allisson recebeu suas respostas</h2>
+        <p className="mt-2 text-[13.5px] leading-[1.5] text-nevoa">
           Agora ele monta sua ficha. Assim que publicar, o treino do dia aparece nesta tela.
         </p>
       </Cartao>
@@ -370,19 +363,28 @@ export function EsperandoFicha({ primeiroNome }: { primeiroNome: string }) {
 
 export function AcessoSuspenso({ nome }: { nome: string }) {
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-5">
       <Titulo>Acesso pausado</Titulo>
       <Cartao>
-        <p className="text-[15px] leading-relaxed text-nevoa">
+        <p className="text-[13.5px] leading-[1.5] text-nevoa">
           {nome}, sua mensalidade está em aberto e o acesso ao treino ficou pausado. Nada do que
           você registrou foi apagado: assim que o pagamento for confirmado, tudo volta como estava.
         </p>
-        <p className="mt-3 text-[15px] leading-relaxed text-nevoa">
+        <p className="mt-3 text-[13.5px] leading-[1.5] text-nevoa">
           Fale com o Allisson para regularizar.
         </p>
+        <BotaoLink
+          href={WHATSAPP_DO_ALLISSON}
+          target="_blank"
+          rel="noreferrer"
+          largura="cheia"
+          className="mt-4"
+        >
+          Falar com o Allisson
+        </BotaoLink>
       </Cartao>
       <form action="/auth/sair" method="post">
-        <Botao type="submit" aparencia="secundario" largura="cheia">
+        <Botao type="submit" aparencia="fantasma" largura="cheia">
           Sair
         </Botao>
       </form>
