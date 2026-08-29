@@ -14,7 +14,10 @@ import {
 } from "@/lib/painel";
 import { VisaoDoPainel } from "./visao";
 
-type SessaoComBloco = LinhaSessao & { bloco_treino: { nome: string } | null };
+type SessaoComBloco = LinhaSessao & {
+  nota: string | null;
+  bloco_treino: { nome: string } | null;
+};
 
 /** Esta pagina so busca. Quem desenha e a VisaoDoPainel. */
 export default async function Painel() {
@@ -34,7 +37,9 @@ export default async function Painel() {
         .from("sessao_treino")
         // O nome do treino entra junto: a linha do feed diz "TREINO B", e sem
         // isso ela viraria so peso e esforco soltos.
-        .select("id, aluno_id, data, status, peso_kg, esforco, concluida_em, bloco_treino (nome)")
+        .select(
+          "id, aluno_id, data, status, peso_kg, esforco, nota, concluida_em, bloco_treino (nome)",
+        )
         .order("concluida_em", { ascending: false, nullsFirst: false })
         .limit(60),
     ]);
@@ -92,6 +97,9 @@ export default async function Painel() {
       quando: haQuantoTempo(s.concluida_em, agora),
       em: s.concluida_em ?? `${hoje}T00:00:00Z`,
       chegada: false,
+      // A linha nao cabe o recado inteiro, entao ela so avisa que existe um.
+      // Quem le o texto e a tela de Treinos.
+      recado: Boolean(s.nota?.trim()),
     });
   }
 

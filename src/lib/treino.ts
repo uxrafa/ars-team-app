@@ -377,6 +377,35 @@ export const ESFORCOS = [
   [10, "No limite", "Não fazia mais nenhuma"],
 ] as const;
 
+/**
+ * O nome do degrau, para quem lê do outro lado.
+ *
+ * O aluno escolhe numa régua de cinco degraus, mas a coluna aceita 1 a 10.
+ * "esforço 7" não diz nada no painel do Allisson, então vira palavra,
+ * arredondando para o degrau mais perto.
+ */
+export function nomeDoEsforco(valor: number | null): string | null {
+  if (valor === null || valor === undefined) return null;
+  const alvo = valor;
+  let melhor: (typeof ESFORCOS)[number] = ESFORCOS[0];
+  for (const degrau of ESFORCOS) {
+    if (Math.abs(degrau[0] - alvo) < Math.abs(melhor[0] - alvo)) melhor = degrau;
+  }
+  return melhor[1];
+}
+
+/**
+ * Cor do esforço no painel.
+ *
+ * Só os extremos ganham cor de atenção, e os dois pelo mesmo motivo: são os
+ * únicos que pedem mexer na ficha. Treino que sobrou está leve demais, treino
+ * no limite toda semana é caminho de lesão. O meio da régua é o alvo.
+ */
+export function tomDoEsforco(valor: number | null): "ok" | "aviso" | "neutro" {
+  if (valor === null || valor === undefined) return "neutro";
+  return valor <= 4 || valor >= 10 ? "aviso" : "ok";
+}
+
 /* ------------------------------------------------------------------ */
 /* Tempo de treino                                                     */
 /* ------------------------------------------------------------------ */

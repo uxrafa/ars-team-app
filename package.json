@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "testar": "node --experimental-strip-types testes/treino.ts"
+    "testar": "node --experimental-strip-types testes/treino.ts && node --experimental-strip-types testes/feed.ts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.4",

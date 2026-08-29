@@ -135,6 +135,10 @@ export function VisaoDoPainel({ saudacao, mes, atencao, r, alunos, eventos }: Da
   const naFila = quantosAlunosNaFila(atencao);
   const emDia = Math.max(0, r.total - naFila);
 
+  // Recado e a unica coisa desta coluna que alguem escreveu a mao. Merece
+  // contagem propria, senao se perde no meio dos check-ins.
+  const recadosHoje = eventos.filter((e) => e.recado).length;
+
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-wrap items-end gap-4">
@@ -291,8 +295,13 @@ export function VisaoDoPainel({ saudacao, mes, atencao, r, alunos, eventos }: Da
           </section>
 
           <section className="flex flex-1 flex-col overflow-hidden rounded-2xl border border-linha bg-tinta-2">
-            <div className="border-b border-linha px-5 py-4">
+            <div className="flex items-center gap-3 border-b border-linha px-5 py-4">
               <h2 className="text-lg font-bold">Check-ins de hoje</h2>
+              {recadosHoje > 0 && (
+                <span className="rounded-full bg-raio-solido px-3 py-1 text-[13px] font-bold text-papel">
+                  {recadosHoje} {recadosHoje === 1 ? "recado" : "recados"}
+                </span>
+              )}
             </div>
             {eventos.length === 0 ? (
               <p className="flex-1 px-5 py-10 text-center text-[15px] leading-relaxed text-nevoa">
@@ -319,13 +328,30 @@ export function VisaoDoPainel({ saudacao, mes, atencao, r, alunos, eventos }: Da
                         {e.detalhe}
                       </p>
                     </div>
-                    <span className="flex-none font-mono text-[13px] uppercase text-nevoa">
-                      {e.quando}
+                    {/* A linha nao cabe o texto do recado. Ela avisa que tem
+                        um, e quem le e a tela de Treinos. */}
+                    <span className="flex flex-none flex-col items-end gap-1">
+                      <span className="font-mono text-[13px] uppercase text-nevoa">{e.quando}</span>
+                      {e.recado && (
+                        <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-raio-forte">
+                          <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-raio" />
+                          recado
+                        </span>
+                      )}
                     </span>
                   </li>
                 ))}
               </ul>
             )}
+
+            <Link
+              href="/painel/treinos"
+              className="border-t border-linha px-5 py-4 text-[15px] font-semibold text-raio-forte transition-colors hover:bg-tinta-3/40"
+            >
+              {recadosHoje > 0
+                ? `Ler o que ${recadosHoje === 1 ? "ele escreveu" : "eles escreveram"}`
+                : "Ver os treinos das últimas semanas"}
+            </Link>
           </section>
         </div>
       </div>

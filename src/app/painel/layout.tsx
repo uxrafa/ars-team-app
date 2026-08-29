@@ -8,10 +8,13 @@ import { Abas } from "./abas";
 export const metadata = { title: "Painel · ARS Team" };
 
 // A ordem é a do desenho aprovado: Painel, Alunos, Biblioteca. Convites veio
-// depois e entra ao lado, antes do Financeiro que ainda não existe.
+// depois e entra ao lado, antes do Financeiro que ainda não existe. Treinos
+// fica colado em Alunos porque é a mesma pergunta vista do outro lado: lá é
+// quem são, aqui é o que fizeram.
 const ABAS = [
   { href: "/painel", nome: "Painel" },
   { href: "/painel/alunos", nome: "Alunos" },
+  { href: "/painel/treinos", nome: "Treinos" },
   { href: "/painel/biblioteca", nome: "Biblioteca" },
   { href: "/painel/convites", nome: "Convites" },
 ] as const;

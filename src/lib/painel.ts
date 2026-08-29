@@ -329,6 +329,8 @@ export type EventoDoDia = {
   /** Carimbo cru, so para ordenar. A tela nao mostra. */
   em: string;
   chegada: boolean;
+  /** O aluno escreveu alguma coisa ao fechar o treino. */
+  recado?: boolean;
 };
 
 /** Peso com virgula, que e como se le em portugues. */
