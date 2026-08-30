@@ -202,7 +202,14 @@ export async function copiarFicha(
     console.error("copiarFicha (leitura):", erroLeitura.message);
     return { erro: "Não consegui ler a ficha de origem." };
   }
-  if (!blocos?.length) return { erro: "Essa ficha não tem treino para copiar." };
+  // A tela não conta mais os exercícios da origem (era um join de três níveis
+  // em toda abertura da ficha), então quem recusa origem vazia é aqui.
+  const temItem = (blocos ?? []).some(
+    (b) => ((b as { item_exercicio?: unknown[] }).item_exercicio ?? []).length > 0,
+  );
+  if (!blocos?.length || !temItem) {
+    return { erro: "Essa ficha não tem exercício para copiar." };
+  }
 
   type ItemBruto = {
     exercicio_id: string;

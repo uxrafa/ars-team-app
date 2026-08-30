@@ -1,9 +1,25 @@
 "use client";
 
 import { Botao, BotaoIcone, CLASSE_CAMPO, Rotulo } from "@/components/ui";
-import { METODOS, emMinutos, mover, type BlocoNaTela, type ItemNaTela, type Metodo } from "@/lib/ficha";
+import {
+  METODOS,
+  NOME_DO_METODO,
+  emMinutos,
+  mover,
+  type BlocoNaTela,
+  type ItemNaTela,
+  type Metodo,
+} from "@/lib/ficha";
 
-function Seta({ para }: { para: "cima" | "baixo" }) {
+function Seta({ para }: { para: "esquerda" | "direita" }) {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      {para === "esquerda" ? <path d="m15 6-6 6 6 6" /> : <path d="m9 6 6 6-6 6" />}
+    </svg>
+  );
+}
+
+function SetaVertical({ para }: { para: "cima" | "baixo" }) {
   return (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
       {para === "cima" ? <path d="m6 15 6-6 6 6" /> : <path d="m6 9 6 6 6-6" />}
@@ -18,6 +34,94 @@ function Xis() {
     </svg>
   );
 }
+
+/** A moldura da guia aberta: o topo é reto porque a aba encosta nele. */
+const PAINEL =
+  "overflow-hidden rounded-b-2xl rounded-tr-2xl border border-linha bg-tinta-2";
+
+/* ------------------------------------------------------------------ */
+/* Leitura                                                             */
+/* ------------------------------------------------------------------ */
+
+/**
+ * O treino sem nenhum campo editável.
+ *
+ * É o estado normal da tela. Com tudo sempre em input, a ficha parecia um
+ * formulário pela metade e nunca uma coisa pronta e salva; e cada exercício
+ * carregava cinco controles, o que com três treinos passava de cem campos na
+ * página. Aqui é tabela: lê rápido e não pede nada.
+ */
+export function BlocoLeitura({ bloco, indice }: { bloco: BlocoNaTela; indice: number }) {
+  return (
+    <section
+      id={`painel-treino-${indice}`}
+      role="tabpanel"
+      aria-labelledby={`aba-treino-${indice}`}
+      className={PAINEL}
+    >
+      {bloco.foco && (
+        <p className="border-b border-linha bg-tinta-3 px-5 py-3 text-[15px] text-nevoa">
+          {bloco.foco}
+        </p>
+      )}
+
+      {bloco.itens.length === 0 ? (
+        <p className="px-6 py-12 text-center text-[15px] leading-relaxed text-nevoa">
+          Nenhum exercício neste treino ainda. Toque em Editar ficha para montar.
+        </p>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[640px] border-collapse text-left">
+            <thead>
+              <tr className="bg-tinta-3">
+                {["", "Exercício", "Séries", "Reps", "Descanso", "Método"].map((t, i) => (
+                  <th
+                    key={i}
+                    scope="col"
+                    className="px-4 py-3 text-xs font-semibold uppercase tracking-[0.07em] text-nevoa"
+                  >
+                    {t}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {bloco.itens.map((item, i) => (
+                <tr key={item.id ?? `novo-${i}`} className="border-t border-linha align-top">
+                  <td className="px-4 py-3.5 font-mono text-[13px] tabular text-nevoa">{i + 1}</td>
+                  <td className="px-4 py-3.5">
+                    <span className="block text-[15px] font-semibold text-papel">{item.nome}</span>
+                    {item.observacao && (
+                      <span className="mt-1 block text-sm leading-snug text-nevoa">
+                        {item.observacao}
+                      </span>
+                    )}
+                  </td>
+                  <td className="px-4 py-3.5 font-mono text-[13px] tabular text-papel">
+                    {item.series || "?"}
+                  </td>
+                  <td className="px-4 py-3.5 font-mono text-[13px] tabular text-papel">
+                    {item.reps || "?"}
+                  </td>
+                  <td className="px-4 py-3.5 font-mono text-[13px] tabular text-nevoa">
+                    {emMinutos(item.descanso_seg)}
+                  </td>
+                  <td className="px-4 py-3.5 text-sm text-nevoa">
+                    {item.metodo === "normal" ? "—" : NOME_DO_METODO[item.metodo]}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </section>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* Edição                                                              */
+/* ------------------------------------------------------------------ */
 
 /** Campo estreito de número, para séries e descanso. */
 function Numero({
@@ -88,7 +192,7 @@ function Item({
             disabled={indice === 0}
             className="disabled:opacity-40"
           >
-            <Seta para="cima" />
+            <SetaVertical para="cima" />
           </BotaoIcone>
           <BotaoIcone
             rotulo="Descer exercício"
@@ -96,7 +200,7 @@ function Item({
             disabled={indice === total - 1}
             className="disabled:opacity-40"
           >
-            <Seta para="baixo" />
+            <SetaVertical para="baixo" />
           </BotaoIcone>
           <BotaoIcone rotulo={`Tirar ${item.nome} do treino`} onClick={aoRemover}>
             <Xis />
@@ -181,6 +285,7 @@ export function Bloco({
   indice: number;
   total: number;
   aoMudar: (b: BlocoNaTela) => void;
+  /** Move a guia inteira de lugar: -1 é para a esquerda. */
   aoMover: (passo: -1 | 1) => void;
   aoRemover: () => void;
   aoAbrirSeletor: () => void;
@@ -188,7 +293,12 @@ export function Bloco({
   children?: React.ReactNode;
 }) {
   return (
-    <section className="overflow-hidden rounded-2xl border border-linha bg-tinta-2">
+    <section
+      id={`painel-treino-${indice}`}
+      role="tabpanel"
+      aria-labelledby={`aba-treino-${indice}`}
+      className={PAINEL}
+    >
       <header className="flex flex-wrap items-end gap-3 bg-tinta-3 px-5 py-4">
         <label className="flex min-w-[140px] flex-col gap-1.5">
           <Rotulo>Treino</Rotulo>
@@ -208,22 +318,24 @@ export function Bloco({
           />
         </label>
 
+        {/* A ordem dos treinos agora é a ordem das guias, então as setas
+            apontam para os lados e não para cima e para baixo. */}
         <span className="flex flex-none gap-1.5">
           <BotaoIcone
-            rotulo="Subir treino"
+            rotulo="Mover treino para a esquerda"
             onClick={() => aoMover(-1)}
             disabled={indice === 0}
             className="disabled:opacity-40"
           >
-            <Seta para="cima" />
+            <Seta para="esquerda" />
           </BotaoIcone>
           <BotaoIcone
-            rotulo="Descer treino"
+            rotulo="Mover treino para a direita"
             onClick={() => aoMover(1)}
             disabled={indice === total - 1}
             className="disabled:opacity-40"
           >
-            <Seta para="baixo" />
+            <Seta para="direita" />
           </BotaoIcone>
           <BotaoIcone rotulo={`Apagar ${bloco.nome}`} onClick={aoRemover}>
             <Xis />

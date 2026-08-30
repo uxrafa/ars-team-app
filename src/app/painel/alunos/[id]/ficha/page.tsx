@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { criarClienteServidor } from "@/lib/supabase/server";
 import { BotaoLink } from "@/components/ui";
-import type { LinhaExercicio } from "@/lib/biblioteca";
+import type { ExercicioEscolhivel } from "@/lib/biblioteca";
 import type { LinhaAnamneseFicha, StatusProtocolo } from "@/lib/ficha";
 import { Editor } from "./editor";
 import { Comecar } from "./comecar";
@@ -15,7 +15,6 @@ export type FichaDeOutro = {
   nome: string;
   status: StatusProtocolo;
   aluno: string;
-  exercicios: number;
 };
 
 export default async function PaginaFicha({ params }: { params: Promise<{ id: string }> }) {
@@ -51,9 +50,11 @@ export default async function PaginaFicha({ params }: { params: Promise<{ id: st
     | undefined;
 
   const [{ data: exercicios }, { data: anamnese }, { data: outras }] = await Promise.all([
+    // Só os quatro campos que o seletor usa. Antes vinha a linha inteira,
+    // com o texto de instruções de cada exercício, para o navegador nunca ler.
     supabase
       .from("exercicio")
-      .select("id, nome, grupo, equipamento, video_url, instrucoes, ativo")
+      .select("id, nome, grupo, equipamento")
       .eq("ativo", true)
       .order("nome"),
     supabase
@@ -63,13 +64,16 @@ export default async function PaginaFicha({ params }: { params: Promise<{ id: st
       )
       .eq("aluno_id", alunoId)
       .maybeSingle(),
+    // Sem o join de três níveis. Ele existia só para contar exercícios no
+    // rótulo do menu, e trazia os itens de 30 fichas alheias a cada abertura
+    // desta tela. Quem recusa origem vazia agora é a própria ação de copiar.
     supabase
       .from("protocolo")
-      .select("id, nome, status, aluno_id, perfis (nome), bloco_treino (item_exercicio (id))")
+      .select("id, nome, status, perfis (nome)")
       .neq("aluno_id", alunoId)
       .in("status", ["ativo", "encerrado"])
       .order("criado_em", { ascending: false })
-      .limit(30),
+      .limit(20),
   ]);
 
   const fichasDeOutros: FichaDeOutro[] = (
@@ -78,20 +82,13 @@ export default async function PaginaFicha({ params }: { params: Promise<{ id: st
       nome: string;
       status: StatusProtocolo;
       perfis: { nome: string } | null;
-      bloco_treino: { item_exercicio: { id: string }[] }[];
     }[]
-  )
-    .map((p) => ({
-      id: p.id,
-      nome: p.nome,
-      status: p.status,
-      aluno: p.perfis?.nome ?? "Aluno",
-      exercicios: (p.bloco_treino ?? []).reduce(
-        (s, b) => s + (b.item_exercicio ?? []).length,
-        0,
-      ),
-    }))
-    .filter((p) => p.exercicios > 0);
+  ).map((p) => ({
+    id: p.id,
+    nome: p.nome,
+    status: p.status,
+    aluno: p.perfis?.nome ?? "Aluno",
+  }));
 
   if (!protocolo) {
     return (
@@ -129,7 +126,7 @@ export default async function PaginaFicha({ params }: { params: Promise<{ id: st
         alunoNome={aluno.nome}
         protocolo={protocolo}
         blocosIniciais={blocos}
-        exercicios={(exercicios ?? []) as LinhaExercicio[]}
+        exercicios={(exercicios ?? []) as ExercicioEscolhivel[]}
         anamnese={(anamnese as LinhaAnamneseFicha | null) ?? null}
         fichasDeOutros={fichasDeOutros}
       />

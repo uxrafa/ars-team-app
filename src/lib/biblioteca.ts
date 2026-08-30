@@ -27,6 +27,20 @@ export type LinhaExercicio = {
   ativo: boolean;
 };
 
+/**
+ * O mínimo para escolher um exercício em uma lista.
+ *
+ * A tela de ficha só precisa disto, e não da linha inteira: `instrucoes` é o
+ * campo mais gordo da tabela e ia junto para o navegador em toda abertura de
+ * ficha, sem nunca ser lido lá.
+ */
+export type ExercicioEscolhivel = {
+  id: string;
+  nome: string;
+  grupo: Grupo;
+  equipamento: string | null;
+};
+
 /** A ordem é a do corpo, de cima para baixo, e é como o Allisson pensa a ficha. */
 export const GRUPOS: { valor: Grupo; nome: string }[] = [
   { valor: "peito", nome: "Peito" },
@@ -63,7 +77,10 @@ export function semAcento(texto: string): string {
  * Casa a busca com nome e equipamento, palavra por palavra. Digitar
  * "supino halter" acha "Supino reto com halter" mesmo com o "reto com" no meio.
  */
-export function casaComBusca(e: LinhaExercicio, busca: string): boolean {
+export function casaComBusca(
+  e: { nome: string; equipamento: string | null },
+  busca: string,
+): boolean {
   const termos = semAcento(busca).split(/\s+/).filter(Boolean);
   if (!termos.length) return true;
   const alvo = semAcento(`${e.nome} ${e.equipamento ?? ""}`);
@@ -76,7 +93,11 @@ export type Filtro = {
   soSemVideo: boolean;
 };
 
-export function filtrar(lista: LinhaExercicio[], f: Filtro): LinhaExercicio[] {
+/** Genérica para servir tanto a biblioteca (linha inteira) quanto a ficha. */
+export function filtrar<T extends ExercicioEscolhivel & { video_url?: string | null }>(
+  lista: T[],
+  f: Filtro,
+): T[] {
   return lista.filter((e) => {
     if (f.grupo !== "todos" && e.grupo !== f.grupo) return false;
     if (f.soSemVideo && e.video_url) return false;

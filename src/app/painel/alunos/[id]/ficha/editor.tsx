@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { Aviso, Botao, CLASSE_CAMPO, Pilula, Rotulo } from "@/components/ui";
-import type { LinhaExercicio } from "@/lib/biblioteca";
+import type { ExercicioEscolhivel } from "@/lib/biblioteca";
 import {
   ITEM_PADRAO,
   mover,
@@ -14,7 +14,8 @@ import {
   type LinhaAnamneseFicha,
   type StatusProtocolo,
 } from "@/lib/ficha";
-import { Bloco } from "./bloco";
+import { AbasDeTreino } from "./abas";
+import { Bloco, BlocoLeitura } from "./bloco";
 import { Lateral } from "./lateral";
 import { Seletor } from "./seletor";
 import { copiarFicha, encerrarFicha, publicarFicha, salvarFicha } from "./acoes";
@@ -29,6 +30,21 @@ type Protocolo = {
   observacoes: string | null;
 };
 
+/** Tudo que o botão Cancelar precisa devolver ao estado de antes. */
+type Rascunho = {
+  nome: string;
+  inicio: string;
+  fim: string;
+  observacoes: string;
+  blocos: BlocoNaTela[];
+};
+
+function curta(iso: string | null): string | null {
+  if (!iso) return null;
+  const [ano, mes, dia] = iso.split("-");
+  return `${dia}/${mes}/${ano.slice(2)}`;
+}
+
 export function Editor({
   alunoId,
   alunoNome,
@@ -42,7 +58,7 @@ export function Editor({
   alunoNome: string;
   protocolo: Protocolo;
   blocosIniciais: BlocoNaTela[];
-  exercicios: LinhaExercicio[];
+  exercicios: ExercicioEscolhivel[];
   anamnese: LinhaAnamneseFicha | null;
   fichasDeOutros: FichaDeOutro[];
 }) {
@@ -52,18 +68,38 @@ export function Editor({
   const [observacoes, setObservacoes] = useState(protocolo.observacoes ?? "");
   const [blocos, setBlocos] = useState<BlocoNaTela[]>(blocosIniciais);
 
+  /**
+   * A tela abre em leitura. Antes tudo era campo o tempo todo, e por isso a
+   * ficha nunca parecia pronta: parecia um formulário no meio do preenchimento,
+   * mesmo depois de salva.
+   */
+  const [editando, setEditando] = useState(false);
+  const [antes, setAntes] = useState<Rascunho | null>(null);
+
   const [sujo, setSujo] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
   const [recado, setRecado] = useState<string | null>(null);
   const [pendente, comecar] = useTransition();
 
-  /** Em qual bloco o seletor de exercício está aberto. */
-  const [seletorEm, setSeletorEm] = useState<number | null>(null);
+  const [aba, setAba] = useState(0);
+  const [seletorAberto, setSeletorAberto] = useState(false);
   const [copiando, setCopiando] = useState(false);
   const [origem, setOrigem] = useState("");
 
   const r = resumoDaFicha(blocos);
   const ativa = protocolo.status === "ativo";
+  const primeiroNome = alunoNome.split(" ")[0];
+
+  // Apagar o último treino deixaria a guia aberta fora do array.
+  const atual = Math.min(aba, Math.max(0, blocos.length - 1));
+
+  /** Fechar a página no meio da edição não pode levar o trabalho junto. */
+  useEffect(() => {
+    if (!editando || !sujo) return;
+    const avisar = (e: BeforeUnloadEvent) => e.preventDefault();
+    window.addEventListener("beforeunload", avisar);
+    return () => window.removeEventListener("beforeunload", avisar);
+  }, [editando, sujo]);
 
   function mexer(novos: BlocoNaTela[]) {
     setBlocos(novos);
@@ -80,11 +116,43 @@ export function Editor({
     };
   }
 
-  function adicionarBloco() {
-    mexer([...blocos, { id: null, nome: proximoNomeDeBloco(blocos.length), foco: "", itens: [] }]);
+  function editar() {
+    setAntes({ nome, inicio, fim, observacoes, blocos });
+    setEditando(true);
+    setSujo(false);
+    setErro(null);
+    setRecado(null);
   }
 
-  function adicionarExercicio(indiceBloco: number, e: LinhaExercicio) {
+  function cancelar() {
+    if (antes) {
+      setNome(antes.nome);
+      setInicio(antes.inicio);
+      setFim(antes.fim);
+      setObservacoes(antes.observacoes);
+      setBlocos(antes.blocos);
+    }
+    setEditando(false);
+    setSeletorAberto(false);
+    setSujo(false);
+    setErro(null);
+    setRecado(null);
+  }
+
+  function adicionarTreino() {
+    const novos = [
+      ...blocos,
+      { id: null, nome: proximoNomeDeBloco(blocos.length), foco: "", itens: [] },
+    ];
+    // O "+" da barra de guias funciona em leitura também: quem toca nele está
+    // dizendo que quer mexer, então a tela entra em edição junto.
+    if (!editando) editar();
+    mexer(novos);
+    setAba(novos.length - 1);
+    setSeletorAberto(false);
+  }
+
+  function adicionarExercicio(e: ExercicioEscolhivel) {
     const item: ItemNaTela = {
       id: null,
       exercicio_id: e.id,
@@ -93,9 +161,7 @@ export function Editor({
       observacao: "",
       ...ITEM_PADRAO,
     };
-    mexer(
-      blocos.map((b, i) => (i === indiceBloco ? { ...b, itens: [...b.itens, item] } : b)),
-    );
+    mexer(blocos.map((b, i) => (i === atual ? { ...b, itens: [...b.itens, item] } : b)));
   }
 
   async function gravar(): Promise<boolean> {
@@ -124,7 +190,14 @@ export function Editor({
     setErro(null);
     setRecado(null);
     comecar(async () => {
-      if (await gravar()) setRecado("Ficha salva.");
+      if (!(await gravar())) return;
+      setEditando(false);
+      setSeletorAberto(false);
+      setRecado(
+        ativa
+          ? `Salvo. ${primeiroNome} já vê a ficha nova no app.`
+          : "Rascunho salvo. Publique quando quiser mandar para o aluno.",
+      );
     });
   }
 
@@ -136,14 +209,15 @@ export function Editor({
       setErro(problema);
       return;
     }
+    // Em leitura a ficha já está gravada, então publicar não precisa gravar
+    // de novo: é uma ida ao banco a menos.
     comecar(async () => {
-      if (!(await gravar())) return;
       const r = await publicarFicha(alunoId, protocolo.id);
       if (r.erro) {
         setErro(r.erro);
         return;
       }
-      setRecado(`Publicada. ${alunoNome.split(" ")[0]} já vê o treino no app.`);
+      setRecado(`Publicada. ${primeiroNome} já vê o treino no app.`);
     });
   }
 
@@ -169,7 +243,8 @@ export function Editor({
       if (r.blocos) setBlocos(r.blocos);
       setSujo(false);
       setCopiando(false);
-      setRecado("Copiada. Ajuste o que for diferente para este aluno e salve.");
+      setAba(0);
+      setRecado("Copiada. Toque em Editar ficha para ajustar o que for diferente.");
     });
   }
 
@@ -181,7 +256,7 @@ export function Editor({
           <div className="flex flex-wrap items-start gap-3">
             <div className="min-w-0 flex-1">
               <h1 className="font-display text-3xl uppercase leading-none tracking-wide">
-                Ficha de {alunoNome.split(" ")[0]}
+                Ficha de {primeiroNome}
               </h1>
               <p className="mt-2.5 text-[15px] text-nevoa">
                 {r.blocos === 0
@@ -192,49 +267,68 @@ export function Editor({
             <Pilula tom={ativa ? "ok" : "neutro"}>{ativa ? "No ar para o aluno" : "Rascunho"}</Pilula>
           </div>
 
-          <div className="mt-5 grid gap-4 sm:grid-cols-[2fr_1fr_1fr]">
-            <label className="flex flex-col gap-2">
-              <Rotulo>Nome da ficha</Rotulo>
-              <input
-                value={nome}
-                onChange={(e) => campo(setNome)(e.target.value)}
-                className={CLASSE_CAMPO}
-              />
-            </label>
-            <label className="flex flex-col gap-2">
-              <Rotulo>Começa em</Rotulo>
-              <input
-                type="date"
-                value={inicio}
-                onChange={(e) => campo(setInicio)(e.target.value)}
-                className={CLASSE_CAMPO}
-              />
-            </label>
-            <label className="flex flex-col gap-2">
-              <Rotulo>Vence em</Rotulo>
-              <input
-                type="date"
-                value={fim}
-                onChange={(e) => campo(setFim)(e.target.value)}
-                className={CLASSE_CAMPO}
-              />
-            </label>
-          </div>
+          {editando ? (
+            <>
+              <div className="mt-5 grid gap-4 sm:grid-cols-[2fr_1fr_1fr]">
+                <label className="flex flex-col gap-2">
+                  <Rotulo>Nome da ficha</Rotulo>
+                  <input
+                    value={nome}
+                    onChange={(e) => campo(setNome)(e.target.value)}
+                    className={CLASSE_CAMPO}
+                  />
+                </label>
+                <label className="flex flex-col gap-2">
+                  <Rotulo>Começa em</Rotulo>
+                  <input
+                    type="date"
+                    value={inicio}
+                    onChange={(e) => campo(setInicio)(e.target.value)}
+                    className={CLASSE_CAMPO}
+                  />
+                </label>
+                <label className="flex flex-col gap-2">
+                  <Rotulo>Vence em</Rotulo>
+                  <input
+                    type="date"
+                    value={fim}
+                    onChange={(e) => campo(setFim)(e.target.value)}
+                    className={CLASSE_CAMPO}
+                  />
+                </label>
+              </div>
 
-          <label className="mt-4 flex flex-col gap-2">
-            <Rotulo>Recado para o aluno</Rotulo>
-            <textarea
-              rows={2}
-              value={observacoes}
-              onChange={(e) => campo(setObservacoes)(e.target.value)}
-              placeholder="Ex.: nas duas primeiras semanas segure a carga e foque na execução"
-              className={`${CLASSE_CAMPO} resize-none leading-relaxed`}
-            />
-          </label>
+              <label className="mt-4 flex flex-col gap-2">
+                <Rotulo>Recado para o aluno</Rotulo>
+                <textarea
+                  rows={2}
+                  value={observacoes}
+                  onChange={(e) => campo(setObservacoes)(e.target.value)}
+                  placeholder="Ex.: nas duas primeiras semanas segure a carga e foque na execução"
+                  className={`${CLASSE_CAMPO} resize-none leading-relaxed`}
+                />
+              </label>
+            </>
+          ) : (
+            <div className="mt-4 flex flex-col gap-2">
+              <p className="text-base font-semibold">{nome}</p>
+              <p className="font-mono text-[13px] uppercase tabular text-nevoa">
+                {curta(inicio)}
+                {fim ? ` até ${curta(fim)}` : " · sem data de vencimento"}
+              </p>
+              {observacoes.trim() && (
+                <p className="mt-1 whitespace-pre-line text-[15px] leading-relaxed text-nevoa">
+                  <span className="text-nevoa-fraca">Recado: </span>
+                  {observacoes}
+                </p>
+              )}
+            </div>
+          )}
         </section>
 
-        {/* Copiar de outra ficha */}
-        {fichasDeOutros.length > 0 && (
+        {/* Copiar de outra ficha. Só em leitura: é uma ação que grava sozinha,
+            e no meio de uma edição ela atropelaria o que está na tela. */}
+        {!editando && fichasDeOutros.length > 0 && (
           <section className="rounded-2xl border border-linha bg-tinta-2 p-5">
             {!copiando ? (
               <div className="flex flex-wrap items-center gap-3">
@@ -276,7 +370,7 @@ export function Editor({
                     <option value="">Escolha um aluno</option>
                     {fichasDeOutros.map((f) => (
                       <option key={f.id} value={f.id}>
-                        {f.aluno} · {f.nome} · {f.exercicios} exercícios
+                        {f.aluno} · {f.nome}
                         {f.status === "encerrado" ? " (encerrada)" : ""}
                       </option>
                     ))}
@@ -284,12 +378,7 @@ export function Editor({
                 </label>
 
                 <div className="flex flex-wrap gap-2.5">
-                  <Botao
-                    type="button"
-                    onClick={copiar}
-                    disabled={pendente || !origem}
-                    tamanho="sm"
-                  >
+                  <Botao type="button" onClick={copiar} disabled={pendente || !origem} tamanho="sm">
                     {pendente ? "Copiando" : "Copiar para cá"}
                   </Botao>
                   <Botao
@@ -306,34 +395,57 @@ export function Editor({
           </section>
         )}
 
-        {/* Blocos */}
-        {blocos.map((b, i) => (
-          <Bloco
-            key={b.id ?? `novo-${i}`}
-            bloco={b}
-            indice={i}
-            total={blocos.length}
-            aoMudar={(novo) => mexer(blocos.map((x, j) => (j === i ? novo : x)))}
-            aoMover={(passo) => mexer(mover(blocos, i, passo))}
-            aoRemover={() => mexer(blocos.filter((_, j) => j !== i))}
-            aoAbrirSeletor={() => setSeletorEm(seletorEm === i ? null : i)}
-            seletorAberto={seletorEm === i}
-          >
-            {seletorEm === i && (
-              <Seletor
-                exercicios={exercicios}
-                jaNaFicha={new Set(blocos.flatMap((x) => x.itens.map((it) => it.exercicio_id)))}
-                aoEscolher={(e) => adicionarExercicio(i, e)}
-                aoFechar={() => setSeletorEm(null)}
-              />
-            )}
-          </Bloco>
-        ))}
-
+        {/* Os treinos, um ao lado do outro */}
         <div>
-          <Botao type="button" onClick={adicionarBloco} aparencia="secundario">
-            Adicionar treino
-          </Botao>
+          <AbasDeTreino
+            blocos={blocos}
+            ativa={atual}
+            aoTrocar={(i) => {
+              setAba(i);
+              setSeletorAberto(false);
+            }}
+            aoAdicionar={adicionarTreino}
+          />
+
+          {blocos.length === 0 ? (
+            <section className="rounded-b-2xl rounded-tr-2xl border border-linha bg-tinta-2 px-6 py-14 text-center">
+              <p className="mx-auto max-w-[46ch] text-[15px] leading-relaxed text-nevoa">
+                Esta ficha ainda não tem nenhum treino. Toque no + acima para criar o Treino A.
+              </p>
+            </section>
+          ) : editando ? (
+            <Bloco
+              key={blocos[atual].id ?? `novo-${atual}`}
+              bloco={blocos[atual]}
+              indice={atual}
+              total={blocos.length}
+              aoMudar={(novo) => mexer(blocos.map((x, j) => (j === atual ? novo : x)))}
+              aoMover={(passo) => {
+                const destino = atual + passo;
+                if (destino < 0 || destino >= blocos.length) return;
+                mexer(mover(blocos, atual, passo));
+                setAba(destino);
+              }}
+              aoRemover={() => {
+                mexer(blocos.filter((_, j) => j !== atual));
+                setAba(Math.max(0, atual - 1));
+                setSeletorAberto(false);
+              }}
+              aoAbrirSeletor={() => setSeletorAberto((v) => !v)}
+              seletorAberto={seletorAberto}
+            >
+              {seletorAberto && (
+                <Seletor
+                  exercicios={exercicios}
+                  jaNaFicha={new Set(blocos.flatMap((x) => x.itens.map((it) => it.exercicio_id)))}
+                  aoEscolher={adicionarExercicio}
+                  aoFechar={() => setSeletorAberto(false)}
+                />
+              )}
+            </Bloco>
+          ) : (
+            <BlocoLeitura bloco={blocos[atual]} indice={atual} />
+          )}
         </div>
 
         {/* Barra de ação */}
@@ -350,34 +462,53 @@ export function Editor({
           )}
 
           <div className="flex flex-wrap items-center gap-2.5">
-            <Botao type="button" onClick={salvar} disabled={pendente} aparencia="secundario">
-              {pendente ? "Salvando" : "Salvar rascunho"}
-            </Botao>
-
-            {ativa ? (
+            {editando ? (
               <>
-                <Botao type="button" onClick={publicar} disabled={pendente}>
-                  Salvar e atualizar para o aluno
+                <Botao type="button" onClick={salvar} disabled={pendente}>
+                  {pendente ? "Salvando" : "Salvar"}
                 </Botao>
                 <Botao
                   type="button"
-                  onClick={encerrar}
+                  onClick={cancelar}
                   disabled={pendente}
                   aparencia="fantasma"
-                  className="sm:ml-auto"
                 >
-                  Tirar do ar
+                  Cancelar
                 </Botao>
+                {ativa && (
+                  <span className="text-sm text-nevoa sm:ml-auto">
+                    {primeiroNome} vê a mudança assim que você salvar.
+                  </span>
+                )}
               </>
             ) : (
-              <Botao type="button" onClick={publicar} disabled={pendente}>
-                Publicar para o aluno
-              </Botao>
-            )}
+              <>
+                <Botao type="button" onClick={editar} disabled={pendente}>
+                  Editar ficha
+                </Botao>
 
-            <span className="text-sm text-nevoa sm:ml-auto">
-              {sujo ? "Alterações não salvas" : "Tudo salvo"}
-            </span>
+                {ativa ? (
+                  <Botao
+                    type="button"
+                    onClick={encerrar}
+                    disabled={pendente}
+                    aparencia="fantasma"
+                    className="sm:ml-auto"
+                  >
+                    Tirar do ar
+                  </Botao>
+                ) : (
+                  <Botao
+                    type="button"
+                    onClick={publicar}
+                    disabled={pendente}
+                    aparencia="secundario"
+                  >
+                    Publicar para o aluno
+                  </Botao>
+                )}
+              </>
+            )}
           </div>
         </section>
       </div>

@@ -6,8 +6,8 @@ import {
   GRUPOS,
   NOME_DO_GRUPO,
   filtrar,
+  type ExercicioEscolhivel,
   type Grupo,
-  type LinhaExercicio,
 } from "@/lib/biblioteca";
 
 /**
@@ -22,9 +22,9 @@ export function Seletor({
   aoEscolher,
   aoFechar,
 }: {
-  exercicios: LinhaExercicio[];
+  exercicios: ExercicioEscolhivel[];
   jaNaFicha: Set<string>;
-  aoEscolher: (e: LinhaExercicio) => void;
+  aoEscolher: (e: ExercicioEscolhivel) => void;
   aoFechar: () => void;
 }) {
   const [busca, setBusca] = useState("");
