@@ -103,17 +103,19 @@ export default async function Alunos() {
       {semDados > 0 && (
         <p className="rounded-xl border border-alerta/40 bg-alerta/[0.08] px-5 py-4 text-[15px] leading-relaxed text-alerta">
           {semDados === 1
-            ? "1 aluno está sem data de vencimento ou mensalidade."
-            : `${semDados} alunos estão sem data de vencimento ou mensalidade.`}{" "}
-          <span className="text-nevoa">
-            Toque em Editar para preencher. É isso que faz a fila de cobrança do painel funcionar.
-          </span>
+            ? "1 aluno sem vencimento ou mensalidade."
+            : `${semDados} alunos sem vencimento ou mensalidade.`}{" "}
+          {/* Sai o "toque em Editar", que é instrução de primeira vez e está
+              na mesma linha do problema. Fica o porquê, que não é óbvio. */}
+          <span className="text-nevoa">Sem isso a fila de cobrança fica vazia.</span>
         </p>
       )}
 
       <section className="overflow-hidden rounded-2xl border border-linha bg-tinta-2">
         <div className="hidden grid-cols-[1.7fr_0.8fr_1fr_1.3fr_0.9fr_auto] gap-4 bg-tinta-3 px-5 py-3 lg:grid">
-          {["Aluno", "Plano", "Pagamento", "Ficha atual", "Check-in", ""].map((t, i) => (
+          {/* "Mensal" no cabeçalho, e não "/mês" repetido em cada linha:
+              unidade se declara uma vez. */}
+          {["Aluno", "Plano", "Pagamento · mensal", "Ficha atual", "Check-in", ""].map((t, i) => (
             <span
               key={i}
               className="text-xs font-semibold uppercase tracking-[0.07em] text-nevoa"

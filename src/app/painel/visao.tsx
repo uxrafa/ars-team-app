@@ -21,16 +21,29 @@ const TOM_DO_MOTIVO: Record<string, Tom> = {
   sumido: "neutro",
 };
 
+/**
+ * Cartao de numero do painel.
+ *
+ * `detalhe` e opcional de proposito: a linha de apoio so existe quando diz o
+ * que o numero nao diz. "ninguem devendo" embaixo de um zero e o mesmo fato
+ * duas vezes, e some.
+ *
+ * `quieto` e para cartao de PENDENCIA zerado: nada a fazer, entao ele recua
+ * em vez de gritar junto com os outros. Cartao de contagem (alunos, check-ins)
+ * nunca recua, porque ali zero e noticia ruim e nao silencio.
+ */
 function Cartao({
   rotulo,
   valor,
   detalhe,
   tom = "normal",
+  quieto = false,
 }: {
   rotulo: string;
   valor: React.ReactNode;
-  detalhe: string;
+  detalhe?: string | null;
   tom?: "normal" | "urgente" | "aviso";
+  quieto?: boolean;
 }) {
   const moldura =
     tom === "urgente"
@@ -38,8 +51,13 @@ function Cartao({
       : tom === "aviso"
         ? "border-alerta/40 bg-alerta/[0.07]"
         : "border-linha bg-tinta-2";
-  const cor =
-    tom === "urgente" ? "text-raio-forte" : tom === "aviso" ? "text-alerta" : "text-papel";
+  const cor = quieto
+    ? "text-nevoa-fraca"
+    : tom === "urgente"
+      ? "text-raio-forte"
+      : tom === "aviso"
+        ? "text-alerta"
+        : "text-papel";
 
   return (
     <div className={`rounded-2xl border p-5 ${moldura}`}>
@@ -47,7 +65,7 @@ function Cartao({
         {rotulo}
       </p>
       <p className={`mt-3 font-display text-[42px] leading-none tabular ${cor}`}>{valor}</p>
-      <p className="mt-2 text-sm leading-snug text-nevoa">{detalhe}</p>
+      {detalhe && <p className="mt-2 text-sm leading-snug text-nevoa">{detalhe}</p>}
     </div>
   );
 }
@@ -80,9 +98,7 @@ function LinhaAtencao({ item }: { item: ItemAtencao }) {
       <Avatar nome={aluno.nome} />
       <div className="min-w-0 flex-1">
         <p className="truncate text-base font-semibold">{aluno.nome}</p>
-        <p className="mt-1 truncate text-sm text-nevoa">
-          {aluno.tipo === "consultoria" ? "Consultoria" : "Planilha"} · {detalhe}
-        </p>
+        <p className="mt-1 truncate text-sm text-nevoa">{detalhe}</p>
       </div>
       <span className="flex-none">
         <Pilula tom={TOM_DO_MOTIVO[motivo]}>{ROTULO_MOTIVO[motivo]}</Pilula>
@@ -139,6 +155,8 @@ export function VisaoDoPainel({ saudacao, mes, atencao, r, alunos, eventos }: Da
   // contagem propria, senao se perde no meio dos check-ins.
   const recadosHoje = eventos.filter((e) => e.recado).length;
 
+  const faltamTreinar = Math.max(0, r.previstosHoje - r.checkinsHoje);
+
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-wrap items-end gap-4">
@@ -163,25 +181,34 @@ export function VisaoDoPainel({ saudacao, mes, atencao, r, alunos, eventos }: Da
         <Cartao
           rotulo="Alunos ativos"
           valor={r.total}
-          detalhe={`${r.consultoria} consultoria · ${r.planilha} planilha`}
+          // A repartição só informa quando existem os dois planos. Com todo
+          // mundo na consultoria, "0 planilha" é uma linha para não dizer nada.
+          detalhe={
+            r.consultoria > 0 && r.planilha > 0
+              ? `${r.consultoria} consultoria · ${r.planilha} planilha`
+              : null
+          }
         />
         <Cartao
           rotulo="Pagamentos pendentes"
           valor={r.vencidos}
           tom={r.vencidos > 0 ? "urgente" : "normal"}
+          quieto={r.vencidos === 0}
           detalhe={
             r.vencidos === 0
-              ? "ninguém devendo"
+              ? null
               : r.emAberto > 0
                 ? `${emReais(r.emAberto)} em aberto${r.semValor ? " (falta valor de alguém)" : ""}`
                 : "sem valor de mensalidade cadastrado"
           }
         />
+        {/* "nos próximos 7 dias" era a definição da métrica, não um dado.
+            Definição pertence ao rótulo. */}
         <Cartao
-          rotulo="Fichas vencendo"
+          rotulo="Fichas vencendo em 7 dias"
           valor={r.fichasVencendo}
           tom={r.fichasVencendo > 0 ? "aviso" : "normal"}
-          detalhe="nos próximos 7 dias"
+          quieto={r.fichasVencendo === 0}
         />
         <Cartao
           rotulo="Check-ins hoje"
@@ -191,10 +218,12 @@ export function VisaoDoPainel({ saudacao, mes, atencao, r, alunos, eventos }: Da
               <span className="text-xl text-nevoa">/{r.previstosHoje}</span>
             </>
           }
+          // O "4/9" já diz quantos faltam. A linha só aparece quando falta
+          // alguém, que é quando ela vira tarefa.
           detalhe={
-            r.previstosHoje === 0
-              ? "ninguém tinha treino marcado"
-              : `${Math.max(0, r.previstosHoje - r.checkinsHoje)} ainda não treinaram`
+            faltamTreinar > 0
+              ? `${faltamTreinar} ainda não ${faltamTreinar === 1 ? "treinou" : "treinaram"}`
+              : null
           }
         />
       </div>
@@ -208,9 +237,6 @@ export function VisaoDoPainel({ saudacao, mes, atencao, r, alunos, eventos }: Da
                 {atencao.length}
               </span>
             )}
-            <span className="ml-auto hidden text-xs font-semibold uppercase tracking-[0.07em] text-nevoa sm:block">
-              ordenado por urgência
-            </span>
           </div>
 
           {atencao.length === 0 ? (
@@ -242,9 +268,7 @@ export function VisaoDoPainel({ saudacao, mes, atencao, r, alunos, eventos }: Da
                     <path d="M8.5 12.5 11 15l4.5-5" />
                   </svg>
                   <p className="max-w-[46ch] text-[15px] leading-relaxed text-nevoa">
-                    {emDia === 1
-                      ? "O outro aluno está em dia, com ficha válida e check-in recente."
-                      : `Os outros ${emDia} alunos estão em dia, com ficha válida e check-in recente.`}
+                    {emDia === 1 ? "O outro aluno está em dia." : `Os outros ${emDia} estão em dia.`}
                   </p>
                 </div>
               )}
@@ -278,15 +302,12 @@ export function VisaoDoPainel({ saudacao, mes, atencao, r, alunos, eventos }: Da
               <div className="bg-ok" style={{ width: `${percentualRecebido}%` }} />
               <div className="bg-raio" style={{ width: `${100 - percentualRecebido}%` }} />
             </div>
-            <div className="mt-3 flex flex-wrap gap-4">
-              <span className="flex items-center gap-2 text-sm text-nevoa">
-                <span className="h-2.5 w-2.5 rounded-[3px] bg-ok" /> Recebido
-              </span>
-              <span className="flex items-center gap-2 text-sm text-nevoa">
-                <span className="h-2.5 w-2.5 rounded-[3px] bg-raio" />
-                {r.emAberto > 0 ? `${emReais(r.emAberto)} em aberto` : "nada em aberto"}
-              </span>
-            </div>
+            {/* Valor, porcentagem, barra e legenda eram quatro formas de
+                dizer o mesmo. Ficaram duas, e o que falta receber só aparece
+                quando falta alguma coisa. */}
+            {r.emAberto > 0 && (
+              <p className="mt-3 text-sm text-nevoa">{emReais(r.emAberto)} em aberto</p>
+            )}
             {r.semValor && (
               <p className="mt-3 text-sm leading-relaxed text-nevoa">
                 Algum aluno está sem mensalidade cadastrada, então o total ainda não fecha.

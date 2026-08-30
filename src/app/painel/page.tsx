@@ -1,6 +1,5 @@
 import { criarClienteServidor } from "@/lib/supabase/server";
 import {
-  emQuilos,
   haQuantoTempo,
   hojeSP,
   juntarAlunos,
@@ -86,14 +85,10 @@ export default async function Painel() {
     eventos.push({
       id: `sessao-${s.id}`,
       aluno: nome,
-      detalhe:
-        [
-          s.bloco_treino?.nome ?? null,
-          emQuilos(s.peso_kg),
-          s.esforco ? `esforço ${s.esforco}` : null,
-        ]
-          .filter(Boolean)
-          .join(" · ") || "treino concluído",
+      // Só o nome do bloco. Peso e esforço têm cartão inteiro na tela de
+      // Treinos, com o recado junto; nesta coluna estreita eles roubavam a
+      // atenção do que importa aqui, que é quem treinou e quem escreveu.
+      detalhe: s.bloco_treino?.nome ?? "treino concluído",
       quando: haQuantoTempo(s.concluida_em, agora),
       em: s.concluida_em ?? `${hoje}T00:00:00Z`,
       chegada: false,

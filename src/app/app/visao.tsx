@@ -121,9 +121,11 @@ function CartaoDeCheckin({ feito }: { feito: boolean }) {
           <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
         </svg>
       </span>
+      {/* Sem a linha "Peso, esforço e como você se sentiu": ela descrevia o
+          formulário que abre no toque seguinte, e a pílula ao lado já diz o
+          que importa aqui, que é se falta fazer. */}
       <div className="min-w-0 flex-1">
         <p className="text-sm font-semibold">Check-in de hoje</p>
-        <p className="mt-0.5 text-xs text-nevoa">Peso, esforço e como você se sentiu</p>
       </div>
       <span
         className={`flex-none rounded-full px-3.5 py-2 text-xs font-semibold ${

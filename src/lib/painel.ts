@@ -332,9 +332,3 @@ export type EventoDoDia = {
   /** O aluno escreveu alguma coisa ao fechar o treino. */
   recado?: boolean;
 };
-
-/** Peso com virgula, que e como se le em portugues. */
-export function emQuilos(valor: number | null): string | null {
-  if (valor === null || valor === undefined) return null;
-  return `${String(valor).replace(".", ",")} kg`;
-}

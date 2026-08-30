@@ -74,10 +74,14 @@ export function Visao({ lista }: { lista: LinhaExercicio[] }) {
       <div className="flex flex-wrap items-end gap-4">
         <div>
           <h1 className="font-display text-3xl uppercase leading-none tracking-wide">Biblioteca</h1>
+          {/* Uma contagem só, que troca de conteúdo quando há filtro. Duas
+              faziam ele parar para descobrir qual responde à pergunta dele. */}
           <p className="mt-2.5 text-[15px] text-nevoa">
             {r.total === 0
               ? "Nenhum exercício cadastrado ainda."
-              : `${r.total} exercícios · ${r.comVideo} com vídeo, ${r.semVideo} ainda sem`}
+              : filtrando
+                ? `${filtrada.length} de ${r.total} exercícios`
+                : `${r.total} exercícios · ${r.comVideo} com vídeo, ${r.semVideo} ainda sem`}
           </p>
         </div>
         <div className="ml-auto">
@@ -142,14 +146,6 @@ export function Visao({ lista }: { lista: LinhaExercicio[] }) {
         </p>
       ) : (
         <div className="flex flex-col gap-5">
-          {filtrando && (
-            <p className="text-[15px] text-nevoa">
-              {filtrada.length === 1
-                ? "1 exercício encontrado"
-                : `${filtrada.length} exercícios encontrados`}
-            </p>
-          )}
-
           {secoes.map((s) => (
             <section
               key={s.grupo}

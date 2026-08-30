@@ -206,7 +206,9 @@ export function VisaoDaEvolucao({
         <>
           {ultimaLinha && MEDIDAS.some(([c]) => ultimaLinha[c] !== null) && (
             <section className="rounded-2xl border border-linha bg-tinta-2 px-[18px] py-4">
-              <Meta>Último registro · {curtaComMes(ultimaLinha.data)}</Meta>
+              {/* A unidade fica no rótulo do cartão, uma vez, em vez de uma
+                  linha inteira embaixo da grade. */}
+              <Meta>Último registro · {curtaComMes(ultimaLinha.data)} · em cm</Meta>
               <dl className="mt-3 grid grid-cols-4 gap-2">
                 {MEDIDAS.map(([chave, nome]) => (
                   <div key={chave}>
@@ -217,7 +219,6 @@ export function VisaoDaEvolucao({
                   </div>
                 ))}
               </dl>
-              <p className="mt-3 text-[11px] text-nevoa">medidas em centímetros</p>
             </section>
           )}
 

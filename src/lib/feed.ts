@@ -46,8 +46,6 @@ export type TreinoNoFeed = {
   id: string;
   alunoId: string;
   aluno: string;
-  /** "Consultoria" ou "Planilha". So para a linha de contexto. */
-  plano: string;
   whatsapp: string | null;
   data: string;
   /** "19:42", no fuso de Sao Paulo. */
@@ -205,7 +203,6 @@ export function montarFeed(
       id: s.id,
       alunoId: aluno.id,
       aluno: aluno.nome,
-      plano: aluno.tipo === "planilha" ? "Planilha" : "Consultoria",
       whatsapp: aluno.whatsapp,
       data: s.data,
       hora: horaSP(s.concluida_em),
@@ -279,14 +276,18 @@ export function mensagemDeResposta(treino: TreinoNoFeed, hoje: string): string {
   return `${abertura} Você anotou: “${recado}”`;
 }
 
-/** Uma linha com o que da para dizer em numeros. Vazia vira "treino concluído". */
+/**
+ * Uma linha com o que da para dizer em numeros. Vazia vira "treino concluído".
+ *
+ * Sao tres dados, e nao cinco. O plano do aluno nao muda como se le um treino,
+ * e a contagem de exercicios aparece sozinha ao abrir "Ver o treino". "de
+ * volume" fica: sem essa palavra o numero vira um kg solto ao lado do peso
+ * corporal do aluno, que esta na pilula logo acima.
+ */
 export function resumoEmNumeros(treino: TreinoNoFeed): string {
   const partes = [
     treino.totalSeries > 0
       ? `${treino.totalSeries} ${treino.totalSeries === 1 ? "série" : "séries"}`
-      : null,
-    treino.exercicios.length > 0
-      ? `${treino.exercicios.length} ${treino.exercicios.length === 1 ? "exercício" : "exercícios"}`
       : null,
     treino.volumeKg > 0 ? `${treino.volumeKg.toLocaleString("pt-BR")} kg de volume` : null,
     emTempo(treino.duracaoMin),

@@ -15,11 +15,11 @@ const NOME_DO_PLANO = {
 } as const;
 
 /** Ainda não existem. O aluno precisa saber que vêm, e que não sumiram. */
-const EM_BREVE = [
-  ["Semana", "A agenda do seu treino, dia a dia"],
-  ["Orientação alimentar", "O material que o Allisson monta para você"],
-  ["Chat", "Conversa direta com ele, sem sair do app"],
-] as const;
+/**
+ * Só os nomes. Descrever em detalhe o que ele ainda não pode usar é vender de
+ * novo uma coisa que ele já comprou, e o nome basta para dizer que vem aí.
+ */
+const EM_BREVE = ["Semana", "Orientação alimentar", "Chat"] as const;
 
 function Linha({ nome, valor }: { nome: string; valor: string }) {
   return (
@@ -131,10 +131,12 @@ export default async function Perfil() {
       <section className="flex flex-col gap-3">
         <Rotulo>Em breve</Rotulo>
         <ul className="overflow-hidden rounded-2xl border border-linha bg-tinta-2">
-          {EM_BREVE.map(([nome, detalhe]) => (
-            <li key={nome} className="border-t border-linha px-4 py-3 first:border-t-0">
-              <p className="font-semibold text-nevoa">{nome}</p>
-              <p className="mt-0.5 text-sm text-nevoa">{detalhe}</p>
+          {EM_BREVE.map((nome) => (
+            <li
+              key={nome}
+              className="border-t border-linha px-4 py-3.5 font-semibold text-nevoa first:border-t-0"
+            >
+              {nome}
             </li>
           ))}
         </ul>

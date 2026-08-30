@@ -229,9 +229,10 @@ conferir("resumo em numeros pula o que nao existe", () => {
   );
   const texto = resumoEmNumeros(dias[0].treinos[0]);
   assert.ok(texto.includes("2 séries"));
-  assert.ok(texto.includes("1 exercício"));
   assert.ok(texto.includes("800 kg"));
   assert.ok(texto.includes("1 h"));
+  // Tres dados, nao cinco: a contagem de exercicios saiu da linha.
+  assert.ok(!texto.includes("exercício"));
 
   const vazio = montarFeed(
     [sessao("s2", "a1", HOJE, { iniciada_em: `${HOJE}T22:00:00Z` })],

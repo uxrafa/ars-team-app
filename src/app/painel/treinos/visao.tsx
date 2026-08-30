@@ -105,9 +105,7 @@ function CartaoDeTreino({ treino, hoje }: { treino: TreinoNoFeed; hoje: string }
           {/* O nome nao e link. Vira alvo de 17px de altura, abaixo do piso
               de 44px, e o cartao ja tem o botao "Abrir a ficha" logo abaixo. */}
           <p className="text-base font-semibold">{treino.aluno}</p>
-          <p className="mt-1 text-sm text-nevoa">
-            {treino.plano} · {resumoEmNumeros(treino)}
-          </p>
+          <p className="mt-1 text-sm text-nevoa">{resumoEmNumeros(treino)}</p>
         </div>
 
         <div className="text-right">
@@ -218,13 +216,11 @@ export function VisaoDosTreinos({
         <div>
           <h1 className="font-display text-3xl uppercase leading-none tracking-wide">Treinos</h1>
           <p className="mt-2.5 text-[15px] text-nevoa">
+            {/* Sem "· N com recado": o número já está no filtro logo abaixo,
+                e lá ele é clicável. */}
             {total === 0
               ? `Nenhum treino registrado nos últimos ${DIAS_DO_FEED} dias.`
-              : `${total} ${total === 1 ? "treino" : "treinos"} nos últimos ${DIAS_DO_FEED} dias · ${
-                  recados === 0
-                    ? "nenhum recado"
-                    : `${recados} com recado${recados === 1 ? "" : "s"}`
-                }`}
+              : `${total} ${total === 1 ? "treino" : "treinos"} nos últimos ${DIAS_DO_FEED} dias`}
           </p>
         </div>
         <div className="ml-auto">

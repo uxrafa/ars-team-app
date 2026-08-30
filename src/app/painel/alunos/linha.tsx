@@ -166,9 +166,11 @@ export function LinhaAluno({ aluno, hoje }: { aluno: AlunoNaTela; hoje: string }
         >
           {iniciais(aluno.nome)}
         </span>
+        {/* Sem e-mail nem whatsapp embaixo do nome: ninguém escolhe aluno
+            pelo endereço, e vinte e seis deles empilhados eram a maior mancha
+            de texto da tela. Os dois aparecem ao abrir Editar. */}
         <div className="min-w-0">
           <p className="truncate text-base font-semibold">{aluno.nome}</p>
-          <p className="mt-0.5 truncate text-sm text-nevoa">{aluno.whatsapp || aluno.email}</p>
         </div>
       </div>
 
@@ -179,7 +181,7 @@ export function LinhaAluno({ aluno, hoje }: { aluno: AlunoNaTela; hoje: string }
       <div className="hidden lg:block">
         <Pilula tom={pagamento.tom}>{pagamento.texto}</Pilula>
         {aluno.mensalidade !== null && (
-          <p className="mt-1.5 font-mono text-[13px] text-nevoa">{emReais(aluno.mensalidade)}/mês</p>
+          <p className="mt-1.5 font-mono text-[13px] text-nevoa">{emReais(aluno.mensalidade)}</p>
         )}
       </div>
 
