@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useActionState } from "react";
 import { Logo } from "@/components/logo";
 import { Aviso, Botao, CLASSE_CAMPO, Rotulo } from "@/components/ui";
@@ -48,10 +49,17 @@ export default function Entrar() {
           </Botao>
         </form>
 
-        <p className="mt-7 text-center text-sm leading-relaxed text-nevoa">
-          Esqueceu a senha ou ainda não tem acesso?
-          <br />
-          Fale com o Allisson pelo WhatsApp.
+        <p className="mt-6 text-center">
+          <Link
+            href="/esqueci"
+            className="inline-flex min-h-11 items-center justify-center text-[15px] font-semibold text-raio-forte"
+          >
+            Esqueci minha senha
+          </Link>
+        </p>
+
+        <p className="mt-1 text-center text-sm leading-relaxed text-nevoa">
+          Ainda não tem acesso? Fale com o Allisson pelo WhatsApp.
         </p>
 
         <p className="mt-9 text-center text-sm leading-relaxed text-nevoa">
