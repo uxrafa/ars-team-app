@@ -39,10 +39,12 @@ export async function aceitarConvite(
   const token = String(dados.get("token") ?? "").trim();
   const nome = String(dados.get("nome") ?? "").trim();
   const senha = String(dados.get("senha") ?? "");
+  const confirmacao = String(dados.get("confirmacao") ?? "");
 
   if (!token) return { erro: "Link incompleto. Abra de novo o link que o Allisson mandou." };
   if (!nome) return { erro: "Escreva seu nome." };
   if (senha.length < 6) return { erro: "A senha precisa de pelo menos 6 caracteres." };
+  if (senha !== confirmacao) return { erro: "As duas senhas não estão iguais. Confira os dois campos." };
 
   const supabase = await criarClienteServidor();
 

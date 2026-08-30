@@ -2,7 +2,7 @@
 
 import { useActionState } from "react";
 import { Aviso, Botao } from "@/components/ui";
-import { CampoSenha } from "@/components/campo-senha";
+import { CamposDeSenha } from "@/components/campos-de-senha";
 import { definirSenha, type EstadoSenha } from "./acoes";
 
 const INICIAL: EstadoSenha = {};
@@ -16,17 +16,7 @@ export function FormularioDeSenha({ email }: { email: string }) {
         Criando uma senha nova para <span className="text-papel">{email}</span>.
       </p>
 
-      {/* Um campo só, com o olho, e não dois com "repita a senha": no celular,
-          na academia, digitar a mesma coisa duas vezes às cegas é o que mais
-          gera erro. Ver é melhor do que repetir. */}
-      <CampoSenha
-        name="senha"
-        rotulo="Senha nova"
-        autoComplete="new-password"
-        autoFocus
-        placeholder="Pelo menos 6 caracteres"
-        dica="Toque no olho para conferir o que você digitou."
-      />
+      <CamposDeSenha rotulo="Senha nova" />
 
       {estado.erro && <Aviso>{estado.erro}</Aviso>}
 

@@ -2,7 +2,7 @@
 
 import { useActionState } from "react";
 import { Aviso, Botao, CLASSE_CAMPO, Rotulo } from "@/components/ui";
-import { CampoSenha } from "@/components/campo-senha";
+import { CamposDeSenha } from "@/components/campos-de-senha";
 import { aceitarConvite, type EstadoAceite } from "./acoes";
 
 const INICIAL: EstadoAceite = {};
@@ -49,15 +49,7 @@ export function Formulario({
         />
       </label>
 
-      <CampoSenha
-        name="senha"
-        rotulo="Crie sua senha"
-        autoComplete="new-password"
-        required
-        minLength={6}
-        placeholder="Pelo menos 6 caracteres"
-        dica="Guarde bem: é com ela que você entra no app todo dia."
-      />
+      <CamposDeSenha rotulo="Crie sua senha" />
 
       {estado.erro && <Aviso>{estado.erro}</Aviso>}
       {estado.aviso && <Aviso tom="ok">{estado.aviso}</Aviso>}

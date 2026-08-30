@@ -27,7 +27,9 @@ export async function definirSenha(
   dados: FormData,
 ): Promise<EstadoSenha> {
   const senha = String(dados.get("senha") ?? "");
+  const confirmacao = String(dados.get("confirmacao") ?? "");
   if (senha.length < 6) return { erro: "A senha precisa de pelo menos 6 caracteres." };
+  if (senha !== confirmacao) return { erro: "As duas senhas não estão iguais. Confira os dois campos." };
 
   const supabase = await criarClienteServidor();
 
