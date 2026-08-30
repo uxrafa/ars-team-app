@@ -107,7 +107,9 @@ export default async function Alunos() {
             : `${semDados} alunos sem vencimento ou mensalidade.`}{" "}
           {/* Sai o "toque em Editar", que é instrução de primeira vez e está
               na mesma linha do problema. Fica o porquê, que não é óbvio. */}
-          <span className="text-nevoa">Sem isso a fila de cobrança fica vazia.</span>
+          <span className="text-nevoa">
+            Abra o aluno para preencher. Sem isso a fila de cobrança fica vazia.
+          </span>
         </p>
       )}
 

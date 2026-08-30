@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useState, useTransition } from "react";
 import { Aviso, Botao, BotaoLink } from "@/components/ui";
 import { criarRascunho } from "./acoes";
@@ -30,19 +29,7 @@ export function Comecar({
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex flex-wrap items-center gap-3">
-        <Link
-          href="/painel/alunos"
-          className="text-[15px] text-nevoa underline underline-offset-4 hover:text-papel"
-        >
-          Alunos
-        </Link>
-        <span aria-hidden="true" className="text-nevoa">
-          /
-        </span>
-        <span className="text-[15px] text-papel">{nome}</span>
-      </div>
-
+      {/* Sem migalha: o layout de /painel/alunos/[id] já diz de quem é. */}
       <section className="mx-auto w-full max-w-xl rounded-2xl border border-linha bg-tinta-2 p-8 text-center">
         <h1 className="font-display text-3xl uppercase leading-none tracking-wide">
           Sem ficha ainda

@@ -16,7 +16,7 @@ import {
 } from "@/lib/ficha";
 import { AbasDeTreino } from "./abas";
 import { Bloco, BlocoLeitura } from "./bloco";
-import { Lateral } from "./lateral";
+import { Lateral } from "../lateral";
 import { Seletor } from "./seletor";
 import { copiarFicha, encerrarFicha, publicarFicha, salvarFicha } from "./acoes";
 import type { FichaDeOutro } from "./page";
@@ -255,9 +255,9 @@ export function Editor({
         <section className="rounded-2xl border border-linha bg-tinta-2 p-5">
           <div className="flex flex-wrap items-start gap-3">
             <div className="min-w-0 flex-1">
-              <h1 className="font-display text-3xl uppercase leading-none tracking-wide">
-                Ficha de {primeiroNome}
-              </h1>
+              {/* "Ficha de Marcos" saiu: o cabeçalho do layout já diz o nome.
+                  Aqui basta o que a ficha tem dentro. */}
+              <h2 className="font-display text-2xl uppercase leading-none tracking-wide">Ficha</h2>
               <p className="mt-2.5 text-[15px] text-nevoa">
                 {r.blocos === 0
                   ? "Nenhum treino ainda."

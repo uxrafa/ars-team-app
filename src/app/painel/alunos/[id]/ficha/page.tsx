@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { criarClienteServidor } from "@/lib/supabase/server";
 import { BotaoLink } from "@/components/ui";
@@ -105,18 +104,10 @@ export default async function PaginaFicha({ params }: { params: Promise<{ id: st
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex flex-wrap items-center gap-3">
-        <Link
-          href="/painel/alunos"
-          className="text-[15px] text-nevoa underline underline-offset-4 hover:text-papel"
-        >
-          Alunos
-        </Link>
-        <span aria-hidden="true" className="text-nevoa">
-          /
-        </span>
-        <span className="text-[15px] text-papel">{aluno.nome}</span>
-        <BotaoLink href="/painel/biblioteca" aparencia="secundario" tamanho="sm" className="ml-auto">
+      {/* Sem migalha e sem nome do aluno: o layout de /painel/alunos/[id] já
+          diz de quem é esta ficha, e repetir empurraria o editor para baixo. */}
+      <div className="flex justify-end">
+        <BotaoLink href="/painel/biblioteca" aparencia="secundario" tamanho="sm">
           Ver biblioteca
         </BotaoLink>
       </div>

@@ -287,6 +287,26 @@ export function linkWhatsapp(numero: string | null, texto: string): string | nul
   return `https://wa.me/${comPais}?text=${encodeURIComponent(texto)}`;
 }
 
+/**
+ * Como o pagamento daquele aluno le, em pilula.
+ *
+ * Mora aqui porque a lista e a tela do aluno mostram a mesma coisa, e duas
+ * copias disso acabariam divergindo no dia em que aparecer um estado novo.
+ */
+export function estadoDoPagamento(a: {
+  status: "ativo" | "carencia" | "suspenso";
+  acesso_ate: string | null;
+  diasVencido: number | null;
+}): { tom: "ok" | "aviso" | "urgente" | "neutro"; texto: string } {
+  if (a.status === "suspenso") return { tom: "urgente", texto: "Suspenso" };
+  if (a.status === "carencia") return { tom: "aviso", texto: "Em carência" };
+  if (a.acesso_ate === null) return { tom: "neutro", texto: "Sem data" };
+  if (a.diasVencido !== null && a.diasVencido > 0) {
+    return { tom: "urgente", texto: `Venceu faz ${a.diasVencido} dias` };
+  }
+  return { tom: "ok", texto: "Em dia" };
+}
+
 export function iniciais(nome: string): string {
   const partes = nome.trim().split(/\s+/).filter(Boolean);
   if (!partes.length) return "?";
