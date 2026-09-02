@@ -3,7 +3,16 @@
 import { randomBytes } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { criarClienteServidor } from "@/lib/supabase/server";
-import { emailValido, limparWhatsapp, whatsappValido } from "@/lib/convite";
+import {
+  DIAS_DE_VALIDADE,
+  emailValido,
+  limparWhatsapp,
+  linkDoConvite,
+  whatsappValido,
+} from "@/lib/convite";
+import { assuntoDoConvite, corpoDoConvite, textoDoConvite } from "@/lib/email-convite";
+import { enviarEmail } from "@/lib/enviar-email";
+import { enderecoDoSite } from "@/lib/site";
 
 export type EstadoConvite = {
   erro?: string;
@@ -17,6 +26,31 @@ export type EstadoConvite = {
  */
 function novoToken(): string {
   return randomBytes(24).toString("base64url");
+}
+
+/**
+ * Manda o link por e-mail, se o e-mail estiver ligado.
+ *
+ * Fica DEPOIS do convite gravado e nao devolve erro para a tela de proposito:
+ * o convite ja existe e o link ja esta na tela para copiar. Enquanto nao
+ * houver dominio proprio verificado na Resend, `enviarEmail` nem chama rede
+ * (ver o comentario em `lib/enviar-email.ts`) e o caminho continua sendo o
+ * WhatsApp.
+ */
+async function avisarPorEmail(dados: {
+  nome: string;
+  email: string;
+  token: string;
+  tipo: "consultoria" | "planilha";
+}) {
+  const link = linkDoConvite(await enderecoDoSite(), dados.token);
+  const corpo = { nome: dados.nome, link, tipo: dados.tipo, diasDeValidade: DIAS_DE_VALIDADE };
+  await enviarEmail({
+    para: dados.email,
+    assunto: assuntoDoConvite(dados.nome),
+    html: corpoDoConvite(corpo),
+    texto: textoDoConvite(corpo),
+  });
 }
 
 function paraNumero(valor: string): number | null {
@@ -118,6 +152,8 @@ export async function criarConvite(
     return { erro: "Não consegui gerar o convite agora. Tente de novo em instantes." };
   }
 
+  await avisarPorEmail({ nome, email, token, tipo });
+
   revalidatePath("/painel/convites");
   revalidatePath("/painel");
   return { criado: { token, nome, whatsapp } };
@@ -191,6 +227,13 @@ export async function gerarNovoLink(id: string): Promise<ResultadoConvite> {
     console.error("gerarNovoLink:", error.message);
     return { erro: "Não consegui gerar o link novo agora. Tente de novo." };
   }
+
+  await avisarPorEmail({
+    nome: antigo.nome,
+    email: antigo.email,
+    token,
+    tipo: antigo.tipo,
+  });
 
   revalidatePath("/painel/convites");
   return { ok: true, token };
