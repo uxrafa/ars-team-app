@@ -11,6 +11,12 @@
  * Para ligar, depois do dominio verificado na Resend:
  *   RESEND_API_KEY=re_...                        (Vercel, nunca no repositorio)
  *   EMAIL_REMETENTE=ARS Team <contato@arsteam.com.br>
+ *   EMAIL_RESPOSTA=arsteamgym@gmail.com
+ *
+ * O EMAIL_RESPOSTA existe porque comprar o dominio nao cria caixa de entrada:
+ * `contato@arsteam.com.br` sabe mandar e nao sabe receber. Sem `Reply-To`, o
+ * aluno que apertasse "responder" escreveria para o vazio. Com ele, a resposta
+ * cai no Gmail que o Allisson ja le todo dia.
  *
  * A chave da Resend so manda e-mail. Nao e a service role key da Supabase e
  * nao toca no banco.
@@ -39,10 +45,11 @@ export type EmailParaEnviar = {
 export async function enviarEmail(email: EmailParaEnviar): Promise<ResultadoDoEnvio> {
   const chave = process.env.RESEND_API_KEY;
   const remetente = process.env.EMAIL_REMETENTE;
+  const resposta = process.env.EMAIL_RESPOSTA;
   if (!chave || !remetente) return { enviado: false, motivo: "desligado" };
 
   try {
-    const resposta = await fetch(RESEND, {
+    const r = await fetch(RESEND, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${chave}`,
@@ -54,13 +61,14 @@ export async function enviarEmail(email: EmailParaEnviar): Promise<ResultadoDoEn
         subject: email.assunto,
         html: email.html,
         text: email.texto,
+        ...(resposta ? { reply_to: resposta } : {}),
       }),
     });
 
-    if (!resposta.ok) {
+    if (!r.ok) {
       // O corpo da Resend diz o motivo (dominio nao verificado, destinatario
       // fora da conta, chave errada). Vai para o log da Vercel, nao para a tela.
-      console.error("enviarEmail:", resposta.status, await resposta.text());
+      console.error("enviarEmail:", r.status, await r.text());
       return { enviado: false, motivo: "recusado" };
     }
     return { enviado: true };
