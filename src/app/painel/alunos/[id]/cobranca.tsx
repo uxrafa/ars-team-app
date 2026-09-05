@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Aviso, Botao, CLASSE_CAMPO, Rotulo } from "@/components/ui";
+import { Aviso, Botao, BotaoLink, CLASSE_CAMPO, Rotulo } from "@/components/ui";
 import { emReais } from "@/lib/painel";
 import { salvarCobranca, type DadosCobranca } from "../acoes";
 
@@ -51,7 +51,6 @@ export function Cobranca({
     whatsapp: aluno.whatsapp ?? "",
     tipo: aluno.tipo,
     status: aluno.status,
-    acesso_ate: aluno.acesso_ate ?? "",
     mensalidade: aluno.mensalidade !== null ? String(aluno.mensalidade).replace(".", ",") : "",
   };
   const [form, setForm] = useState<DadosCobranca>(inicial);
@@ -137,16 +136,6 @@ export function Cobranca({
             </label>
 
             <label className="flex flex-col gap-2">
-              <Rotulo>Pago até</Rotulo>
-              <input
-                type="date"
-                value={form.acesso_ate}
-                onChange={(e) => setForm({ ...form, acesso_ate: e.target.value })}
-                className={CLASSE_CAMPO}
-              />
-            </label>
-
-            <label className="flex flex-col gap-2">
               <Rotulo>Mensalidade</Rotulo>
               <input
                 value={form.mensalidade}
@@ -157,6 +146,13 @@ export function Cobranca({
               />
             </label>
           </div>
+
+          {/* Explica uma ausência, e por isso fica: o campo de vencimento
+              estava aqui e sumiu. */}
+          <p className="text-sm leading-relaxed text-nevoa">
+            O &ldquo;pago até&rdquo; não se digita mais: ele anda quando um pagamento é
+            registrado no Financeiro.
+          </p>
 
           {erro && <Aviso>{erro}</Aviso>}
 
@@ -187,6 +183,16 @@ export function Cobranca({
           <Linha rotulo="Pago até" valor={curta(aluno.acesso_ate)} />
           <Linha rotulo="WhatsApp" valor={aluno.whatsapp || "não cadastrado"} />
           <Linha rotulo="E-mail" valor={aluno.email} />
+
+          <div className="mt-4">
+            <BotaoLink
+              href={`/painel/financeiro?aluno=${aluno.id}`}
+              aparencia="secundario"
+              tamanho="sm"
+            >
+              Registrar pagamento
+            </BotaoLink>
+          </div>
         </div>
       )}
     </section>

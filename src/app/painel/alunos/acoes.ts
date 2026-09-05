@@ -10,7 +10,6 @@ export type DadosCobranca = {
   whatsapp: string;
   tipo: "consultoria" | "planilha";
   status: "ativo" | "carencia" | "suspenso";
-  acesso_ate: string;
   mensalidade: string;
 };
 
@@ -22,7 +21,12 @@ function paraNumero(valor: string): number | null {
 }
 
 /**
- * Guarda plano, status, vencimento e mensalidade de um aluno.
+ * Guarda plano, status e mensalidade de um aluno.
+ *
+ * `acesso_ate` NAO entra aqui, e nao e esquecimento: desde a migracao 0014 o
+ * vencimento e consequencia de um pagamento registrado, e quem o move e o
+ * gatilho no banco. Deixar o campo aberto nesta tela criaria dois donos da
+ * mesma data -- e o digitado seria o errado, porque nao teria dinheiro atras.
  *
  * A trava de verdade e dupla no banco: a RLS so deixa admin tocar em linha
  * alheia, e o gatilho da migracao 0009 impede que um aluno mexa nestes
@@ -60,7 +64,6 @@ export async function salvarCobranca(dados: DadosCobranca): Promise<ResultadoAlu
       whatsapp: dados.whatsapp.trim() || null,
       tipo: dados.tipo,
       status: dados.status,
-      acesso_ate: dados.acesso_ate || null,
       mensalidade,
     })
     .eq("id", dados.id);
@@ -72,5 +75,6 @@ export async function salvarCobranca(dados: DadosCobranca): Promise<ResultadoAlu
 
   revalidatePath("/painel");
   revalidatePath("/painel/alunos");
+  revalidatePath(`/painel/alunos/${dados.id}`);
   return { ok: true };
 }

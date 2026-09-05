@@ -220,7 +220,21 @@ export function montarAtencao(alunos: Aluno[], hoje: string): ItemAtencao[] {
 
 export type Resumo = ReturnType<typeof resumo>;
 
-export function resumo(alunos: Aluno[], checkinsHoje: number, hoje: string) {
+/**
+ * Os numeros do topo do painel.
+ *
+ * `recebidoNoMes` vem de fora, ja somado da tabela `pagamento`. Ate a
+ * migracao 0014 nao existia registro de valor recebido, e o unico numero
+ * possivel era a soma das mensalidades de quem estava em dia -- a carteira
+ * ativa, que um aluno com trimestre pago em marco inflava em abril, maio e
+ * junho sem ter pago nada nesses meses. Aquilo era curativo; isto e a conta.
+ */
+export function resumo(
+  alunos: Aluno[],
+  checkinsHoje: number,
+  hoje: string,
+  recebidoNoMes: number,
+) {
   const consultoria = alunos.filter((a) => a.tipo === "consultoria").length;
   const planilha = alunos.filter((a) => a.tipo === "planilha").length;
 
@@ -241,23 +255,6 @@ export function resumo(alunos: Aluno[], checkinsHoje: number, hoje: string) {
     (a) => a.tipo === "consultoria" && (a.anamnese?.dias_disponiveis ?? []).includes(dow),
   ).length;
 
-  // ATENCAO AO NOME: isto NAO e faturamento do mes.
-  //
-  // Nao existe registro de pagamento no banco -- so existe `acesso_ate`, que
-  // diz ate quando o aluno esta pago. Entao a unica conta possivel hoje e a
-  // soma das mensalidades de quem esta em dia: quanto vale a carteira ativa.
-  //
-  // Um aluno que pagou em marco com acesso ate junho entra neste numero em
-  // abril, maio e junho, sem ter pago nada nesses meses. Chamar isso de
-  // "recebido" faria o Allisson contar faturamento errado.
-  //
-  // Vira faturamento de verdade quando existir tabela de pagamento, com uma
-  // linha por valor recebido e a data em que entrou.
-  const mensalidadesEmDia = alunos.reduce((soma, a) => {
-    const emDia = !a.acesso_ate || diasEntre(a.acesso_ate, hoje) <= 0;
-    return emDia ? soma + (a.mensalidade ?? 0) : soma;
-  }, 0);
-
   return {
     total: alunos.length,
     consultoria,
@@ -268,7 +265,7 @@ export function resumo(alunos: Aluno[], checkinsHoje: number, hoje: string) {
     fichasVencendo,
     previstosHoje,
     checkinsHoje,
-    mensalidadesEmDia,
+    recebidoNoMes,
   };
 }
 

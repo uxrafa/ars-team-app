@@ -25,8 +25,14 @@ export default async function Painel() {
   const hoje = hojeSP();
   const agora = new Date();
 
-  const [{ data: perfis }, { data: anamneses }, { data: protocolos }, { data: checkins }, { data: sessoesDeHoje }] =
-    await Promise.all([
+  const [
+    { data: perfis },
+    { data: anamneses },
+    { data: protocolos },
+    { data: checkins },
+    { data: sessoesDeHoje },
+    { data: recebidos },
+  ] = await Promise.all([
       supabase
         .from("perfis")
         .select("id, nome, email, whatsapp, tipo, status, acesso_ate, mensalidade, criado_em")
@@ -55,7 +61,21 @@ export default async function Painel() {
         .eq("data", hoje)
         .eq("status", "concluida")
         .order("concluida_em", { ascending: false, nullsFirst: false }),
+      // 3) o que entrou de dinheiro neste mes. So o valor, e so o que nao foi
+      //    estornado: o cartao do topo soma, nao lista.
+      supabase
+        .from("pagamento")
+        .select("valor")
+        .gte("recebido_em", `${hoje.slice(0, 7)}-01`)
+        .is("estornado_em", null),
     ]);
+
+  // `numeric` pode voltar como texto do PostgREST, e somar texto daria
+  // "250250" no lugar de 500 sem ninguem perceber num mes calmo.
+  const recebidoNoMes = ((recebidos ?? []) as { valor: number | string }[]).reduce(
+    (soma, p) => soma + Number(p.valor),
+    0,
+  );
 
   const alunos = juntarAlunos(
     (perfis ?? []) as LinhaPerfil[],
@@ -128,8 +148,9 @@ export default async function Painel() {
   return (
     <VisaoDoPainel
       saudacao={horaSP < 12 ? "Bom dia" : horaSP < 18 ? "Boa tarde" : "Boa noite"}
+      mes={hoje.slice(0, 7)}
       atencao={montarAtencao(alunos, hoje)}
-      r={resumo(alunos, (sessoesDeHoje ?? []).length, hoje)}
+      r={resumo(alunos, (sessoesDeHoje ?? []).length, hoje, recebidoNoMes)}
       alunos={alunos}
       eventos={eventos.slice(0, 6)}
     />

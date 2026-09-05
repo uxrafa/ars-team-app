@@ -13,6 +13,7 @@ import {
   type ItemAtencao,
   type Resumo,
 } from "@/lib/painel";
+import { nomeDoMes } from "@/lib/pagamento";
 
 const TOM_DO_MOTIVO: Record<string, Tom> = {
   pagamento: "urgente",
@@ -133,20 +134,15 @@ function LinhaAtencao({ item }: { item: ItemAtencao }) {
 
 export type DadosDaVisao = {
   saudacao: string;
+  /** "2026-09". So para o cartao do dinheiro dizer de que mes ele fala. */
+  mes: string;
   atencao: ItemAtencao[];
   r: Resumo;
   alunos: Aluno[];
   eventos: EventoDoDia[];
 };
 
-export function VisaoDoPainel({ saudacao, atencao, r, alunos, eventos }: DadosDaVisao) {
-  // Quanto da carteira esta em dia. Nao e "quanto foi recebido": ver a nota
-  // em `resumo()`, em lib/painel.ts.
-  const percentualEmDia =
-    r.mensalidadesEmDia + r.emAberto > 0
-      ? Math.round((r.mensalidadesEmDia / (r.mensalidadesEmDia + r.emAberto)) * 100)
-      : 100;
-
+export function VisaoDoPainel({ saudacao, mes, atencao, r, alunos, eventos }: DadosDaVisao) {
   // A frase conta PESSOAS. Um aluno pode estar na fila por dois motivos, e
   // "5 coisas precisam de voce" nao e o que ele quer saber.
   const naFila = quantosAlunosNaFila(atencao);
@@ -287,33 +283,33 @@ export function VisaoDoPainel({ saudacao, atencao, r, alunos, eventos }: DadosDa
         </section>
 
         <div className="flex flex-col gap-5">
-          <section className="rounded-2xl border border-linha bg-tinta-2 p-5">
-            <div className="flex items-baseline">
+          {/* ANTES ISTO DIZIA "MENSALIDADES EM DIA", que era a carteira ativa
+              e não faturamento: um aluno com trimestre pago em março entrava
+              no número em abril, maio e junho sem ter pago nada. Com a tabela
+              `pagamento` (migração 0014) o número passou a ser o dinheiro que
+              entrou mesmo, somado pela data em que entrou. */}
+          <section className="flex flex-col overflow-hidden rounded-2xl border border-linha bg-tinta-2">
+            <div className="p-5">
               <p className="text-xs font-semibold uppercase tracking-[0.07em] text-nevoa">
-                Mensalidades em dia
+                Recebido em {nomeDoMes(mes, false)}
               </p>
-              <p className="ml-auto font-mono text-[13px] text-nevoa">
-                {percentualEmDia}%
+              <p className="mt-3 font-display text-[34px] leading-none tabular">
+                {emReais(r.recebidoNoMes)}
               </p>
+              {/* Só aparece quando falta alguma coisa: é aí que vira tarefa. */}
+              {r.emAberto > 0 && (
+                <p className="mt-3 text-sm text-nevoa">
+                  {emReais(r.emAberto)} em aberto
+                  {r.semValor ? ", e falta a mensalidade de alguém" : ""}
+                </p>
+              )}
             </div>
-            <p className="mt-3 font-display text-[34px] leading-none tabular">
-              {emReais(r.mensalidadesEmDia)}
-            </p>
-            <div className="mt-4 flex h-2.5 overflow-hidden rounded-full bg-tinta-3">
-              <div className="bg-ok" style={{ width: `${percentualEmDia}%` }} />
-              <div className="bg-raio" style={{ width: `${100 - percentualEmDia}%` }} />
-            </div>
-            {/* Valor, porcentagem, barra e legenda eram quatro formas de
-                dizer o mesmo. Ficaram duas, e o que falta receber só aparece
-                quando falta alguma coisa. */}
-            {r.emAberto > 0 && (
-              <p className="mt-3 text-sm text-nevoa">{emReais(r.emAberto)} em aberto</p>
-            )}
-            {r.semValor && (
-              <p className="mt-3 text-sm leading-relaxed text-nevoa">
-                Algum aluno está sem mensalidade cadastrada, então o total ainda não fecha.
-              </p>
-            )}
+            <Link
+              href="/painel/financeiro"
+              className="mt-auto border-t border-linha px-5 py-4 text-[15px] font-semibold text-raio-forte transition-colors hover:bg-tinta-3/40"
+            >
+              {r.recebidoNoMes > 0 ? "Ver o mês no Financeiro" : "Registrar um pagamento"}
+            </Link>
           </section>
 
           <section className="flex flex-1 flex-col overflow-hidden rounded-2xl border border-linha bg-tinta-2">
@@ -380,9 +376,9 @@ export function VisaoDoPainel({ saudacao, atencao, r, alunos, eventos }: DadosDa
 
       {r.total > 0 && alunos.every((a) => a.mensalidade === null && a.acesso_ate === null) && (
         <p className="rounded-2xl border border-linha bg-tinta-2 px-5 py-4 text-[15px] leading-relaxed text-nevoa">
-          Nenhum aluno tem data de vencimento nem mensalidade preenchida ainda, então a fila de
-          cobrança e o total do mês ficam vazios. Isso se preenche na tela de alunos, e na entrega 2B
-          o pagamento passa a atualizar sozinho.{" "}
+          Nenhum aluno tem mensalidade cadastrada nem pagamento registrado ainda, então a fila de
+          cobrança fica vazia. A mensalidade se preenche na tela do aluno, e o vencimento passa a
+          andar sozinho quando o primeiro pagamento entrar no Financeiro.{" "}
           <span className="text-nevoa">Ver dias sem check-in e fichas vencendo já funciona.</span>
         </p>
       )}

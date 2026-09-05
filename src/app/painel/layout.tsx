@@ -8,19 +8,23 @@ import { Abas } from "./abas";
 export const metadata = { title: "Painel · ARS Team" };
 
 // A ordem é a do desenho aprovado: Painel, Alunos, Biblioteca. Convites veio
-// depois e entra ao lado, antes do Financeiro que ainda não existe. Treinos
-// fica colado em Alunos porque é a mesma pergunta vista do outro lado: lá é
-// quem são, aqui é o que fizeram.
+// depois e entra ao lado, e o Financeiro fecha a fileira. Treinos fica colado
+// em Alunos porque é a mesma pergunta vista do outro lado: lá é quem são,
+// aqui é o que fizeram.
 const ABAS = [
   { href: "/painel", nome: "Painel" },
   { href: "/painel/alunos", nome: "Alunos" },
   { href: "/painel/treinos", nome: "Treinos" },
   { href: "/painel/biblioteca", nome: "Biblioteca" },
   { href: "/painel/convites", nome: "Convites" },
+  { href: "/painel/financeiro", nome: "Financeiro" },
 ] as const;
 
-/** Ainda nao existem, mas o Allisson precisa ver para onde a coisa vai. */
-const EM_BREVE = ["Financeiro"] as const;
+/**
+ * Aba desenhada e ainda nao construida. Vazia hoje: o Financeiro saiu daqui
+ * quando a tabela `pagamento` entrou. Fica porque a lista volta a encher.
+ */
+const EM_BREVE: readonly string[] = [];
 
 export default async function LayoutPainel({
   children,

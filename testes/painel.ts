@@ -130,13 +130,13 @@ conferir("admin nunca aparece na lista de alunos", () => {
 
 conferir("resumo recebe a contagem de check-ins pronta", () => {
   const alunos = juntarAlunos([perfil("a"), perfil("b", { tipo: "planilha" })], [], [], []);
-  const r = resumo(alunos, 3, HOJE);
+  const r = resumo(alunos, 3, HOJE, 0);
   assert.equal(r.checkinsHoje, 3);
   assert.equal(r.consultoria, 1);
   assert.equal(r.planilha, 1);
 });
 
-conferir("vencido conta em aberto, em dia conta na carteira ativa", () => {
+conferir("vencido conta em aberto, e o recebido do mes vem de fora", () => {
   const alunos = juntarAlunos(
     [
       perfil("a", { acesso_ate: "2026-08-30", mensalidade: 250 }), // vencido
@@ -146,10 +146,12 @@ conferir("vencido conta em aberto, em dia conta na carteira ativa", () => {
     [],
     [],
   );
-  const r = resumo(alunos, 0, HOJE);
+  const r = resumo(alunos, 0, HOJE, 940);
   assert.equal(r.emAberto, 250);
-  // Nao e faturamento: e a soma das mensalidades de quem esta em dia.
-  assert.equal(r.mensalidadesEmDia, 300);
+  // O recebido NAO se deduz das mensalidades: quem esta em dia pode ter pago
+  // um trimestre em marco e nao ter posto um real neste mes. Ele chega
+  // somado da tabela `pagamento`, e o resumo so repassa.
+  assert.equal(r.recebidoNoMes, 940);
 });
 
 /* --- fila -------------------------------------------------------------- */
