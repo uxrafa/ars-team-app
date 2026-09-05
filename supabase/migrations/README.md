@@ -261,12 +261,29 @@ e `gateway_evento` sao anotacao interna. No dia em que a tela do aluno pedir
 historico, a policy ganha `aluno_id = auth.uid()` e as colunas internas saem por
 uma view.
 
-Validada em 05/09/2026 com 10 verificacoes em transacao abortada, no banco de
-verdade: emenda no vencimento, buraco nao cobrado, trimestre somando a partir da
-base certa, estorno devolvendo o vencimento nos dois niveis, recusa de reescrita
-de valor, recusa de desestorno, recusa de data futura, recusa de evento de
-gateway repetido e recusa de `origem = gateway` sem `gateway_id`. O banco ficou
-com zero pagamentos, que e como estava.
+Validada em 05/09/2026 em duas rodadas, as duas em transacao abortada no banco
+de verdade. O banco ficou com zero pagamentos, que e como estava.
+
+**Regra (10 verificacoes, como postgres):** emenda no vencimento, buraco nao
+cobrado, trimestre somando a partir da base certa, estorno devolvendo o
+vencimento nos dois niveis, recusa de reescrita de valor, recusa de desestorno,
+recusa de data futura, recusa de evento de gateway repetido e recusa de
+`origem = gateway` sem `gateway_id`.
+
+**RLS (11 verificacoes, com as contas reais).** A primeira rodada nao provava
+RLS: postgres passa por cima dela. Esta rodou com `set local role authenticated`
+e o `sub` do JWT apontando para cada perfil, que e o contexto em que a policy
+realmente decide. Um dos dois admins virou `consultoria` dentro da transacao
+para servir de aluno, ja que ainda nao existe nenhum.
+
+Como **admin logado**: registra pagamento, le o que registrou, o gatilho move o
+`acesso_ate` mesmo rodando sob RLS, o `delete` afeta zero linhas (nao ha policy)
+e a reescrita de valor e recusada.
+
+Como **aluno logado**: nao le pagamento nenhum, **nem o proprio** -- a consulta
+volta vazia, e nao com erro, que e como RLS nega; nao consegue registrar
+pagamento para si (seria dar acesso de graca); o estorno afeta zero linhas; e o
+gatilho da 0009 continua recusando que ele mexa no proprio vencimento.
 
 ## Nota sobre o banco atual
 
