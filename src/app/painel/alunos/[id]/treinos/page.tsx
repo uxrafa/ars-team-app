@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { criarClienteServidor } from "@/lib/supabase/server";
+import { carregarAluno } from "../carregar";
 import { hojeSP } from "@/lib/painel";
 import { horaSP } from "@/lib/feed";
 import {
@@ -37,11 +38,8 @@ export default async function TreinosDoAluno({ params }: { params: Promise<{ id:
   const supabase = await criarClienteServidor();
   const hoje = hojeSP();
 
-  const { data: aluno } = await supabase
-    .from("perfis")
-    .select("nome")
-    .eq("id", id)
-    .maybeSingle<{ nome: string }>();
+  // Vem do mesmo `cache` que o layout ja aqueceu nesta requisicao.
+  const aluno = await carregarAluno(id);
   if (!aluno) notFound();
 
   const desde = inicioDaJanela(hoje);

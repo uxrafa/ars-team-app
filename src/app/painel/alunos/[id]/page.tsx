@@ -3,7 +3,7 @@ import { criarClienteServidor } from "@/lib/supabase/server";
 import { diasEntre, hojeSP } from "@/lib/painel";
 import type { LinhaAnamneseFicha } from "@/lib/ficha";
 import { VisaoDoResumo, type FichaNoResumo } from "./visao";
-import type { PerfilDoAluno } from "./layout";
+import { carregarAluno } from "./carregar";
 
 export const metadata = { title: "Aluno · ARS Team" };
 
@@ -15,13 +15,11 @@ export default async function ResumoDoAluno({ params }: { params: Promise<{ id: 
   const supabase = await criarClienteServidor();
   const hoje = hojeSP();
 
-  const [{ data: aluno }, { data: anamnese }, { data: protocolos }, { data: sessoes }] =
+  // `carregarAluno` ja foi chamada pelo layout nesta mesma requisicao: o
+  // `cache` do React devolve o resultado sem ir ao banco de novo.
+  const [aluno, { data: anamnese }, { data: protocolos }, { data: sessoes }] =
     await Promise.all([
-      supabase
-        .from("perfis")
-        .select("id, nome, email, whatsapp, tipo, status, acesso_ate, mensalidade, criado_em")
-        .eq("id", id)
-        .maybeSingle<PerfilDoAluno>(),
+      carregarAluno(id),
       supabase
         .from("anamnese")
         .select(

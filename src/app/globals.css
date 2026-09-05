@@ -115,3 +115,25 @@ h3 {
 .tabular {
   font-variant-numeric: tabular-nums;
 }
+
+/* --- A faixa da barra de status, no modo aplicativo ------------------------
+   Instalado na tela inicial, o app deixa de ter barra de navegador e o
+   conteudo sobe ate a borda de cima do aparelho -- por baixo do relogio e da
+   bateria. E consequencia direta de duas escolhas nossas, as duas certas:
+   `viewportFit: "cover"` e `statusBarStyle: "black-translucent"`, que sao o
+   que faz o preto do app ir ate a borda em vez de deixar uma tarja cinza.
+
+   O preco e ter que devolver esse espaco na mao. `env(safe-area-inset-top)`
+   vale a altura da area ocupada pelo sistema: uns 47px num iPhone com notch,
+   e ZERO no navegador e no desktop -- entao a mesma regra serve para todos os
+   casos, sem media query e sem detectar aparelho. */
+.topo-seguro {
+  padding-top: env(safe-area-inset-top);
+}
+
+/* Mesma ideia nas laterais, para o celular deitado nao esconder texto atras
+   do notch. */
+.lados-seguros {
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+}

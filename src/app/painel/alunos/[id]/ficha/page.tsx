@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { criarClienteServidor } from "@/lib/supabase/server";
+import { carregarAluno } from "../carregar";
 import { BotaoLink } from "@/components/ui";
 import type { ExercicioEscolhivel } from "@/lib/biblioteca";
 import type { LinhaAnamneseFicha, StatusProtocolo } from "@/lib/ficha";
@@ -20,22 +21,22 @@ export default async function PaginaFicha({ params }: { params: Promise<{ id: st
   const { id: alunoId } = await params;
   const supabase = await criarClienteServidor();
 
-  const { data: aluno } = await supabase
-    .from("perfis")
-    .select("id, nome, email, tipo")
-    .eq("id", alunoId)
-    .maybeSingle<{ id: string; nome: string; email: string; tipo: string }>();
-
-  if (!aluno) notFound();
-
+  // O aluno vem do `cache` do layout; o protocolo nao depende dele, entao os
+  // dois saem juntos em vez de um esperar o outro.
+  //
   // Rascunho ganha do ativo: se existe um rascunho, é nele que ele estava
   // trabalhando. A ficha ativa continua no ar para o aluno enquanto isso.
-  const { data: protocolos } = await supabase
-    .from("protocolo")
-    .select("id, nome, inicio, fim, status, observacoes")
-    .eq("aluno_id", alunoId)
-    .in("status", ["rascunho", "ativo"])
-    .order("status");
+  const [aluno, { data: protocolos }] = await Promise.all([
+    carregarAluno(alunoId),
+    supabase
+      .from("protocolo")
+      .select("id, nome, inicio, fim, status, observacoes")
+      .eq("aluno_id", alunoId)
+      .in("status", ["rascunho", "ativo"])
+      .order("status"),
+  ]);
+
+  if (!aluno) notFound();
 
   const protocolo = (protocolos ?? [])[0] as
     | {

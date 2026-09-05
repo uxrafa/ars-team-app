@@ -28,7 +28,10 @@ export function TopoDoApp() {
   const titulo = TITULO.find(([padrao]) => padrao.test(caminho))?.[1] ?? null;
 
   return (
-    <header className="sticky top-0 z-30 border-b border-linha bg-[rgba(11,11,12,0.85)] backdrop-blur-md">
+    // `topo-seguro` desce o conteudo abaixo do relogio quando o app esta
+    // instalado na tela inicial. O fundo continua subindo ate a borda, que e o
+    // que faz o preto encostar no topo do aparelho em vez de virar tarja.
+    <header className="topo-seguro sticky top-0 z-30 border-b border-linha bg-[rgba(11,11,12,0.85)] backdrop-blur-md">
       <div className="mx-auto flex h-[53px] max-w-md items-center gap-2.5 px-5">
         {titulo ? (
           <>

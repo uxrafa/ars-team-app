@@ -61,7 +61,7 @@ export default async function LayoutPainel({
 
   return (
     <div className="min-h-dvh">
-      <header className="border-b border-linha bg-tinta-2">
+      <header className="topo-seguro border-b border-linha bg-tinta-2">
         <div className="mx-auto flex h-16 max-w-[1440px] items-center gap-8 px-6 lg:px-8">
           <Link href="/painel" className="flex-none py-4">
             <Logo className="h-5 w-auto text-papel" />

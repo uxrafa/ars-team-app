@@ -91,7 +91,7 @@ export function Visao({ lista }: { lista: LinhaExercicio[] }) {
 
       {/* A barra de filtro gruda no topo: com 121 itens, rolar até o fim e
           perder a busca de vista é o incômodo óbvio. */}
-      <div className="sticky top-0 z-30 -mx-6 flex flex-col gap-3 border-b border-linha bg-tinta/95 px-6 py-4 backdrop-blur lg:-mx-8 lg:px-8">
+      <div className="sticky top-0 z-30 -mx-6 flex flex-col gap-3 border-b border-linha bg-tinta/95 px-6 pb-4 pt-[calc(1rem+env(safe-area-inset-top))] backdrop-blur lg:-mx-8 lg:px-8">
         <div className="flex flex-wrap items-center gap-3">
           <label className="relative min-w-[260px] flex-1">
             <span className="sr-only">Buscar exercício</span>

@@ -56,7 +56,25 @@ export default async function Hoje({
   // O acesso de verdade é a mensalidade. Nada é apagado, só fica em espera.
   if (perfil?.status === "suspenso") return <AcessoSuspenso nome={primeiroNome} />;
 
-  const { protocolo, blocos } = await carregarFichaAtiva(supabase, alunoId);
+  // TRES PERGUNTAS INDEPENDENTES, DE UMA VEZ SO.
+  //
+  // A ficha, a anamnese e o historico de sessoes nao dependem um do outro --
+  // so precisam do id do aluno. Em fila eram tres idas ao banco somadas, e
+  // esta e a tela de abertura do app: e o primeiro carregamento que o aluno
+  // sente, no 4G da academia. Buscar as tres juntas custa a mais lenta, e nao
+  // a soma das tres.
+  //
+  // O preco e buscar sessoes que a tela vai descartar se ele ainda nao
+  // respondeu a anamnese -- caso que acontece uma vez na vida de cada aluno.
+  const [{ protocolo, blocos }, { data: anamnese }, sessoes] = await Promise.all([
+    carregarFichaAtiva(supabase, alunoId),
+    supabase
+      .from("anamnese")
+      .select("status, dias_disponiveis")
+      .eq("aluno_id", alunoId)
+      .maybeSingle<{ status: "rascunho" | "enviada"; dias_disponiveis: number[] | null }>(),
+    carregarSessoes(supabase, alunoId),
+  ]);
 
   if (perfil?.tipo === "planilha") {
     if (!protocolo) return <EsperandoFicha primeiroNome={primeiroNome} />;
@@ -70,12 +88,6 @@ export default async function Hoje({
     );
   }
 
-  const { data: anamnese } = await supabase
-    .from("anamnese")
-    .select("status, dias_disponiveis")
-    .eq("aluno_id", alunoId)
-    .maybeSingle<{ status: "rascunho" | "enviada"; dias_disponiveis: number[] | null }>();
-
   if (anamnese?.status !== "enviada") {
     return <SemAnamnese primeiroNome={primeiroNome} comecou={Boolean(anamnese)} />;
   }
@@ -83,14 +95,19 @@ export default async function Hoje({
   if (!protocolo) return <EsperandoFicha primeiroNome={primeiroNome} />;
 
   const hoje = hojeSP();
-  const sessoes = await carregarSessoes(supabase, alunoId);
   const aberta = acharSessaoAberta(sessoes);
   const feitas = concluidas(sessoes);
 
   const sugerido = proximoBloco(blocos, sessoes);
+  // So os exercicios que estao na ficha dele: e o unico historico que esta
+  // tela vai mostrar.
+  const exerciciosDaFicha = [
+    ...new Set(blocos.flatMap((b) => b.itens.map((i) => i.exercicio_id))),
+  ];
+
   const [series, ultimaCarga] = await Promise.all([
     aberta ? carregarSeries(supabase, aberta.id) : Promise.resolve([]),
-    carregarUltimasCargas(supabase),
+    carregarUltimasCargas(supabase, exerciciosDaFicha),
   ]);
 
   const p = progresso(

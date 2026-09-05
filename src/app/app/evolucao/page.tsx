@@ -31,18 +31,30 @@ export default async function Evolucao() {
         .eq("aluno_id", alunoId)
         .order("data")
         .limit(180),
+      // ORDEM CRESCENTE, E O LIMITE E ALTO DE PROPOSITO.
+      //
+      // A comparacao desta tela e sempre contra a PRIMEIRA foto (`datas[0]`
+      // em fotos.tsx) -- e a foto do comeco que da sentido ao antes e depois.
+      // Cortar pelas mais recentes economizaria links assinados e destruiria
+      // justamente a referencia: em poucos meses o "antes" passaria a ser o
+      // mes passado. 60 linhas sao 20 envios de tres angulos.
       supabase
         .from("foto_evolucao")
         .select("data, angulo, caminho")
         .eq("aluno_id", alunoId)
-        .order("data"),
+        .order("data")
+        .limit(60),
+      // O `status = concluida` vai no join, e nao num filtro em JS depois:
+      // assim as 240 linhas do limite sao 240 series que valem, em vez de
+      // incluir sessoes abandonadas que seriam descartadas aqui dentro.
       supabase
         .from("serie_registrada")
         .select(
           "exercicio_id, carga_kg, reps, sessao_treino!inner (data, status), exercicio!inner (nome)",
         )
+        .eq("sessao_treino.status", "concluida")
         .order("concluida_em", { ascending: false })
-        .limit(400),
+        .limit(240),
       supabase
         .from("anamnese")
         .select("objetivo")
@@ -74,9 +86,8 @@ export default async function Evolucao() {
       .filter((f) => f.url);
   }
 
-  const cru = ((series ?? []) as unknown as LinhaSerie[]).filter(
-    (s) => s.sessao_treino?.status === "concluida",
-  );
+  // Ja vem so o que foi concluido, filtrado no join.
+  const cru = (series ?? []) as unknown as LinhaSerie[];
   const historico: SerieHistorica[] = cru.map((s) => ({
     exercicio_id: s.exercicio_id,
     carga_kg: s.carga_kg === null ? null : Number(s.carga_kg),

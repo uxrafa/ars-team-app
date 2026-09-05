@@ -45,6 +45,18 @@ export type LinhaSessao = {
   concluida_em: string | null;
 };
 
+/**
+ * Uma linha por aluno, vinda da view `ultimo_checkin` (migracao 0013).
+ *
+ * Antes isto era deduzido em JS a partir das N sessoes mais recentes de todo
+ * mundo. Com 25 alunos, a janela nao alcancava quem tinha parado de treinar --
+ * e quem parou de treinar e justamente o que o painel precisa mostrar.
+ */
+export type LinhaCheckin = {
+  aluno_id: string;
+  data: string;
+};
+
 export type MotivoAtencao =
   | "pagamento"
   | "sem_ficha"
@@ -62,7 +74,7 @@ export type ItemAtencao = {
 export type Aluno = LinhaPerfil & {
   anamnese: LinhaAnamnese | null;
   protocolo: LinhaProtocolo | null;
-  ultimoCheckin: LinhaSessao | null;
+  ultimoCheckin: LinhaCheckin | null;
 };
 
 export const DIAS_PARA_SUMIR = 7;
@@ -112,7 +124,7 @@ export function juntarAlunos(
   perfis: LinhaPerfil[],
   anamneses: LinhaAnamnese[],
   protocolos: LinhaProtocolo[],
-  sessoes: LinhaSessao[],
+  checkins: LinhaCheckin[],
 ): Aluno[] {
   const porAluno = <T extends { aluno_id: string }>(lista: T[]) => {
     const mapa = new Map<string, T>();
@@ -121,9 +133,10 @@ export function juntarAlunos(
   };
 
   const mapaAnamnese = porAluno(anamneses);
-  const mapaProtocolo = porAluno(protocolos.filter((p) => p.status === "ativo"));
-  // sessoes ja chegam da mais nova para a mais velha
-  const mapaSessao = porAluno(sessoes.filter((s) => s.status === "concluida"));
+  const mapaProtocolo = porAluno(protocolos);
+  // Ja vem uma linha por aluno, e ja e a mais recente: quem garante e o
+  // `distinct on` da view, nao a ordem em que a lista chegou aqui.
+  const mapaCheckin = porAluno(checkins);
 
   return perfis
     .filter((p) => p.tipo !== "admin")
@@ -131,7 +144,7 @@ export function juntarAlunos(
       ...p,
       anamnese: mapaAnamnese.get(p.id) ?? null,
       protocolo: mapaProtocolo.get(p.id) ?? null,
-      ultimoCheckin: mapaSessao.get(p.id) ?? null,
+      ultimoCheckin: mapaCheckin.get(p.id) ?? null,
     }));
 }
 
@@ -207,7 +220,7 @@ export function montarAtencao(alunos: Aluno[], hoje: string): ItemAtencao[] {
 
 export type Resumo = ReturnType<typeof resumo>;
 
-export function resumo(alunos: Aluno[], sessoes: LinhaSessao[], hoje: string) {
+export function resumo(alunos: Aluno[], checkinsHoje: number, hoje: string) {
   const consultoria = alunos.filter((a) => a.tipo === "consultoria").length;
   const planilha = alunos.filter((a) => a.tipo === "planilha").length;
 
@@ -226,10 +239,6 @@ export function resumo(alunos: Aluno[], sessoes: LinhaSessao[], hoje: string) {
   const dow = diaDaSemanaSP();
   const previstosHoje = alunos.filter(
     (a) => a.tipo === "consultoria" && (a.anamnese?.dias_disponiveis ?? []).includes(dow),
-  ).length;
-
-  const checkinsHoje = sessoes.filter(
-    (s) => s.data === hoje && s.status === "concluida",
   ).length;
 
   const recebidoNoMes = alunos.reduce((soma, a) => {

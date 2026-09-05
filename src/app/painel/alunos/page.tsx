@@ -7,7 +7,7 @@ import {
   type LinhaAnamnese,
   type LinhaPerfil,
   type LinhaProtocolo,
-  type LinhaSessao,
+  type LinhaCheckin,
 } from "@/lib/painel";
 import { BotaoLink } from "@/components/ui";
 import { LinhaAluno, type AlunoNaTela } from "./linha";
@@ -23,26 +23,30 @@ export default async function Alunos() {
   const supabase = await criarClienteServidor();
   const hoje = hojeSP();
 
-  const [{ data: perfis }, { data: anamneses }, { data: protocolos }, { data: sessoes }] =
+  const [{ data: perfis }, { data: anamneses }, { data: protocolos }, { data: checkins }] =
     await Promise.all([
       supabase
         .from("perfis")
         .select("id, nome, email, whatsapp, tipo, status, acesso_ate, mensalidade, criado_em")
         .order("nome"),
       supabase.from("anamnese").select("aluno_id, status, dias_disponiveis, objetivo, enviada_em"),
-      supabase.from("protocolo").select("id, aluno_id, nome, inicio, fim, status"),
+      // So a ficha ativa: as encerradas e os rascunhos eram descartados em JS,
+      // e cada aluno acumula uma ficha nova a cada poucas semanas.
       supabase
-        .from("sessao_treino")
-        .select("id, aluno_id, data, status, peso_kg, esforco, concluida_em")
-        .order("concluida_em", { ascending: false, nullsFirst: false })
-        .limit(200),
+        .from("protocolo")
+        .select("id, aluno_id, nome, inicio, fim, status")
+        .eq("status", "ativo"),
+      // Uma linha por aluno, do banco. Antes eram as 200 sessoes mais recentes
+      // de todo mundo, e quem tinha parado de treinar caia fora da janela --
+      // aparecia como "sem check-in" em vez de aparecer como sumido.
+      supabase.from("ultimo_checkin").select("aluno_id, data"),
     ]);
 
   const alunos = juntarAlunos(
     (perfis ?? []) as LinhaPerfil[],
     (anamneses ?? []) as LinhaAnamnese[],
     (protocolos ?? []) as LinhaProtocolo[],
-    (sessoes ?? []) as LinhaSessao[],
+    (checkins ?? []) as LinhaCheckin[],
   );
 
   const naTela: AlunoNaTela[] = alunos.map((a) => {

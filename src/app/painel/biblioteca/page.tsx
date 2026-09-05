@@ -12,7 +12,9 @@ export default async function Biblioteca() {
   // passa a ser no banco, com `ilike` e paginação.
   const { data } = await supabase
     .from("exercicio")
-    .select("id, nome, grupo, equipamento, video_url, instrucoes, ativo")
+    // `instrucoes` fica de fora: e o campo mais gordo da tabela, nenhuma tela
+    // da biblioteca le, e ia inteiro para o navegador nas 121 linhas.
+    .select("id, nome, grupo, equipamento, video_url, ativo")
     .order("nome");
 
   return <Visao lista={(data ?? []) as LinhaExercicio[]} />;

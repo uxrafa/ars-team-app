@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "testar": "node --experimental-strip-types testes/treino.ts && node --experimental-strip-types testes/feed.ts && node --experimental-strip-types testes/aluno.ts && node --experimental-strip-types testes/email-convite.ts"
+    "testar": "node --experimental-strip-types testes/treino.ts && node --experimental-strip-types testes/feed.ts && node --experimental-strip-types testes/aluno.ts && node --experimental-strip-types testes/email-convite.ts && node --experimental-strip-types testes/painel.ts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.4",

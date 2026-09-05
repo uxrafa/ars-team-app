@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { criarClienteServidor } from "@/lib/supabase/server";
+import { carregarAluno } from "../carregar";
 import { cargasQueSubiram, type SerieHistorica } from "@/lib/treino";
 import type { Ponto } from "@/app/app/evolucao/grafico";
 import { VisaoDaEvolucaoDoAluno, type FotoNaTela, type MedidaNaTela } from "./visao";
@@ -31,11 +32,8 @@ export default async function EvolucaoDoAluno({ params }: { params: Promise<{ id
   const { id } = await params;
   const supabase = await criarClienteServidor();
 
-  const { data: aluno } = await supabase
-    .from("perfis")
-    .select("nome")
-    .eq("id", id)
-    .maybeSingle<{ nome: string }>();
+  // Vem do mesmo `cache` que o layout ja aqueceu nesta requisicao.
+  const aluno = await carregarAluno(id);
   if (!aluno) notFound();
 
   const [{ data: medidas }, { data: fotos }, { data: series }] = await Promise.all([
@@ -57,8 +55,10 @@ export default async function EvolucaoDoAluno({ params }: { params: Promise<{ id
         "exercicio_id, carga_kg, reps, sessao_treino!inner (data, status, aluno_id), exercicio!inner (nome)",
       )
       .eq("sessao_treino.aluno_id", id)
+      // Concluida no join, e nao peneirada em JS depois de vir.
+      .eq("sessao_treino.status", "concluida")
       .order("concluida_em", { ascending: false })
-      .limit(400),
+      .limit(240),
   ]);
 
   const linhas = ((medidas ?? []) as MedidaCrua[]).map((m) => ({
@@ -93,9 +93,7 @@ export default async function EvolucaoDoAluno({ params }: { params: Promise<{ id
       .filter((f) => f.url);
   }
 
-  const cru = ((series ?? []) as unknown as SerieCrua[]).filter(
-    (s) => s.sessao_treino?.status === "concluida",
-  );
+  const cru = (series ?? []) as unknown as SerieCrua[];
   const historico: SerieHistorica[] = cru.map((s) => ({
     exercicio_id: s.exercicio_id,
     carga_kg: paraNumero(s.carga_kg),

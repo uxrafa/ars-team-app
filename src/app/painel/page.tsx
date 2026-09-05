@@ -9,6 +9,7 @@ import {
   type LinhaAnamnese,
   type LinhaPerfil,
   type LinhaProtocolo,
+  type LinhaCheckin,
   type LinhaSessao,
 } from "@/lib/painel";
 import { VisaoDoPainel } from "./visao";
@@ -24,30 +25,43 @@ export default async function Painel() {
   const hoje = hojeSP();
   const agora = new Date();
 
-  const [{ data: perfis }, { data: anamneses }, { data: protocolos }, { data: sessoes }] =
+  const [{ data: perfis }, { data: anamneses }, { data: protocolos }, { data: checkins }, { data: sessoesDeHoje }] =
     await Promise.all([
       supabase
         .from("perfis")
         .select("id, nome, email, whatsapp, tipo, status, acesso_ate, mensalidade, criado_em")
         .order("nome"),
       supabase.from("anamnese").select("aluno_id, status, dias_disponiveis, objetivo, enviada_em"),
-      supabase.from("protocolo").select("id, aluno_id, nome, inicio, fim, status"),
+      supabase
+        .from("protocolo")
+        .select("id, aluno_id, nome, inicio, fim, status")
+        .eq("status", "ativo"),
+      // DUAS PERGUNTAS DIFERENTES, DUAS CONSULTAS.
+      //
+      // Antes eram as 60 sessoes mais recentes de todo mundo, servindo tanto o
+      // "quem sumiu" quanto o feed do dia. Com 25 alunos, 60 sessoes cobrem
+      // quatro dias: quem parou de treinar ha tres semanas nao aparecia, e o
+      // painel dizia "sem check-in" em vez de "sumido ha 21 dias".
+      //
+      // 1) uma linha por aluno, para saber quem sumiu
+      supabase.from("ultimo_checkin").select("aluno_id, data"),
+      // 2) so o que aconteceu hoje, para o feed -- filtrado no banco, e nao
+      //    peneirado em JS depois de trazer as outras semanas junto.
       supabase
         .from("sessao_treino")
         // O nome do treino entra junto: a linha do feed diz "TREINO B", e sem
         // isso ela viraria so peso e esforco soltos.
-        .select(
-          "id, aluno_id, data, status, peso_kg, esforco, nota, concluida_em, bloco_treino (nome)",
-        )
-        .order("concluida_em", { ascending: false, nullsFirst: false })
-        .limit(60),
+        .select("id, aluno_id, data, status, nota, concluida_em, bloco_treino (nome)")
+        .eq("data", hoje)
+        .eq("status", "concluida")
+        .order("concluida_em", { ascending: false, nullsFirst: false }),
     ]);
 
   const alunos = juntarAlunos(
     (perfis ?? []) as LinhaPerfil[],
     (anamneses ?? []) as LinhaAnamnese[],
     (protocolos ?? []) as LinhaProtocolo[],
-    (sessoes ?? []) as LinhaSessao[],
+    (checkins ?? []) as LinhaCheckin[],
   );
 
   const horaSP = Number(
@@ -77,8 +91,8 @@ export default async function Painel() {
    */
   const eventos: EventoDoDia[] = [];
 
-  for (const s of ((sessoes ?? []) as unknown as SessaoComBloco[])) {
-    if (s.status !== "concluida" || s.data !== hoje) continue;
+  // Ja vem so o de hoje, e so o que foi concluido: quem filtra e o banco.
+  for (const s of ((sessoesDeHoje ?? []) as unknown as SessaoComBloco[])) {
     const nome = nomeDoAluno(s.aluno_id);
     if (!nome) continue;
 
@@ -123,7 +137,7 @@ export default async function Painel() {
       saudacao={horaSP < 12 ? "Bom dia" : horaSP < 18 ? "Boa tarde" : "Boa noite"}
       mes={mes}
       atencao={montarAtencao(alunos, hoje)}
-      r={resumo(alunos, (sessoes ?? []) as LinhaSessao[], hoje)}
+      r={resumo(alunos, (sessoesDeHoje ?? []).length, hoje)}
       alunos={alunos}
       eventos={eventos.slice(0, 6)}
     />

@@ -1,21 +1,11 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { LinkIcone, Pilula } from "@/components/ui";
-import { criarClienteServidor } from "@/lib/supabase/server";
 import { diasEntre, estadoDoPagamento, hojeSP, iniciais, linkWhatsapp } from "@/lib/painel";
 import { AbasDoAluno } from "./abas";
+import { carregarAluno } from "./carregar";
 
-export type PerfilDoAluno = {
-  id: string;
-  nome: string;
-  email: string;
-  whatsapp: string | null;
-  tipo: "consultoria" | "planilha" | "admin";
-  status: "ativo" | "carencia" | "suspenso";
-  acesso_ate: string | null;
-  mensalidade: number | null;
-  criado_em: string;
-};
+export type { PerfilDoAluno } from "./carregar";
 
 /**
  * O cabeçalho de tudo que é daquele aluno.
@@ -32,14 +22,7 @@ export default async function LayoutDoAluno({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const supabase = await criarClienteServidor();
-
-  const { data: aluno } = await supabase
-    .from("perfis")
-    .select("id, nome, email, whatsapp, tipo, status, acesso_ate, mensalidade, criado_em")
-    .eq("id", id)
-    .maybeSingle<PerfilDoAluno>();
-
+  const aluno = await carregarAluno(id);
   if (!aluno) notFound();
 
   const hoje = hojeSP();

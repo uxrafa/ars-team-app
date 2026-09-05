@@ -661,7 +661,7 @@ export function Formulario({
           gradiente na propria barra, a mensagem de erro caia na parte
           transparente e ficava escrita por cima do campo de tras quando
           quebrava em duas linhas. */}
-      <div className="fixed inset-x-0 bottom-0 bg-tinta px-5 pb-6 pt-4">
+      <div className="fixed inset-x-0 bottom-0 bg-tinta px-5 pb-[calc(1.5rem+env(safe-area-inset-bottom))] pt-4">
         <div
           aria-hidden="true"
           className="pointer-events-none absolute inset-x-0 bottom-full h-10 bg-gradient-to-t from-tinta to-transparent"

@@ -23,9 +23,13 @@ export type LinhaExercicio = {
   grupo: Grupo;
   equipamento: string | null;
   video_url: string | null;
-  instrucoes: string | null;
   ativo: boolean;
 };
+
+// `instrucoes` saiu daqui de proposito. Nenhuma tela da biblioteca le esse
+// campo -- quem le e a tela de execucao do aluno, que carrega o exercicio por
+// outro caminho (`app/carregar.ts`). Deixa-lo no tipo convidava a consulta a
+// traze-lo, e ele e o campo mais gordo da tabela, multiplicado por 121 linhas.
 
 /**
  * O mínimo para escolher um exercício em uma lista.

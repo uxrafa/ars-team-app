@@ -108,20 +108,35 @@ export async function carregarSessoes(
 /**
  * A carga mais recente de cada exercício.
  *
- * É o "última 42 kg" que aparece embaixo do nome na lista do treino. Traz as
- * séries das últimas sessões e fica com a maior carga do dia mais recente de
- * cada exercício, porque série de aquecimento no meio do treino não é a carga
- * daquele dia. A RLS já limita às sessões do próprio aluno.
+ * É o "última 42 kg" que aparece embaixo do nome na lista do treino. Fica com
+ * a maior carga do dia mais recente de cada exercício, porque série de
+ * aquecimento no meio do treino não é a carga daquele dia. A RLS já limita às
+ * sessões do próprio aluno.
+ *
+ * PERGUNTA SÓ PELOS EXERCÍCIOS DA FICHA DELE, e isso importa. Antes vinham as
+ * 300 séries mais recentes de qualquer exercício: um agachamento que só
+ * aparece no Treino C, feito uma vez por semana, saía dessa janela em três
+ * semanas e o aluno perdia a carga sugerida justamente no exercício que ele
+ * menos lembra. Filtrando por exercício, cada um traz o próprio histórico e o
+ * índice `serie_exercicio_idx (exercicio_id, concluida_em desc)` é usado.
+ *
+ * E só sessão concluída conta: treino abandonado no meio não é referência de
+ * carga.
  */
 export async function carregarUltimasCargas(
   supabase: SupabaseClient,
+  exercicioIds: string[],
 ): Promise<Record<string, number>> {
+  if (!exercicioIds.length) return {};
+
   const { data } = await supabase
     .from("serie_registrada")
-    .select("exercicio_id, carga_kg, sessao_treino!inner (data)")
+    .select("exercicio_id, carga_kg, sessao_treino!inner (data, status)")
+    .in("exercicio_id", exercicioIds)
+    .eq("sessao_treino.status", "concluida")
     .not("carga_kg", "is", null)
     .order("concluida_em", { ascending: false })
-    .limit(300);
+    .limit(20 * exercicioIds.length);
 
   const linhas = (data ?? []) as unknown as {
     exercicio_id: string;

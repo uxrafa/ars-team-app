@@ -261,7 +261,7 @@ export function Execucao({
         </div>
       )}
 
-      <div className="pointer-events-none absolute inset-x-0 top-0 z-10 flex items-center px-[18px] pt-4">
+      <div className="pointer-events-none absolute inset-x-0 top-0 z-10 flex items-center px-[18px] pt-[calc(1rem+env(safe-area-inset-top))]">
         <Link
           href="/app/treino"
           aria-label={`Voltar para ${blocoNome}`}
