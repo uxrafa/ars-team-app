@@ -1,5 +1,5 @@
 import { criarClienteServidor } from "@/lib/supabase/server";
-import { diasEntre, hojeSP } from "@/lib/painel";
+import { diasEntre, hojeSP, naAtiva } from "@/lib/painel";
 import {
   faturamentoPorMes,
   mesDe,
@@ -21,6 +21,7 @@ type LinhaAluno = {
   tipo: "admin" | "consultoria" | "planilha";
   acesso_ate: string | null;
   mensalidade: number | null;
+  arquivado_em: string | null;
 };
 
 /** Esta página só busca. Quem desenha é a VisaoFinanceiro. */
@@ -38,7 +39,9 @@ export default async function Financeiro({
   const [{ data: perfis }, { data: pagos }] = await Promise.all([
     supabase
       .from("perfis")
-      .select("id, nome, tipo, acesso_ate, mensalidade")
+      // Traz o arquivado tambem: ele sai das contas e do seletor, mas o nome
+      // dele precisa continuar resolvendo na lista de pagamentos antigos.
+      .select("id, nome, tipo, acesso_ate, mensalidade, arquivado_em")
       .neq("tipo", "admin")
       .order("nome"),
     // Só a janela do gráfico. Trazer o histórico inteiro para somar seis
@@ -53,8 +56,11 @@ export default async function Financeiro({
       .order("criado_em", { ascending: false }),
   ]);
 
-  const alunos = (perfis ?? []) as LinhaAluno[];
-  const nomes = new Map(alunos.map((a) => [a.id, a.nome]));
+  const todos = (perfis ?? []) as LinhaAluno[];
+  const nomes = new Map(todos.map((a) => [a.id, a.nome]));
+  // Quem saiu nao entra em "em aberto" nem em "a receber": cobrar aluno
+  // arquivado e o oposto de arquivar.
+  const alunos = naAtiva(todos);
 
   // `numeric` volta do PostgREST como texto em alguns casos. Somar texto daria
   // "250250" em vez de 500, e o erro passaria despercebido num mês calmo.

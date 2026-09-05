@@ -11,6 +11,8 @@ export type PerfilDoAluno = {
   acesso_ate: string | null;
   mensalidade: number | null;
   criado_em: string;
+  arquivado_em: string | null;
+  arquivado_motivo: string | null;
 };
 
 /**
@@ -29,7 +31,9 @@ export const carregarAluno = cache(async (id: string): Promise<PerfilDoAluno | n
   const supabase = await criarClienteServidor();
   const { data } = await supabase
     .from("perfis")
-    .select("id, nome, email, whatsapp, tipo, status, acesso_ate, mensalidade, criado_em")
+    .select(
+      "id, nome, email, whatsapp, tipo, status, acesso_ate, mensalidade, criado_em, arquivado_em, arquivado_motivo",
+    )
     .eq("id", id)
     .maybeSingle<PerfilDoAluno>();
   return data ?? null;

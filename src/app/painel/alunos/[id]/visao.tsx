@@ -1,6 +1,7 @@
 import { BotaoLink } from "@/components/ui";
 import { quandoFoi } from "@/lib/painel";
 import type { LinhaAnamneseFicha } from "@/lib/ficha";
+import { Arquivar } from "./arquivar";
 import { Cobranca } from "./cobranca";
 import { Lateral } from "./lateral";
 
@@ -19,6 +20,8 @@ export type DadosDoResumo = {
   ficha: FichaNoResumo | null;
   ultimoTreino: string | null;
   anamnese: LinhaAnamneseFicha | null;
+  arquivadoEm: string | null;
+  arquivadoMotivo: string | null;
   cobranca: {
     id: string;
     email: string;
@@ -50,11 +53,23 @@ export function VisaoDoResumo({
   ficha,
   ultimoTreino,
   anamnese,
+  arquivadoEm,
+  arquivadoMotivo,
   cobranca,
 }: DadosDoResumo) {
   return (
     <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_340px] xl:items-start">
       <div className="flex flex-col gap-5">
+        {/* Em cima, e não só no cartão lá embaixo: sem isto o Allisson abriria
+            um aluno arquivado, veria ficha e treinos normais, e acharia que
+            ele continua na ativa. */}
+        {arquivadoEm && (
+          <p className="rounded-xl border border-contorno bg-tinta-3/40 px-4 py-3.5 text-[15px] leading-relaxed text-nevoa">
+            Este aluno está arquivado. Ele não aparece nas listas nem entra no app, e nada do que
+            está aqui foi apagado.
+          </p>
+        )}
+
         <div className="grid gap-4 sm:grid-cols-2">
           <section className="rounded-2xl border border-linha bg-tinta-2 p-5">
             <p className="text-xs font-semibold uppercase tracking-[0.07em] text-nevoa">
@@ -118,6 +133,13 @@ export function VisaoDoResumo({
         </div>
 
         <Cobranca aluno={cobranca} />
+
+        <Arquivar
+          alunoId={alunoId}
+          alunoNome={alunoNome}
+          arquivadoEm={arquivadoEm}
+          arquivadoMotivo={arquivadoMotivo}
+        />
       </div>
 
       <Lateral anamnese={anamnese} alunoNome={alunoNome} />

@@ -35,7 +35,13 @@ export default async function Painel() {
   ] = await Promise.all([
       supabase
         .from("perfis")
-        .select("id, nome, email, whatsapp, tipo, status, acesso_ate, mensalidade, criado_em")
+        .select(
+          "id, nome, email, whatsapp, tipo, status, acesso_ate, mensalidade, criado_em, arquivado_em",
+        )
+        // Quem foi arquivado nao aparece no painel nem conta em lugar nenhum.
+        // `montarAtencao` e `resumo` filtram de novo, em JS: aqui e desempenho,
+        // la e correcao.
+        .is("arquivado_em", null)
         .order("nome"),
       supabase.from("anamnese").select("aluno_id, status, dias_disponiveis, objetivo, enviada_em"),
       supabase

@@ -62,6 +62,8 @@ export default async function ResumoDoAluno({ params }: { params: Promise<{ id: 
       ficha={ficha}
       ultimoTreino={((sessoes ?? [])[0] as { data: string } | undefined)?.data ?? null}
       anamnese={(anamnese as LinhaAnamneseFicha | null) ?? null}
+      arquivadoEm={aluno.arquivado_em}
+      arquivadoMotivo={aluno.arquivado_motivo}
       cobranca={{
         id: aluno.id,
         email: aluno.email,

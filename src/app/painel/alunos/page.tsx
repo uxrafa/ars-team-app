@@ -3,12 +3,15 @@ import {
   DIAS_DE_AVISO_DE_FICHA,
   diasEntre,
   hojeSP,
+  iniciais,
   juntarAlunos,
+  naAtiva,
   type LinhaAnamnese,
   type LinhaPerfil,
   type LinhaProtocolo,
   type LinhaCheckin,
 } from "@/lib/painel";
+import Link from "next/link";
 import { BotaoLink } from "@/components/ui";
 import { LinhaAluno, type AlunoNaTela } from "./linha";
 
@@ -27,7 +30,11 @@ export default async function Alunos() {
     await Promise.all([
       supabase
         .from("perfis")
-        .select("id, nome, email, whatsapp, tipo, status, acesso_ate, mensalidade, criado_em")
+        // Traz arquivado junto: esta e a unica tela onde ele ainda aparece,
+        // numa lista propria no rodape. Em todas as outras ele nao existe.
+        .select(
+          "id, nome, email, whatsapp, tipo, status, acesso_ate, mensalidade, criado_em, arquivado_em, arquivado_motivo",
+        )
         .order("nome"),
       supabase.from("anamnese").select("aluno_id, status, dias_disponiveis, objetivo, enviada_em"),
       // So a ficha ativa: as encerradas e os rascunhos eram descartados em JS,
@@ -42,12 +49,15 @@ export default async function Alunos() {
       supabase.from("ultimo_checkin").select("aluno_id, data"),
     ]);
 
-  const alunos = juntarAlunos(
+  const todos = juntarAlunos(
     (perfis ?? []) as LinhaPerfil[],
     (anamneses ?? []) as LinhaAnamnese[],
     (protocolos ?? []) as LinhaProtocolo[],
     (checkins ?? []) as LinhaCheckin[],
   );
+
+  const alunos = naAtiva(todos);
+  const arquivados = todos.filter((a) => a.arquivado_em !== null);
 
   const naTela: AlunoNaTela[] = alunos.map((a) => {
     const diasVencido = a.acesso_ate ? diasEntre(a.acesso_ate, hoje) : null;
@@ -149,6 +159,59 @@ export default async function Alunos() {
           </ul>
         )}
       </section>
+
+      {/* Os arquivados ficam no rodape, e nao atras de um filtro: sao poucos,
+          e esconder num controle faria o Allisson esquecer que existem --
+          justo quando alguem some da lista e ele vem procurar por que. */}
+      {arquivados.length > 0 && (
+        <section className="overflow-hidden rounded-2xl border border-linha bg-tinta-2/50">
+          <div className="border-b border-linha px-5 py-4">
+            <h2 className="text-lg font-bold text-nevoa">
+              Arquivados · {arquivados.length}
+            </h2>
+            <p className="mt-1 text-sm leading-relaxed text-nevoa">
+              Fora das listas e das contas. Nada foi apagado, e dá para reativar na tela de cada
+              um.
+            </p>
+          </div>
+          <ul>
+            {arquivados.map((a) => (
+              <li key={a.id} className="border-t border-linha first:border-t-0">
+                <Link
+                  href={`/painel/alunos/${a.id}`}
+                  className="flex items-center gap-3 px-5 py-4 transition-colors hover:bg-tinta-3/40"
+                >
+                  <span
+                    aria-hidden="true"
+                    className="flex h-11 w-11 flex-none items-center justify-center rounded-full border border-linha bg-tinta-3 text-sm font-bold text-nevoa"
+                  >
+                    {iniciais(a.nome)}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-base font-semibold text-nevoa">{a.nome}</p>
+                    <p className="mt-1 truncate font-mono text-[13px] uppercase text-nevoa-fraca">
+                      desde {formatarData(a.arquivado_em!.slice(0, 10))}
+                      {a.arquivado_motivo ? ` · ${a.arquivado_motivo}` : ""}
+                    </p>
+                  </div>
+                  <svg
+                    aria-hidden="true"
+                    viewBox="0 0 24 24"
+                    className="h-5 w-5 flex-none text-nevoa"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="m9 6 6 6-6 6" />
+                  </svg>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
     </div>
   );
 }

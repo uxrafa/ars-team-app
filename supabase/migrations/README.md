@@ -21,6 +21,7 @@ novo e numerado, para o banco poder ser reconstruido do zero.
 | `0012_salvar_ficha.sql` | Funcao que regrava blocos e itens de uma ficha numa transacao so, preservando os ids dos itens. |
 | `0013_ultimo_checkin_e_indice.sql` | **Correcao de dado.** View `ultimo_checkin` com uma linha por aluno; antes o aluno sumido nao aparecia na fila. |
 | `0014_pagamento.sql` | Tabela `pagamento`, uma linha por dinheiro recebido. O `acesso_ate` vira consequencia do pagamento, por gatilho. |
+| `0015_arquivar_aluno.sql` | `perfis.arquivado_em`: tira o aluno de circulacao sem apagar nada. |
 
 ## Como o modelo se encaixa
 
@@ -284,6 +285,52 @@ Como **aluno logado**: nao le pagamento nenhum, **nem o proprio** -- a consulta
 volta vazia, e nao com erro, que e como RLS nega; nao consegue registrar
 pagamento para si (seria dar acesso de graca); o estorno afeta zero linhas; e o
 gatilho da 0009 continua recusando que ele mexa no proprio vencimento.
+
+## Arquivar em vez de excluir (0015)
+
+O Allisson precisa tirar aluno da lista: quem parou, quem virou aluno de outro
+professor, quem sumiu. Sem isso, cada um desses aparece todo dia na fila de
+atencao como "pagamento vencido" **e** como "sumido" -- duas tarefas falsas por
+pessoa, para sempre.
+
+**Nao existe exclusao, e e escolha.** Nao ha backup automatico neste projeto
+(plano Pro adiado em 30/08). `perfis` e referenciada com `on delete cascade` por
+anamnese, protocolo, sessao_treino, medida_corporal e foto_evolucao: apagar um
+perfil derrubaria junto um ano de treino registrado -- e as fotos ainda
+ficariam **orfas no bucket**, porque a linha some e o arquivo nao. Um clique
+errado sem volta. Arquivar e reversivel e cobre o caso real.
+
+**O que arquivar faz:** o aluno sai das listas, das contas, da fila de atencao e
+do Financeiro, e o layout de `/app` para de deixar ele entrar. **O que nao
+faz:** nada e apagado, e `reativarAluno` devolve tudo, porque nada saiu.
+
+**Isto barra tela, e nao dado.** Com o token na mao, a API continua devolvendo a
+ficha do arquivado: a policy diz "o dono le a propria linha" e ele continua
+sendo o dono. E proposital -- ele **precisa** ler o proprio perfil para a tela
+descobrir que esta arquivado. Para cortar acesso de verdade existe
+`status = 'suspenso'`, que e outra pergunta. Arquivar e sobre a lista do
+Allisson, nao sobre seguranca.
+
+**Duas travas no banco.** `perfis_admin_nao_arquiva` impede arquivar conta de
+treinador -- sem ela o Allisson consegue se tirar do proprio painel e nao existe
+tela para desfazer. E o gatilho da 0009 ganhou `arquivado_em`, `arquivado_motivo`
+e `arquivado_por`: a policy de UPDATE deixa o dono editar a propria linha, entao
+sem isso o aluno arquivado rodaria `update perfis set arquivado_em = null` na API
+e voltaria sozinho para a lista. **Mesma licao da 0009: RLS decide quais linhas,
+nao quais colunas.**
+
+Validada em 05/09/2026 com 9 verificacoes com as contas reais, em transacao
+abortada: admin arquiva e reativa; conta de treinador e recusada; motivo em
+branco e recusado; o aluno arquivado continua lendo o proprio perfil e continua
+editando nome e whatsapp, e **nao** consegue se desarquivar nem reescrever o
+motivo.
+
+**A exclusao de verdade, quando vier**, ja tem as decisoes tomadas (05/09): o
+pagamento sobrevive sem dono, com o nome congelado em texto, porque livro-caixa
+nao se reescreve -- o faturamento de marco nao muda porque alguem saiu em
+setembro; e a conta em `auth.users` e apagada junto, para o e-mail voltar a
+ficar livre para um convite novo. Isso pede a chave `service_role` numa variavel
+da Vercel, nunca no repositorio.
 
 ## Nota sobre o banco atual
 

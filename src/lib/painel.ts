@@ -16,6 +16,9 @@ export type LinhaPerfil = {
   acesso_ate: string | null;
   mensalidade: number | null;
   criado_em: string;
+  /** Nulo = aluno na ativa. Preenchido = fora de circulacao, sem nada apagado. */
+  arquivado_em: string | null;
+  arquivado_motivo?: string | null;
 };
 
 export type LinhaAnamnese = {
@@ -152,10 +155,24 @@ export function juntarAlunos(
  * A fila do dia. Um aluno pode ter mais de um problema; entra uma vez para
  * cada, porque cada um pede uma acao diferente do Allisson.
  */
+/**
+ * Os alunos que ainda contam.
+ *
+ * A regra mora aqui e nao so no `where` de cada consulta de proposito: sao
+ * cinco telas perguntando a mesma coisa, e a que esquecesse o filtro somaria
+ * dinheiro de quem saiu sem ninguem perceber. A consulta filtra por
+ * desempenho; esta funcao filtra por correcao.
+ */
+export function naAtiva<T extends { arquivado_em: string | null }>(alunos: T[]): T[] {
+  return alunos.filter((a) => a.arquivado_em === null);
+}
+
 export function montarAtencao(alunos: Aluno[], hoje: string): ItemAtencao[] {
   const itens: ItemAtencao[] = [];
 
-  for (const aluno of alunos) {
+  // Aluno arquivado nao gera tarefa. Era exatamente o motivo de arquivar:
+  // quem saiu aparecia todo dia como "sumido" e como "pagamento vencido".
+  for (const aluno of naAtiva(alunos)) {
     // 1. pagamento vencido
     if (aluno.acesso_ate && diasEntre(aluno.acesso_ate, hoje) > 0) {
       const dias = diasEntre(aluno.acesso_ate, hoje);
@@ -230,11 +247,12 @@ export type Resumo = ReturnType<typeof resumo>;
  * junho sem ter pago nada nesses meses. Aquilo era curativo; isto e a conta.
  */
 export function resumo(
-  alunos: Aluno[],
+  todos: Aluno[],
   checkinsHoje: number,
   hoje: string,
   recebidoNoMes: number,
 ) {
+  const alunos = naAtiva(todos);
   const consultoria = alunos.filter((a) => a.tipo === "consultoria").length;
   const planilha = alunos.filter((a) => a.tipo === "planilha").length;
 

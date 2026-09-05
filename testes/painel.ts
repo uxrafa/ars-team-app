@@ -30,6 +30,7 @@ const perfil = (id: string, troca: Partial<LinhaPerfil> = {}): LinhaPerfil => ({
   acesso_ate: null,
   mensalidade: 250,
   criado_em: "2026-01-10T00:00:00Z",
+  arquivado_em: null,
   ...troca,
 });
 
@@ -184,6 +185,55 @@ conferir("pagamento vem antes de tudo na fila", () => {
     [],
   );
   assert.equal(montarAtencao(alunos, HOJE)[0].motivo, "pagamento");
+});
+
+/* --- aluno arquivado ---------------------------------------------------- */
+
+conferir("aluno arquivado nao gera tarefa, por mais atrasado que esteja", () => {
+  // Era o motivo de arquivar existir: quem parou de treinar e nunca mais pagou
+  // aparecia todo dia como "pagamento vencido" E como "sumido", duas tarefas
+  // falsas por pessoa, para sempre.
+  const alunos = juntarAlunos(
+    [perfil("a", { acesso_ate: "2026-06-01", arquivado_em: "2026-08-01T12:00:00Z" })],
+    [],
+    [ficha("a")],
+    [],
+  );
+  assert.equal(montarAtencao(alunos, HOJE).length, 0);
+});
+
+conferir("aluno arquivado sai das contas do painel", () => {
+  const alunos = juntarAlunos(
+    [
+      perfil("a", { mensalidade: 250, acesso_ate: "2026-08-01" }),
+      perfil("b", {
+        mensalidade: 300,
+        acesso_ate: "2026-08-01",
+        arquivado_em: "2026-08-15T12:00:00Z",
+      }),
+    ],
+    [],
+    [],
+    [],
+  );
+  const r = resumo(alunos, 0, HOJE, 0);
+  assert.equal(r.total, 1);
+  // Os 300 do arquivado nao entram em aberto: cobrar quem saiu e o oposto de
+  // arquivar, e o numero do painel viraria uma divida que ninguem vai cobrar.
+  assert.equal(r.emAberto, 250);
+  assert.equal(r.vencidos, 1);
+});
+
+conferir("desarquivar devolve o aluno inteiro, porque nada saiu", () => {
+  const arquivado = perfil("a", {
+    acesso_ate: "2026-06-01",
+    arquivado_em: "2026-08-01T12:00:00Z",
+  });
+  const devolta = { ...arquivado, arquivado_em: null };
+  const alunos = juntarAlunos([devolta], [], [ficha("a")], []);
+  // Volta com o mesmo vencimento vencido e a mesma ficha, e a fila reconhece
+  // os dois problemas de novo.
+  assert.equal(montarAtencao(alunos, HOJE).length, 2);
 });
 
 console.log(`\n${ok} verificacoes do painel, todas passaram.`);
