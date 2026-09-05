@@ -136,7 +136,7 @@ conferir("resumo recebe a contagem de check-ins pronta", () => {
   assert.equal(r.planilha, 1);
 });
 
-conferir("vencido conta em aberto, em dia conta como recebido", () => {
+conferir("vencido conta em aberto, em dia conta na carteira ativa", () => {
   const alunos = juntarAlunos(
     [
       perfil("a", { acesso_ate: "2026-08-30", mensalidade: 250 }), // vencido
@@ -148,7 +148,8 @@ conferir("vencido conta em aberto, em dia conta como recebido", () => {
   );
   const r = resumo(alunos, 0, HOJE);
   assert.equal(r.emAberto, 250);
-  assert.equal(r.recebidoNoMes, 300);
+  // Nao e faturamento: e a soma das mensalidades de quem esta em dia.
+  assert.equal(r.mensalidadesEmDia, 300);
 });
 
 /* --- fila -------------------------------------------------------------- */

@@ -133,17 +133,18 @@ function LinhaAtencao({ item }: { item: ItemAtencao }) {
 
 export type DadosDaVisao = {
   saudacao: string;
-  mes: string;
   atencao: ItemAtencao[];
   r: Resumo;
   alunos: Aluno[];
   eventos: EventoDoDia[];
 };
 
-export function VisaoDoPainel({ saudacao, mes, atencao, r, alunos, eventos }: DadosDaVisao) {
-  const percentualRecebido =
-    r.recebidoNoMes + r.emAberto > 0
-      ? Math.round((r.recebidoNoMes / (r.recebidoNoMes + r.emAberto)) * 100)
+export function VisaoDoPainel({ saudacao, atencao, r, alunos, eventos }: DadosDaVisao) {
+  // Quanto da carteira esta em dia. Nao e "quanto foi recebido": ver a nota
+  // em `resumo()`, em lib/painel.ts.
+  const percentualEmDia =
+    r.mensalidadesEmDia + r.emAberto > 0
+      ? Math.round((r.mensalidadesEmDia / (r.mensalidadesEmDia + r.emAberto)) * 100)
       : 100;
 
   // A frase conta PESSOAS. Um aluno pode estar na fila por dois motivos, e
@@ -289,18 +290,18 @@ export function VisaoDoPainel({ saudacao, mes, atencao, r, alunos, eventos }: Da
           <section className="rounded-2xl border border-linha bg-tinta-2 p-5">
             <div className="flex items-baseline">
               <p className="text-xs font-semibold uppercase tracking-[0.07em] text-nevoa">
-                {mes}
+                Mensalidades em dia
               </p>
               <p className="ml-auto font-mono text-[13px] text-nevoa">
-                {percentualRecebido}% recebido
+                {percentualEmDia}%
               </p>
             </div>
             <p className="mt-3 font-display text-[34px] leading-none tabular">
-              {emReais(r.recebidoNoMes)}
+              {emReais(r.mensalidadesEmDia)}
             </p>
             <div className="mt-4 flex h-2.5 overflow-hidden rounded-full bg-tinta-3">
-              <div className="bg-ok" style={{ width: `${percentualRecebido}%` }} />
-              <div className="bg-raio" style={{ width: `${100 - percentualRecebido}%` }} />
+              <div className="bg-ok" style={{ width: `${percentualEmDia}%` }} />
+              <div className="bg-raio" style={{ width: `${100 - percentualEmDia}%` }} />
             </div>
             {/* Valor, porcentagem, barra e legenda eram quatro formas de
                 dizer o mesmo. Ficaram duas, e o que falta receber só aparece

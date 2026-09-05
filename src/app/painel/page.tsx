@@ -72,13 +72,6 @@ export default async function Painel() {
     }).format(agora),
   );
 
-  const mes = new Intl.DateTimeFormat("pt-BR", {
-    timeZone: "America/Sao_Paulo",
-    month: "long",
-  })
-    .format(agora)
-    .toUpperCase();
-
   const nomeDoAluno = (id: string) => alunos.find((a) => a.id === id)?.nome ?? null;
 
   /**
@@ -135,7 +128,6 @@ export default async function Painel() {
   return (
     <VisaoDoPainel
       saudacao={horaSP < 12 ? "Bom dia" : horaSP < 18 ? "Boa tarde" : "Boa noite"}
-      mes={mes}
       atencao={montarAtencao(alunos, hoje)}
       r={resumo(alunos, (sessoesDeHoje ?? []).length, hoje)}
       alunos={alunos}
