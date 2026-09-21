@@ -1,28 +1,26 @@
-import Link from "next/link";
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { Logo } from "@/components/logo";
 import { criarClienteServidor } from "@/lib/supabase/server";
-import { Botao } from "@/components/ui";
-import { Abas } from "./abas";
+import { iniciais } from "@/lib/painel";
+import { MenuDoPainel, type ItemDoMenu } from "./menu";
 
 export const metadata = { title: "Painel · ARS Team" };
 
-// A ordem é a do desenho aprovado: Painel, Alunos, Biblioteca. Convites veio
-// depois e entra ao lado, e o Financeiro fecha a fileira. Treinos fica colado
-// em Alunos porque é a mesma pergunta vista do outro lado: lá é quem são,
-// aqui é o que fizeram.
-const ABAS = [
-  { href: "/painel", nome: "Painel" },
-  { href: "/painel/alunos", nome: "Alunos" },
-  { href: "/painel/treinos", nome: "Treinos" },
-  { href: "/painel/biblioteca", nome: "Biblioteca" },
-  { href: "/painel/convites", nome: "Convites" },
-  { href: "/painel/financeiro", nome: "Financeiro" },
-] as const;
+// A ordem é a do desenho aprovado: Painel, Alunos, Biblioteca. Treinos fica
+// colado em Alunos porque é a mesma pergunta vista do outro lado: lá é quem
+// são, aqui é o que fizeram. Convites e Financeiro fecham a lista.
+const ITENS: readonly ItemDoMenu[] = [
+  { href: "/painel", nome: "Painel", icone: "painel" },
+  { href: "/painel/alunos", nome: "Alunos", icone: "alunos" },
+  { href: "/painel/treinos", nome: "Treinos", icone: "treinos" },
+  { href: "/painel/biblioteca", nome: "Biblioteca", icone: "biblioteca" },
+  { href: "/painel/convites", nome: "Convites", icone: "convites" },
+  { href: "/painel/financeiro", nome: "Financeiro", icone: "financeiro" },
+];
 
 /**
- * Aba desenhada e ainda nao construida. Vazia hoje: o Financeiro saiu daqui
- * quando a tabela `pagamento` entrou. Fica porque a lista volta a encher.
+ * Item desenhado e ainda não construído, que aparece apagado no menu. Vazio
+ * hoje. Fica porque a lista volta a encher.
  */
 const EM_BREVE: readonly string[] = [];
 
@@ -46,6 +44,10 @@ export default async function LayoutPainel({
 
   if (perfil?.tipo !== "admin") redirect("/app");
 
+  // Lido no servidor para o menu ja nascer na largura certa. Se viesse do
+  // navegador, ele abriria e fecharia na cara do usuario a cada navegacao.
+  const recolhido = (await cookies()).get("painel_menu")?.value === "recolhido";
+
   const agora = new Date();
   const diaDaSemana = new Intl.DateTimeFormat("pt-BR", {
     timeZone: "America/Sao_Paulo",
@@ -63,40 +65,26 @@ export default async function LayoutPainel({
     .replace(/\./g, "")
     .toUpperCase();
 
+  const nome = perfil?.nome?.trim() || "Treinador";
+
   return (
-    <div className="min-h-dvh">
-      <header className="topo-seguro border-b border-linha bg-tinta-2">
-        <div className="mx-auto flex h-16 max-w-[1440px] items-center gap-8 px-6 lg:px-8">
-          <Link href="/painel" className="flex-none py-4">
-            <Logo className="h-5 w-auto text-papel" />
-          </Link>
+    <div className="min-h-dvh lg:flex">
+      <MenuDoPainel
+        itens={ITENS}
+        emBreve={EM_BREVE}
+        recolhidoDeInicio={recolhido}
+        // Primeiro nome: numa coluna de 240px o nome inteiro virava
+        // "Allisson Sa...", e as iniciais ao lado ja dizem o sobrenome.
+        nome={nome.split(" ")[0]}
+        iniciais={iniciais(nome)}
+        data={{ diaDaSemana, diaEMes }}
+      />
 
-          <Abas abas={ABAS} emBreve={EM_BREVE} />
-
-          <div className="ml-auto flex items-center gap-4">
-            {/* Duas linhas, igual ao desenho: a data fica compacta e não
-                empurra o avatar. */}
-            <span className="hidden text-right font-mono text-[13px] uppercase leading-tight tracking-wide text-nevoa sm:block">
-              {diaDaSemana},
-              <br />
-              {diaEMes}
-            </span>
-            <span
-              aria-hidden="true"
-              className="flex h-10 w-10 items-center justify-center rounded-full border border-contorno bg-tinta-3 text-sm font-bold"
-            >
-              AS
-            </span>
-            <form action="/auth/sair" method="post">
-              <Botao type="submit" aparencia="fantasma" tamanho="sm">
-                Sair
-              </Botao>
-            </form>
-          </div>
-        </div>
-      </header>
-
-      <main className="mx-auto max-w-[1440px] px-6 py-8 pb-16 lg:px-8">{children}</main>
+      {/* min-w-0: sem isto uma tabela larga empurraria a coluna do conteúdo
+          para fora da tela em vez de rolar dentro dela. */}
+      <main className="mx-auto w-full min-w-0 max-w-[1440px] flex-1 px-6 py-8 pb-16 lg:px-8">
+        {children}
+      </main>
     </div>
   );
 }
