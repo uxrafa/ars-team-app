@@ -58,7 +58,7 @@ export default async function TreinoEmAndamento() {
             />
           </div>
           <Meta>
-            {p.feitos} de {p.total} exercícios · {p.seriesFeitas} de {p.seriesPrescritas} séries
+            {p.feitos} de {p.total} exercícios
           </Meta>
         </div>
       </header>
@@ -85,18 +85,17 @@ export default async function TreinoEmAndamento() {
                   (maior > 0 ? ` · ${formatarCarga(maior)} kg hoje` : "")
                 }
                 marca={
-                  <span
-                    aria-label={`${feitas.length} de ${item.series} séries`}
-                    className={`flex h-8 w-8 flex-none items-center justify-center rounded-full border font-mono text-xs tabular ${
-                      completo
-                        ? "border-ok/50 bg-ok/15 text-ok"
-                        : feitas.length
-                          ? "border-alerta/50 bg-alerta/12 text-alerta"
-                          : "border-linha text-nevoa"
-                    }`}
-                  >
-                    {feitas.length}
-                  </span>
+                  // Nada antes de começar: um "0" em cada linha parecia campo a
+                  // preencher. Depois, só o andamento daquele exercício.
+                  completo ? (
+                    <span className="flex-none rounded-full bg-ok/15 px-2.5 py-1 text-xs font-semibold text-ok">
+                      Feito
+                    </span>
+                  ) : feitas.length ? (
+                    <span className="flex-none rounded-full bg-alerta/12 px-2.5 py-1 font-mono text-xs tabular text-alerta">
+                      {feitas.length}/{item.series}
+                    </span>
+                  ) : null
                 }
               />
             );

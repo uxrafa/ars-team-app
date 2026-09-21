@@ -94,7 +94,7 @@ export function LinhaDeExercicio({
   href?: string;
   /** Link que sai do app, como o vídeo no YouTube. */
   externo?: boolean;
-  /** Substitui a seta: a contagem de séries feitas, por exemplo. */
+  /** Vai ao lado da seta: o andamento do exercício no treino, por exemplo. */
   marca?: React.ReactNode;
 }) {
   const conteudo = (
@@ -104,26 +104,28 @@ export function LinhaDeExercicio({
         <span className="block text-sm font-semibold text-papel">{nome}</span>
         <span className="mt-0.5 block text-xs text-nevoa">{meta}</span>
       </span>
-      {/* Seta só onde há para onde ir. Chevron em linha que não abre nada é
-          promessa que a tela não cumpre. */}
-      {marca ??
-        (href ? (
-          <svg
-            aria-hidden="true"
-            viewBox="0 0 24 24"
-            className="h-4 w-4 flex-none text-nevoa"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-          >
-            <path d="m9 6 6 6-6 6" />
-          </svg>
-        ) : null)}
+      {marca}
+      {/* Seta sempre que a linha abre alguma coisa, mesmo com a marca ao lado:
+          sem ela a lista do treino parecia texto parado, não botão (Rafael,
+          21/09). E só onde há para onde ir: chevron em linha que não abre
+          nada é promessa que a tela não cumpre. */}
+      {href ? (
+        <svg
+          aria-hidden="true"
+          viewBox="0 0 24 24"
+          className="h-5 w-5 flex-none text-nevoa"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+        >
+          <path d="m9 6 6 6-6 6" />
+        </svg>
+      ) : null}
     </>
   );
 
-  const clicavel = `${LINHA} transition-colors hover:bg-tinta-3`;
+  const clicavel = `${LINHA} transition-colors hover:bg-tinta-3 active:bg-tinta-3`;
 
   return (
     <li className="border-t border-linha first:border-t-0">
