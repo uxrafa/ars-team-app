@@ -27,6 +27,7 @@ import {
   type Objetivo,
   type Refeicao,
 } from "@/lib/dieta";
+import { Icone, type NomeIcone } from "@/components/icone";
 import { cadastrarAlimento, copiarDieta, salvarDieta } from "./acoes";
 import type { OrientacaoNaTela } from "./carregar";
 
@@ -179,73 +180,81 @@ export function EditorDeDieta({
   const totalDescanso = macrosDoDia(refeicoes, "descanso", mapa);
 
   return (
-    <div className="flex flex-col gap-5">
+    // Coluna estreita de propósito: no computador os campos esticavam até a
+    // borda e a refeição virava uma linha de 1000px difícil de seguir.
+    <div className="mx-auto flex w-full max-w-3xl flex-col gap-10">
       {/* Estado e ações no topo: é a primeira coisa que ele procura ao voltar. */}
-      <div className="flex flex-wrap items-center gap-3">
-        <Pilula tom={publicada ? "ok" : "neutro"}>{publicada ? "No ar" : "Rascunho"}</Pilula>
-        {sujo && <Pilula tom="aviso">Não salvo</Pilula>}
-        <div className="ml-auto flex flex-wrap gap-2">
-          {publicada ? (
-            <>
-              <Botao type="button" aparencia="fantasma" tamanho="sm" disabled={pendente} onClick={() => salvar(false)}>
-                Tirar do ar
-              </Botao>
-              <Botao type="button" tamanho="sm" disabled={pendente || !sujo} onClick={() => salvar(true)}>
-                {pendente ? "Salvando" : "Salvar"}
-              </Botao>
-            </>
-          ) : (
-            <>
-              <Botao type="button" aparencia="secundario" tamanho="sm" disabled={pendente} onClick={() => salvar(false)}>
-                Salvar rascunho
-              </Botao>
-              <Botao type="button" tamanho="sm" disabled={pendente || !refeicoes.length} onClick={() => salvar(true)}>
-                {pendente ? "Publicando" : "Publicar"}
-              </Botao>
-            </>
-          )}
+      <div className="flex flex-col gap-4">
+        <div className="flex flex-wrap items-center gap-3">
+          <Pilula tom={publicada ? "ok" : "neutro"}>{publicada ? "No ar" : "Rascunho"}</Pilula>
+          {sujo && <Pilula tom="aviso">Não salvo</Pilula>}
+          <div className="ml-auto flex flex-wrap gap-2">
+            {publicada ? (
+              <>
+                <Botao type="button" aparencia="fantasma" tamanho="sm" disabled={pendente} onClick={() => salvar(false)}>
+                  Tirar do ar
+                </Botao>
+                <Botao type="button" tamanho="sm" disabled={pendente || !sujo} onClick={() => salvar(true)}>
+                  {pendente ? "Salvando" : "Salvar"}
+                </Botao>
+              </>
+            ) : (
+              <>
+                <Botao type="button" aparencia="secundario" tamanho="sm" disabled={pendente} onClick={() => salvar(false)}>
+                  Salvar rascunho
+                </Botao>
+                <Botao type="button" tamanho="sm" disabled={pendente || !refeicoes.length} onClick={() => salvar(true)}>
+                  {pendente ? "Publicando" : "Publicar"}
+                </Botao>
+              </>
+            )}
+          </div>
         </div>
+        {erro && <Aviso>{erro}</Aviso>}
+        {recado && <Aviso tom="ok">{recado}</Aviso>}
       </div>
 
-      {erro && <Aviso>{erro}</Aviso>}
-      {recado && <Aviso tom="ok">{recado}</Aviso>}
+      <Secao icone="alvo" titulo="Meta">
+        <CartaoMetas
+          dados={dados}
+          metas={metas}
+          fator={fator}
+          ajuste={ajuste}
+          prot={prot}
+          gord={gord}
+          aoMudar={(campo, valor) => {
+            if (campo === "fator") setFator(Number(valor));
+            if (campo === "ajuste") setAjuste(valor);
+            if (campo === "prot") setProt(valor);
+            if (campo === "gord") setGord(valor);
+            mexeu();
+          }}
+        />
+      </Secao>
 
-      <CartaoMetas
-        dados={dados}
-        metas={metas}
-        fator={fator}
-        sugerido={fatorSugerido(diasDeTreino)}
-        ajuste={ajuste}
-        prot={prot}
-        gord={gord}
-        aoMudar={(campo, valor) => {
-          if (campo === "fator") setFator(Number(valor));
-          if (campo === "ajuste") setAjuste(valor);
-          if (campo === "prot") setProt(valor);
-          if (campo === "gord") setGord(valor);
-          mexeu();
-        }}
-      />
-
-      <section className="flex flex-col gap-4">
-        <div role="tablist" aria-label="Dia" className="grid grid-cols-2 gap-2">
+      <Secao icone="prato" titulo="Refeições">
+        <div role="tablist" aria-label="Dia" className="grid grid-cols-2 gap-1 rounded-2xl border border-linha bg-tinta-2 p-1">
           {(["treino", "descanso"] as Dia[]).map((d) => {
             const total = d === "treino" ? totalTreino : totalDescanso;
             const vazio = !refeicoes.some((r) => r.dia === d);
+            const ativo = dia === d;
             return (
               <button
                 key={d}
                 type="button"
                 role="tab"
-                aria-selected={dia === d}
+                aria-selected={ativo}
                 onClick={() => setDia(d)}
-                className={`flex min-h-14 flex-col items-start justify-center rounded-xl border px-4 py-2 text-left transition-colors ${
-                  dia === d ? "border-raio bg-tinta-3 text-papel" : "border-contorno text-nevoa hover:border-nevoa hover:text-papel"
+                className={`flex min-h-14 items-center gap-3 rounded-xl px-4 text-left transition-colors ${
+                  ativo ? "bg-tinta-3 text-papel ring-1 ring-contorno" : "text-nevoa hover:text-papel"
                 }`}
               >
-                <span className="text-[15px] font-semibold">{NOME_DO_DIA[d]}</span>
-                <span className="font-mono text-[13px] text-nevoa">
-                  {vazio ? (d === "descanso" ? "igual ao de treino" : "vazio") : `${milhar(kcal(total))} kcal`}
+                <Icone nome={d === "treino" ? "haltere" : "lua"} className={ativo ? "text-raio" : ""} />
+                <span className="flex flex-col">
+                  <span className="text-[15px] font-semibold">{NOME_DO_DIA[d]}</span>
+                  <span className="font-mono text-[13px] text-nevoa">
+                    {vazio ? (d === "descanso" ? "igual ao de treino" : "vazio") : `${milhar(kcal(total))} kcal`}
+                  </span>
                 </span>
               </button>
             );
@@ -255,7 +264,7 @@ export function EditorDeDieta({
         <ResumoDoDia total={dia === "treino" ? totalTreino : totalDescanso} metas={metas} peso={dados.peso} />
 
         {doDia.length === 0 && (
-          <Cartao className="text-center">
+          <div className="rounded-2xl border border-dashed border-contorno px-6 py-8 text-center">
             <p className="text-[15px] text-nevoa">
               {dia === "descanso"
                 ? "Sem refeições de descanso, o aluno vê a de treino todos os dias."
@@ -279,7 +288,7 @@ export function EditorDeDieta({
                 Copiar do {NOME_DO_DIA[outroDia].toLowerCase()}
               </Botao>
             )}
-          </Cartao>
+          </div>
         )}
 
         {doDia.map((r) => (
@@ -297,49 +306,68 @@ export function EditorDeDieta({
         <Botao
           type="button"
           aparencia="secundario"
+          largura="cheia"
           onClick={() =>
             mudarRefeicoes((lista) => [...lista, { chave: novaChave(), dia, nome: "Refeição", horario: "", itens: [] }])
           }
         >
+          <Icone nome="mais" tamanho={18} />
           Adicionar refeição
         </Botao>
-      </section>
+      </Secao>
 
-      <Cartao className="flex flex-col gap-5">
-        <label className="flex max-w-xs flex-col gap-2">
-          <Rotulo>Água por dia</Rotulo>
-          <span className="relative block">
-            <input
-              inputMode="decimal"
-              value={agua}
+      <Secao icone="gota" titulo="Água e orientações">
+        <Cartao className="flex flex-col gap-6 p-6">
+          <label className="flex max-w-xs flex-col gap-2">
+            <Rotulo>Água por dia</Rotulo>
+            <span className="relative block">
+              <input
+                inputMode="decimal"
+                value={agua}
+                onChange={(e) => {
+                  setAgua(e.target.value);
+                  mexeu();
+                }}
+                // 35 ml/kg é a referência mais usada; fica como sugestão, não valor.
+                placeholder={dados.peso ? `sugestão: ${litros((dados.peso * 35) / 1000)}` : "3,5"}
+                className={`${CLASSE_CAMPO} pr-12`}
+              />
+              <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-sm text-nevoa">L</span>
+            </span>
+          </label>
+
+          <label className="flex flex-col gap-2">
+            <Rotulo>Orientações · uma por linha</Rotulo>
+            <textarea
+              value={orientacoes}
               onChange={(e) => {
-                setAgua(e.target.value);
+                setOrientacoes(e.target.value);
                 mexeu();
               }}
-              // 35 ml/kg é a referência mais usada; fica como sugestão, não valor.
-              placeholder={dados.peso ? `sugestão: ${litros((dados.peso * 35) / 1000)}` : "3,5"}
-              className={`${CLASSE_CAMPO} pr-12`}
+              rows={5}
+              placeholder={"1x na semana, trocar o jantar pela refeição livre\nLegumes e verduras no almoço e no jantar"}
+              className={`${CLASSE_CAMPO} leading-relaxed`}
             />
-            <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-sm text-nevoa">L</span>
-          </span>
-        </label>
-
-        <label className="flex flex-col gap-2">
-          <Rotulo>Orientações · uma por linha</Rotulo>
-          <textarea
-            value={orientacoes}
-            onChange={(e) => {
-              setOrientacoes(e.target.value);
-              mexeu();
-            }}
-            rows={5}
-            placeholder={"1x na semana, trocar o jantar pela refeição livre\nLegumes e verduras no almoço e no jantar"}
-            className={`${CLASSE_CAMPO} leading-relaxed`}
-          />
-        </label>
-      </Cartao>
-
+          </label>
+        </Cartao>
+      </Secao>
     </div>
+  );
+}
+
+/**
+ * Título de seção com ícone. É o "onde estou" da tela: a página é longa, e
+ * sem essas placas meta, refeições e água eram três blocos iguais seguidos.
+ */
+function Secao({ icone, titulo, children }: { icone: NomeIcone; titulo: string; children: React.ReactNode }) {
+  return (
+    <section className="flex flex-col gap-4">
+      <h2 className="flex items-center gap-2.5 text-lg font-semibold text-papel">
+        <Icone nome={icone} className="text-raio" />
+        {titulo}
+      </h2>
+      {children}
+    </section>
   );
 }
 
@@ -415,7 +443,6 @@ function CartaoMetas({
   dados,
   metas,
   fator,
-  sugerido,
   ajuste,
   prot,
   gord,
@@ -424,7 +451,6 @@ function CartaoMetas({
   dados: DadosDoAluno;
   metas: Metas | null;
   fator: number;
-  sugerido: number;
   ajuste: string;
   prot: string;
   gord: string;
@@ -434,9 +460,8 @@ function CartaoMetas({
   const campoPequeno = `${CLASSE_CAMPO} pr-14`;
 
   return (
-    <Cartao className="flex flex-col gap-4">
+    <Cartao className="flex flex-col gap-5 p-6">
       <div className="flex flex-wrap items-center gap-2">
-        <Rotulo className="mr-1">Meta</Rotulo>
         {dados.sexo && <Pilula>{dados.sexo === "masculino" ? "Masculino" : "Feminino"}</Pilula>}
         {dados.idade !== null && <Pilula>{dados.idade} anos</Pilula>}
         {dados.altura && <Pilula>{dados.altura} cm</Pilula>}
@@ -444,14 +469,13 @@ function CartaoMetas({
         {faltas.length > 0 && <Pilula tom="aviso">Falta na anamnese: {faltas.join(", ")}</Pilula>}
       </div>
 
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+      <div className="grid grid-cols-2 gap-4 md:grid-cols-[2fr_1fr_1fr_1fr]">
         <label className="col-span-2 flex flex-col gap-2 md:col-span-1">
           <Rotulo>Atividade</Rotulo>
           <select value={fator} onChange={(e) => aoMudar("fator", e.target.value)} className={CLASSE_CAMPO}>
             {NIVEIS_DE_ATIVIDADE.map((n) => (
               <option key={n.fator} value={n.fator}>
                 {n.nome}
-                {n.fator === sugerido ? " (anamnese)" : ""}
               </option>
             ))}
           </select>
@@ -462,13 +486,23 @@ function CartaoMetas({
       </div>
 
       {metas ? (
-        <p className="font-mono text-[14px] leading-relaxed text-nevoa">
-          TMB {milhar(metas.tmb)} · gasto {milhar(metas.gasto)} ·{" "}
-          <span className="font-semibold text-papel">meta {milhar(metas.kcal)} kcal</span> · P {metas.macros.proteina} g · C{" "}
-          {metas.macros.carboidrato} g · G {metas.macros.gordura} g
-        </p>
+        <div className="flex flex-wrap items-end gap-x-6 gap-y-2 border-t border-linha pt-5">
+          <div>
+            <span className="text-[28px] font-semibold leading-none tabular text-papel">{milhar(metas.kcal)}</span>
+            <span className="ml-1.5 text-[15px] text-nevoa">kcal por dia</span>
+          </div>
+          <span className="font-mono text-[14px] text-papel">
+            P {metas.macros.proteina} g · C {metas.macros.carboidrato} g · G {metas.macros.gordura} g
+          </span>
+          {/* De onde veio a meta, para conferir; não é o número que ele usa. */}
+          <span className="font-mono text-[13px] text-nevoa md:ml-auto">
+            TMB {milhar(metas.tmb)} · gasto {milhar(metas.gasto)}
+          </span>
+        </div>
       ) : (
-        <p className="text-[15px] text-nevoa">Sem esses dados não dá para calcular a meta. A dieta monta igual.</p>
+        <p className="border-t border-linha pt-5 text-[15px] text-nevoa">
+          Sem esses dados não dá para calcular a meta. A dieta monta igual.
+        </p>
       )}
     </Cartao>
   );
@@ -510,14 +544,15 @@ function ResumoDoDia({ total, metas, peso }: { total: Macros; metas: Metas | nul
   ];
 
   return (
-    <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
+    <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
       {linhas.map((l) => {
         const c = l.meta !== null && calorias > 0 ? comparacao(l.atual, l.meta) : null;
         return (
-          <div key={l.nome} className="rounded-xl border border-linha bg-tinta-2 px-4 py-3">
+          <div key={l.nome} className="rounded-2xl border border-linha bg-tinta-2 px-5 py-4">
             <Rotulo>{l.nome}</Rotulo>
-            <div className="mt-1 flex items-baseline gap-2">
+            <div className="mt-1.5 flex items-baseline gap-2">
               <span className="text-xl font-semibold tabular text-papel">{l.valor}</span>
+              {!l.porKg && <span className="text-[13px] text-nevoa">kcal</span>}
               {l.porKg && peso && calorias > 0 && (
                 <span className="font-mono text-[13px] text-nevoa">
                   {String(Math.round((l.atual / peso) * 10) / 10).replace(".", ",")} g/kg
@@ -567,25 +602,33 @@ function CartaoRefeicao({
 
   return (
     <Cartao padding={false}>
-      <div className="grid grid-cols-[1fr_44px] items-center md:grid-cols-[1fr_140px_44px] gap-2 border-b border-linha p-4">
-        <input
-          value={refeicao.nome}
-          onChange={(e) => aoMudar({ ...refeicao, nome: e.target.value })}
-          aria-label="Nome da refeição"
-          className={`${CLASSE_CAMPO} col-span-2 font-semibold md:col-span-1`}
-        />
-        <input
-          type="time"
-          value={refeicao.horario}
-          onChange={(e) => aoMudar({ ...refeicao, horario: e.target.value })}
-          aria-label="Horário"
-          className={CLASSE_CAMPO}
-        />
-        <BotaoIcone rotulo={`Remover ${refeicao.nome}`} type="button" onClick={aoRemover}>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
-            <path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3" />
-          </svg>
-        </BotaoIcone>
+      {/* Cabeçalho em outro tom: é o que separa uma refeição da outra numa
+          página longa. Horário primeiro, como o aluno lê no app. */}
+      <div className="rounded-t-2xl border-b border-linha bg-tinta-3/50 px-5 py-4">
+        <div className="grid grid-cols-[140px_1fr_44px] items-center gap-2">
+          <input
+            type="time"
+            value={refeicao.horario}
+            onChange={(e) => aoMudar({ ...refeicao, horario: e.target.value })}
+            aria-label="Horário"
+            className={CLASSE_CAMPO}
+          />
+          <input
+            value={refeicao.nome}
+            onChange={(e) => aoMudar({ ...refeicao, nome: e.target.value })}
+            aria-label="Nome da refeição"
+            className={`${CLASSE_CAMPO} font-semibold`}
+          />
+          <BotaoIcone rotulo={`Remover ${refeicao.nome}`} type="button" onClick={aoRemover}>
+            <Icone nome="lixeira" tamanho={18} />
+          </BotaoIcone>
+        </div>
+        {kcal(total) > 0 && (
+          <p className="mt-3 flex items-center gap-2 font-mono text-[13px] text-nevoa">
+            <Icone nome="chama" tamanho={15} />
+            {resumoMacros(total)}
+          </p>
+        )}
       </div>
 
       {refeicao.itens.length > 0 && (
@@ -595,7 +638,7 @@ function CartaoRefeicao({
             return (
               <li
                 key={k}
-                className={`grid items-center gap-2 border-b border-linha px-4 py-3 ${
+                className={`grid items-center gap-2 border-b border-linha px-5 py-4 ${
                   i.alimento_id ? "grid-cols-[1fr_104px_44px] md:grid-cols-[1fr_150px_104px_44px]" : "grid-cols-[1fr_44px]"
                 }`}
               >
@@ -603,14 +646,18 @@ function CartaoRefeicao({
                   <>
                     <span className="col-span-3 min-w-0 md:col-span-1">
                       <span className="block text-[15px] text-papel">{a?.nome ?? "Alimento removido"}</span>
+                      {/* Só a kcal: é o que ele olha ao mexer nas gramas. Os macros
+                          do item somam no cabeçalho da refeição. */}
                       {a && i.gramas ? (
-                        <span className="font-mono text-[13px] text-nevoa">{resumoMacros(macrosDoItem(a, i.gramas))}</span>
+                        <span className="font-mono text-[13px] text-nevoa">
+                          {milhar(kcal(macrosDoItem(a, i.gramas)))} kcal
+                        </span>
                       ) : null}
                     </span>
                     <input
                       value={i.descricao}
                       onChange={(e) => mudarItem(k, { descricao: e.target.value })}
-                      placeholder="medida (2 fatias)"
+                      placeholder="ex.: 2 fatias"
                       aria-label="Medida caseira"
                       className={CLASSE_CAMPO}
                     />
@@ -639,9 +686,7 @@ function CartaoRefeicao({
                   type="button"
                   onClick={() => aoMudar({ ...refeicao, itens: refeicao.itens.filter((_, x) => x !== k) })}
                 >
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
-                    <path d="M6 6l12 12M18 6L6 18" />
-                  </svg>
+                  <Icone nome="fechar" tamanho={16} />
                 </BotaoIcone>
               </li>
             );
@@ -664,8 +709,9 @@ function CartaoRefeicao({
           aoFechar={() => setBuscando(false)}
         />
       ) : (
-        <div className="flex flex-wrap items-center gap-2 p-4">
+        <div className="flex flex-wrap items-center gap-2 px-5 py-4">
           <Botao type="button" aparencia="secundario" tamanho="sm" onClick={() => setBuscando(true)}>
+            <Icone nome="mais" tamanho={16} />
             Adicionar alimento
           </Botao>
           <Botao
@@ -676,7 +722,6 @@ function CartaoRefeicao({
           >
             Adicionar texto
           </Botao>
-          {kcal(total) > 0 && <span className="ml-auto font-mono text-[13px] text-nevoa">{resumoMacros(total)}</span>}
         </div>
       )}
     </Cartao>
@@ -705,7 +750,7 @@ function BuscaDeAlimento({
   }
 
   return (
-    <div className="bg-tinta-3/40 p-4">
+    <div className="bg-tinta-3/40 px-5 py-4">
       <div className="grid grid-cols-[1fr_auto] gap-2">
         <input
           autoFocus
@@ -783,7 +828,7 @@ function CadastroDeAlimento({
 
   const campo = `${CLASSE_CAMPO} pr-8`;
   return (
-    <div className="flex flex-col gap-3 bg-tinta-3/40 p-4">
+    <div className="flex flex-col gap-3 bg-tinta-3/40 px-5 py-4">
       <Rotulo>Novo alimento · valores do rótulo, por 100 g</Rotulo>
       <input value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Whey protein" aria-label="Nome" className={CLASSE_CAMPO} />
       <div className="grid grid-cols-3 gap-2">
