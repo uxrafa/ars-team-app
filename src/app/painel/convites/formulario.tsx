@@ -21,12 +21,14 @@ function Escolha({
   onEscolher,
   titulo,
   detalhe,
+  emEspera,
 }: {
   valor: string;
   atual: string;
   onEscolher: (v: string) => void;
   titulo: string;
   detalhe: string;
+  emEspera?: boolean;
 }) {
   const marcado = valor === atual;
   return (
@@ -34,13 +36,23 @@ function Escolha({
       type="button"
       onClick={() => onEscolher(valor)}
       aria-pressed={marcado}
+      disabled={emEspera}
       className={`flex min-h-12 flex-1 flex-col justify-center rounded-xl border px-4 py-2.5 text-left transition-colors ${
-        marcado
-          ? "border-raio bg-raio/12 text-papel"
-          : "border-contorno bg-tinta-3 text-nevoa hover:border-nevoa hover:text-papel"
+        emEspera
+          ? "cursor-not-allowed border-linha bg-tinta-3/50 text-nevoa/60"
+          : marcado
+            ? "border-raio bg-raio/12 text-papel"
+            : "border-contorno bg-tinta-3 text-nevoa hover:border-nevoa hover:text-papel"
       }`}
     >
-      <span className="text-[15px] font-semibold leading-tight">{titulo}</span>
+      <span className="flex items-center gap-2 text-[15px] font-semibold leading-tight">
+        {titulo}
+        {emEspera && (
+          <span className="rounded-full border border-linha px-2 py-0.5 text-[11px] font-medium text-nevoa">
+            Em breve
+          </span>
+        )}
+      </span>
       <span className="mt-0.5 text-sm leading-tight text-nevoa">{detalhe}</span>
     </button>
   );
@@ -68,6 +80,9 @@ function EscolhaDePlano() {
           onEscolher={setTipo}
           titulo="Planilha"
           detalhe="Só treino e vídeos"
+          // Em espera até o produto ser pensado (Rafael, 21/09). Quem trava de
+          // verdade é o gatilho da migração 0017.
+          emEspera
         />
       </div>
     </div>

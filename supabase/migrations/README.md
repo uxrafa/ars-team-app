@@ -23,6 +23,7 @@ novo e numerado, para o banco poder ser reconstruido do zero.
 | `0014_pagamento.sql` | Tabela `pagamento`, uma linha por dinheiro recebido. O `acesso_ate` vira consequencia do pagamento, por gatilho. |
 | `0015_arquivar_aluno.sql` | `perfis.arquivado_em`: tira o aluno de circulacao sem apagar nada. |
 | `0016_serie_de_aquecimento.sql` | `item_exercicio.series_aquecimento` e a tabela `aquecimento_feito`. Aquecimento fica fora de todo volume por construcao. |
+| `0017_planilha_em_espera.sql` | Gatilho que barra convite de planilha enquanto o plano esta em espera. Para reativar, `drop trigger convite_planilha_em_espera on public.convite`. |
 
 ## Como o modelo se encaixa
 

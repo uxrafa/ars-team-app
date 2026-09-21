@@ -102,6 +102,9 @@ export async function criarConvite(
   if (tipo !== "consultoria" && tipo !== "planilha") {
     return { erro: "Escolha entre consultoria e planilha." };
   }
+  if (tipo === "planilha") {
+    return { erro: "O plano planilha ainda não está disponível." };
+  }
 
   const mensalidade = paraNumero(mensalidadeBruta);
   if (mensalidadeBruta.trim() && mensalidade === null) {
