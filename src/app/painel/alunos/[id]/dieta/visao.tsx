@@ -595,16 +595,27 @@ function CartaoRefeicao({
 }) {
   const [buscando, setBuscando] = useState(false);
   const total = macrosDaRefeicao(refeicao, mapa);
+  const vazia = refeicao.itens.length === 0;
 
   function mudarItem(indice: number, mudanca: Partial<Refeicao["itens"][number]>) {
     aoMudar({ ...refeicao, itens: refeicao.itens.map((i, k) => (k === indice ? { ...i, ...mudanca } : i)) });
   }
 
   return (
-    <Cartao padding={false}>
+    // Refeição sem nenhum item recua: contorno tracejado e tom apagado, para
+    // o Allisson ver de relance o que falta preencher. Volta ao normal quando
+    // ele passa o mouse ou está digitando nela.
+    <Cartao
+      padding={false}
+      className={
+        vazia
+          ? "border-dashed border-contorno bg-transparent opacity-60 transition-opacity focus-within:opacity-100 hover:opacity-100"
+          : ""
+      }
+    >
       {/* Cabeçalho em outro tom: é o que separa uma refeição da outra numa
           página longa. Horário primeiro, como o aluno lê no app. */}
-      <div className="rounded-t-2xl border-b border-linha bg-tinta-3/50 px-5 py-4">
+      <div className={`rounded-t-2xl border-b border-linha px-5 py-4 ${vazia ? "" : "bg-tinta-3/50"}`}>
         <div className="grid grid-cols-[140px_1fr_44px] items-center gap-2">
           <input
             type="time"
@@ -623,12 +634,14 @@ function CartaoRefeicao({
             <Icone nome="lixeira" tamanho={18} />
           </BotaoIcone>
         </div>
-        {kcal(total) > 0 && (
+        {kcal(total) > 0 ? (
           <p className="mt-3 flex items-center gap-2 font-mono text-[13px] text-nevoa">
             <Icone nome="chama" tamanho={15} />
             {resumoMacros(total)}
           </p>
-        )}
+        ) : vazia ? (
+          <p className="mt-3 text-[13px] text-nevoa">Sem alimentos</p>
+        ) : null}
       </div>
 
       {refeicao.itens.length > 0 && (

@@ -93,8 +93,18 @@ export function VisaoDaDieta({
         {refeicoes.map((r, k) => (
           <li key={r.chave}>
             {/* A refeição de agora é a única coisa que ele procura ao abrir:
-                borda da marca e fundo um tom acima, para achar sem ler. */}
-            <Cartao padding={false} className={k === proxima ? "border-raio/70 bg-tinta-3" : ""}>
+                borda da marca e fundo um tom acima, para achar sem ler. A que
+                está sem alimento recua, para não competir com as outras. */}
+            <Cartao
+              padding={false}
+              className={
+                k === proxima
+                  ? "border-raio/70 bg-tinta-3"
+                  : r.itens.length === 0
+                    ? "border-dashed bg-transparent opacity-60"
+                    : ""
+              }
+            >
               <div className="flex items-center gap-3 px-4 pt-4">
                 {r.horario && (
                   <span className={`inline-flex items-center gap-1.5 font-mono text-[15px] ${k === proxima ? "text-papel" : "text-nevoa"}`}>
@@ -105,7 +115,8 @@ export function VisaoDaDieta({
                 <h2 className="flex-1 text-[17px] font-semibold text-papel">{r.nome}</h2>
                 {k === proxima && <Pilula tom="urgente">Agora</Pilula>}
               </div>
-              <ul className="px-4 pb-4 pt-2">
+              {r.itens.length === 0 && <p className="px-4 pb-4 pt-2 text-[15px] text-nevoa">Sem alimentos</p>}
+              <ul className={r.itens.length ? "px-4 pb-4 pt-2" : "hidden"}>
                 {r.itens.map((i, x) => {
                   const a = i.alimento_id ? mapa.get(i.alimento_id) : undefined;
                   return (
