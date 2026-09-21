@@ -8,6 +8,8 @@ import {
   variacaoDeVolume,
   type SemanaDeTreino,
 } from "@/lib/aluno";
+import type { ExercicioComHistorico } from "@/lib/evolucao";
+import { EvolucaoPorExercicio } from "./evolucao";
 
 export type TreinoNaLista = {
   id: string;
@@ -80,10 +82,14 @@ function Numero({
 }
 
 export function VisaoDosTreinosDoAluno({
+  exercicios,
+  faixas,
   semanas,
   treinos,
   primeiroNome,
 }: {
+  exercicios: ExercicioComHistorico[];
+  faixas: Record<string, { min: number; max: number; texto: string }>;
   semanas: SemanaDeTreino[];
   treinos: TreinoNaLista[];
   primeiroNome: string;
@@ -179,6 +185,10 @@ export function VisaoDosTreinosDoAluno({
           </table>
         </div>
       </section>
+
+      {/* Depois do volume da semana, antes do histórico: do geral para o
+          exercício, e do exercício para o treino de um dia. */}
+      {exercicios.length > 0 && <EvolucaoPorExercicio exercicios={exercicios} faixas={faixas} />}
 
       <section className="flex flex-col gap-3">
         <h2 className="text-lg font-bold">Histórico</h2>
