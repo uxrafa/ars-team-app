@@ -2,7 +2,8 @@ import { criarClienteServidor } from "@/lib/supabase/server";
 import { cargasQueSubiram, type SerieHistorica } from "@/lib/treino";
 import type { Ponto } from "./grafico";
 import type { FotoNaTela } from "./fotos";
-import { VisaoDaEvolucao, type LinhaMedida } from "./visao";
+import { resumoDasMedidas, type LinhaMedida } from "@/lib/medidas";
+import { VisaoDaEvolucao } from "./visao";
 
 export const metadata = { title: "Evolução · ARS Team" };
 
@@ -99,7 +100,7 @@ export default async function Evolucao() {
   return (
     <VisaoDaEvolucao
       pontos={pontos}
-      ultimaLinha={linhas[linhas.length - 1] ?? null}
+      medidas={resumoDasMedidas(linhas)}
       subiram={cargasQueSubiram(historico, nomes).slice(0, 6)}
       alunoId={alunoId}
       fotos={comUrl}

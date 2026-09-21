@@ -6,22 +6,7 @@ import { Meta } from "../pecas";
 import { GraficoDePeso, type Ponto } from "./grafico";
 import { RegistroDeMedidas, RegistroDePeso } from "./registro";
 import { Fotos, type FotoNaTela } from "./fotos";
-
-export type LinhaMedida = {
-  data: string;
-  peso_kg: number | null;
-  cintura_cm: number | null;
-  quadril_cm: number | null;
-  braco_cm: number | null;
-  coxa_cm: number | null;
-};
-
-const MEDIDAS = [
-  ["cintura_cm", "Cintura"],
-  ["quadril_cm", "Quadril"],
-  ["braco_cm", "Braço"],
-  ["coxa_cm", "Coxa"],
-] as const;
+import { rotuloDaDiferenca, type ChaveDaMedida, type ResumoDasMedidas } from "@/lib/medidas";
 
 const ABAS = [
   ["peso", "Peso"],
@@ -33,14 +18,14 @@ type Aba = (typeof ABAS)[number][0];
 
 export function VisaoDaEvolucao({
   pontos,
-  ultimaLinha,
+  medidas,
   subiram,
   alunoId,
   fotos,
   objetivo,
 }: {
   pontos: Ponto[];
-  ultimaLinha: LinhaMedida | null;
+  medidas: ResumoDasMedidas;
   subiram: CargaQueSubiu[];
   alunoId: string;
   fotos: FotoNaTela[];
@@ -204,18 +189,32 @@ export function VisaoDaEvolucao({
       {/* ---------------------------------------------------------- */}
       {aba === "medidas" && (
         <>
-          {ultimaLinha && MEDIDAS.some(([c]) => ultimaLinha[c] !== null) && (
+          {medidas.ultima && (
             <section className="rounded-2xl border border-linha bg-tinta-2 px-[18px] py-4">
-              {/* A unidade fica no rótulo do cartão, uma vez, em vez de uma
-                  linha inteira embaixo da grade. */}
-              <Meta>Último registro · {curtaComMes(ultimaLinha.data)} · em cm</Meta>
+              {/* A unidade e as datas ficam no rótulo, uma vez, e não em cada
+                  medida. Com comparação, "05/08 → 21/09" diz de quando a
+                  quando a seta está falando. */}
+              <Meta>
+                Em cm ·{" "}
+                {medidas.desde
+                  ? `${curtaComMes(medidas.desde)} → ${curtaComMes(medidas.ultima)}`
+                  : curtaComMes(medidas.ultima)}
+              </Meta>
               <dl className="mt-3 grid grid-cols-4 gap-2">
-                {MEDIDAS.map(([chave, nome]) => (
-                  <div key={chave}>
-                    <dt className="text-[11px] text-nevoa">{nome}</dt>
+                {medidas.itens.map((m) => (
+                  <div key={m.chave}>
+                    <dt className="text-[13px] text-nevoa">{m.nome}</dt>
                     <dd className="mt-0.5 font-mono text-[15px] tabular text-papel">
-                      {ultimaLinha[chave] !== null ? formatarCarga(Number(ultimaLinha[chave])) : "-"}
+                      {m.atual !== null ? formatarCarga(m.atual) : "-"}
                     </dd>
+                    {/* Seta sem cor: cintura descendo é ótimo para quem
+                        emagrece e braço subindo é ótimo para quem ganha massa.
+                        Pintar de verde ou vermelho seria julgar pelo aluno. */}
+                    {m.diferenca !== null && (
+                      <dd className="mt-0.5 font-mono text-[13px] tabular text-nevoa">
+                        {rotuloDaDiferenca(m.diferenca)}
+                      </dd>
+                    )}
                   </div>
                 ))}
               </dl>
@@ -223,12 +222,7 @@ export function VisaoDaEvolucao({
           )}
 
           <RegistroDeMedidas
-            atuais={{
-              cintura_cm: ultimaLinha?.cintura_cm ?? null,
-              quadril_cm: ultimaLinha?.quadril_cm ?? null,
-              braco_cm: ultimaLinha?.braco_cm ?? null,
-              coxa_cm: ultimaLinha?.coxa_cm ?? null,
-            }}
+            atuais={Object.fromEntries(medidas.itens.map((m) => [m.chave, m.atual])) as Record<ChaveDaMedida, number | null>}
           />
         </>
       )}
