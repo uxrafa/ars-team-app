@@ -101,34 +101,6 @@ export function evolucaoPorExercicio(
   );
 }
 
-/**
- * A faixa de repetições que o Allisson prescreveu, lida do texto da ficha.
- *
- * `item_exercicio.reps` é texto de propósito (cabe "6-10", "12", "falha",
- * "30s"), então nem sempre existe faixa. Sem faixa, o gráfico só não desenha
- * a referência -- não inventa uma.
- */
-export function faixaDeReps(texto: string | null | undefined): { min: number; max: number } | null {
-  if (!texto) return null;
-  const limpo = texto.toLowerCase().replace(/\s+/g, " ").trim();
-
-  const faixa = limpo.match(/^(\d{1,3})\s*(?:-|–|a|até)\s*(\d{1,3})$/);
-  if (faixa) {
-    const a = Number(faixa[1]);
-    const b = Number(faixa[2]);
-    if (a <= 0 || b <= 0) return null;
-    return { min: Math.min(a, b), max: Math.max(a, b) };
-  }
-
-  const unico = limpo.match(/^(\d{1,3})$/);
-  if (unico) {
-    const n = Number(unico[1]);
-    return n > 0 ? { min: n, max: n } : null;
-  }
-
-  return null;
-}
-
 export type VariacaoDaSerie = {
   numero: number;
   de: number;

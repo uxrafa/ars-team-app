@@ -17,8 +17,6 @@ import {
 const SUPERFICIE = "#101013"; // --tinta-2, o fundo do cartao
 const GRADE = "#2a2a2e"; //      --linha: so divisoria, recessiva de proposito
 const EIXO = "#807b78"; //       --nevoa-fraca: 4.54:1 sobre o cartao
-const FAIXA = "rgba(255,255,255,0.07)"; // a faixa prescrita: neutra, nao compete com as series
-const FAIXA_BORDA = "rgba(255,255,255,0.22)";
 
 const ALTURA = 200;
 const M = { topo: 12, dir: 34, base: 28, esq: 40 };
@@ -28,19 +26,15 @@ function dataCurta(iso: string): string {
   return `${dia}/${mes}`;
 }
 
-/**
- * Quatro marcas "redondas" no eixo: 0, 10, 20, 30, e nao 0, 8.3, 16.6.
- * `inteiro` e para repeticao: "9,5 reps" no eixo nao existe na academia.
- */
-function marcas(min: number, max: number, inteiro = false): number[] {
+/** Quatro marcas "redondas" no eixo: 0, 10, 20, 30, e nao 0, 8.3, 16.6. */
+function marcas(min: number, max: number): number[] {
   if (min === max) {
     min = min - 1;
     max = max + 1;
   }
   const bruto = (max - min) / 4;
   const potencia = 10 ** Math.floor(Math.log10(bruto));
-  const achado = [1, 2, 2.5, 5, 10].map((m) => m * potencia).find((p) => p >= bruto) ?? bruto;
-  const passo = inteiro ? Math.max(1, Math.round(achado)) : achado;
+  const passo = [1, 2, 2.5, 5, 10].map((m) => m * potencia).find((p) => p >= bruto) ?? bruto;
   const inicio = Math.floor(min / passo) * passo;
   const fim = Math.ceil(max / passo) * passo;
   const lista: number[] = [];
@@ -62,8 +56,6 @@ function Linhas({
   numeros,
   cores,
   valor,
-  faixa,
-  inteiro = false,
   indice,
   aoApontar,
 }: {
@@ -73,8 +65,6 @@ function Linhas({
   numeros: number[];
   cores: readonly string[];
   valor: (d: DiaDoExercicio, numero: number) => number | null;
-  faixa: { min: number; max: number } | null;
-  inteiro?: boolean;
   indice: number | null;
   aoApontar: (i: number | null) => void;
 }) {
@@ -92,14 +82,7 @@ function Linhas({
   const valores = dias.flatMap((d) => numeros.map((n) => valor(d, n))).filter((v): v is number => v !== null);
   const semDado = valores.length === 0;
 
-  const limites = [...valores, ...(faixa ? [faixa.min, faixa.max] : [])];
-  // Uma unidade de folga em volta da faixa: sem isso, uma faixa de 6 a 10 com
-  // o aluno fazendo exatamente de 6 a 10 enche o grafico inteiro e deixa de
-  // ser referencia -- vira fundo.
-  const folga = faixa ? 1 : 0;
-  const eixo = semDado
-    ? [0, 1]
-    : marcas(Math.max(0, Math.min(...limites) - folga), Math.max(...limites) + folga, inteiro);
+  const eixo = semDado ? [0, 1] : marcas(Math.min(...valores), Math.max(...valores));
   const piso = eixo[0];
   const teto = eixo[eixo.length - 1];
 
@@ -229,20 +212,6 @@ function Linhas({
             </text>
           ))}
 
-          {/* A faixa que o Allisson prescreveu: neutra, atras das linhas. A
-              pergunta do grafico de reps e "caiu dentro ou fora disto?". */}
-          {faixa && !semDado && (
-            faixa.min === faixa.max ? (
-              <line x1={M.esq} x2={largura - M.dir} y1={y(faixa.min)} y2={y(faixa.min)} stroke={FAIXA_BORDA} strokeWidth={1} />
-            ) : (
-              <g>
-                <rect x={M.esq} width={larguraUtil} y={y(faixa.max)} height={y(faixa.min) - y(faixa.max)} fill={FAIXA} />
-                <line x1={M.esq} x2={largura - M.dir} y1={y(faixa.max)} y2={y(faixa.max)} stroke={FAIXA_BORDA} strokeWidth={1} />
-                <line x1={M.esq} x2={largura - M.dir} y1={y(faixa.min)} y2={y(faixa.min)} stroke={FAIXA_BORDA} strokeWidth={1} />
-              </g>
-            )
-          )}
-
           {indice !== null && (
             <line x1={x(indice)} x2={x(indice)} y1={M.topo} y2={ALTURA - M.base} stroke={EIXO} strokeWidth={1} />
           )}
@@ -291,11 +260,15 @@ function Linhas({
             <ul className="mt-1.5 flex flex-col gap-1">
               {numeros.map((n, k) => {
                 const v = valor(diaApontado, n);
+                const r = diaApontado.series.find((x) => x.numero === n)?.reps ?? null;
                 return (
                   <li key={n} className="flex items-center gap-2 text-sm">
                     <span aria-hidden="true" className="h-0.5 w-3 flex-none rounded-full" style={{ background: cores[k] }} />
+                    {/* As repetições vivem aqui desde 21/09: o gráfico de
+                        reps saiu, em nome do "o mais simples". */}
                     <span className="font-mono font-semibold tabular text-papel">
-                      {v === null ? "—" : `${kg(v)}${unidade === "kg" ? " kg" : ""}`}
+                      {v === null ? "—" : `${kg(v)} kg`}
+                      {r !== null && <span className="font-normal text-nevoa"> × {r}</span>}
                     </span>
                     <span className="text-nevoa">S{n}</span>
                   </li>
@@ -313,19 +286,13 @@ function Linhas({
  * "Um exercício ao longo do tempo", o primeiro dos quatro gráficos combinados
  * depois da call de 20/09.
  *
- * Carga e repetições em dois gráficos lado a lado, e NUNCA num gráfico só com
- * dois eixos: kg e reps em escalas diferentes no mesmo quadro fazem o cruzamento
- * das linhas parecer significar alguma coisa, e não significa. O apontador é
- * compartilhado, então passar o mouse num mostra o mesmo dia no outro.
+ * UM SELETOR, UMA FRASE E UM GRÁFICO. A primeira versão tinha carga e
+ * repetições lado a lado, com a faixa da ficha sombreada -- cinco elementos
+ * para uma pergunta só. Em 21/09 o Rafael firmou o princípio do "mais simples,
+ * nunca informação demais", e ficou só a carga. As repetições continuam a um
+ * gesto: no passar do mouse ("40 kg × 10") e na tabela recolhida.
  */
-export function EvolucaoPorExercicio({
-  exercicios,
-  faixas,
-}: {
-  exercicios: ExercicioComHistorico[];
-  /** Faixa de reps da ficha ativa, por exercício. Ausente = sem referência. */
-  faixas: Record<string, { min: number; max: number; texto: string } | undefined>;
-}) {
+export function EvolucaoPorExercicio({ exercicios }: { exercicios: ExercicioComHistorico[] }) {
   const [escolhido, setEscolhido] = useState(exercicios[0]?.exercicio_id ?? "");
   const [indice, setIndice] = useState<number | null>(null);
 
@@ -334,12 +301,10 @@ export function EvolucaoPorExercicio({
 
   const numeros = e.numeros.slice(0, MAX_SERIES_NO_GRAFICO);
   const cores = coresDasSeries(numeros.length);
-  const faixa = faixas[e.exercicio_id] ?? null;
   const variacoes = variacaoPorSerie(e);
   const sobrando = e.numeros.length - numeros.length;
 
   const carga = (d: DiaDoExercicio, n: number) => d.series.find((s) => s.numero === n)?.carga ?? null;
-  const reps = (d: DiaDoExercicio, n: number) => d.series.find((s) => s.numero === n)?.reps ?? null;
 
   return (
     <section className="rounded-2xl border border-linha bg-tinta-2 p-5">
@@ -376,21 +341,14 @@ export function EvolucaoPorExercicio({
 
       {/* Legenda sempre que houver duas séries ou mais. Chave de linha, e não
           quadrado, porque a marca é linha. */}
-      {(numeros.length > 1 || faixa) && (
+      {numeros.length > 1 && (
         <ul className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-nevoa">
-          {numeros.length > 1 &&
-            numeros.map((n, k) => (
-              <li key={n} className="flex items-center gap-2">
-                <span aria-hidden="true" className="h-0.5 w-4 rounded-full" style={{ background: cores[k] }} />
-                Série {n}
-              </li>
-            ))}
-          {faixa && (
-            <li className="flex items-center gap-2">
-              <span aria-hidden="true" className="h-3 w-4 rounded-sm border-y" style={{ background: FAIXA, borderColor: FAIXA_BORDA }} />
-              Faixa da ficha · {faixa.texto} reps
+          {numeros.map((n, k) => (
+            <li key={n} className="flex items-center gap-2">
+              <span aria-hidden="true" className="h-0.5 w-4 rounded-full" style={{ background: cores[k] }} />
+              Série {n}
             </li>
-          )}
+          ))}
         </ul>
       )}
 
@@ -398,9 +356,8 @@ export function EvolucaoPorExercicio({
         <p className="mt-4 text-sm text-nevoa">Um treino só até aqui. A linha aparece a partir do segundo.</p>
       )}
 
-      <div className="mt-4 grid gap-6 lg:grid-cols-2">
-        <Linhas titulo="Carga" unidade="kg" dias={e.dias} numeros={numeros} cores={cores} valor={carga} faixa={null} indice={indice} aoApontar={setIndice} />
-        <Linhas titulo="Repetições" unidade="" dias={e.dias} numeros={numeros} cores={cores} valor={reps} faixa={faixa} inteiro indice={indice} aoApontar={setIndice} />
+      <div className="mt-4">
+        <Linhas titulo="Carga" unidade="kg" dias={e.dias} numeros={numeros} cores={cores} valor={carga} indice={indice} aoApontar={setIndice} />
       </div>
 
       {/* A tabela nunca esconde nada: é onde vivem a sexta série em diante e

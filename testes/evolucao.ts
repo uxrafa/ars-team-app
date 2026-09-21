@@ -2,7 +2,6 @@ import assert from "node:assert/strict";
 import {
   coresDasSeries,
   evolucaoPorExercicio,
-  faixaDeReps,
   kg,
   rotuloDaVariacao,
   variacaoPorSerie,
@@ -74,24 +73,6 @@ conferir("serie sem carga fica como buraco, nao como zero", () => {
   const [e] = evolucaoPorExercicio([s("supino", "2026-09-05", 1, null, 12)], nomes);
   assert.equal(e.dias[0].series[0].carga, null);
   assert.equal(e.dias[0].series[0].reps, 12);
-});
-
-/* --- faixa prescrita ---------------------------------------------------- */
-
-conferir("a faixa de reps le as formas que o Allisson escreve", () => {
-  assert.deepEqual(faixaDeReps("6-10"), { min: 6, max: 10 });
-  assert.deepEqual(faixaDeReps("8 a 12"), { min: 8, max: 12 });
-  assert.deepEqual(faixaDeReps("10–12"), { min: 10, max: 12 });
-  assert.deepEqual(faixaDeReps("12"), { min: 12, max: 12 });
-  assert.deepEqual(faixaDeReps("12-8"), { min: 8, max: 12 });
-});
-
-conferir("sem faixa legivel, o grafico nao inventa referencia", () => {
-  assert.equal(faixaDeReps("falha"), null);
-  assert.equal(faixaDeReps("30s"), null);
-  assert.equal(faixaDeReps(""), null);
-  assert.equal(faixaDeReps(null), null);
-  assert.equal(faixaDeReps("0"), null);
 });
 
 /* --- variacao ----------------------------------------------------------- */

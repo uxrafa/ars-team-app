@@ -9,7 +9,7 @@ import {
   type SerieDoHistorico,
   type SessaoDoHistorico,
 } from "@/lib/aluno";
-import { evolucaoPorExercicio, faixaDeReps, type SerieParaEvolucao } from "@/lib/evolucao";
+import { evolucaoPorExercicio, type SerieParaEvolucao } from "@/lib/evolucao";
 import { VisaoDosTreinosDoAluno, type TreinoNaLista } from "./visao";
 
 export const metadata = { title: "Treinos do aluno · ARS Team" };
@@ -30,10 +30,6 @@ type SerieCrua = {
   carga_kg: string | number | null;
   reps: number | null;
   exercicio: { nome: string } | null;
-};
-
-type FichaCrua = {
-  bloco_treino: { ordem: number; item_exercicio: { exercicio_id: string; reps: string; ordem: number }[] }[];
 };
 
 const paraNumero = (v: string | number | null): number | null =>
@@ -69,25 +65,13 @@ export default async function TreinosDoAluno({ params }: { params: Promise<{ id:
   const ids = cruas.map((s) => s.id);
 
   // As mesmas séries servem ao volume por semana e à evolução por exercício:
-  // uma consulta só, com o exercício e o número da série junto. E a faixa de
-  // reps da ficha ativa vem em paralelo, para o gráfico desenhar a referência.
-  const [{ data: series }, { data: fichaAtiva }] = await Promise.all([
-    ids.length
-      ? supabase
-          .from("serie_registrada")
-          .select("sessao_id, exercicio_id, numero, carga_kg, reps, exercicio (nome)")
-          .in("sessao_id", ids)
-      : Promise.resolve({ data: [] as unknown[] }),
-    // Embute de cima para baixo (ficha > treinos > itens): e o formato que
-    // o resto do app ja usa, e o indice parcial de uma ficha ativa por aluno
-    // garante que volta uma linha so.
-    supabase
-      .from("protocolo")
-      .select("bloco_treino (ordem, item_exercicio (exercicio_id, reps, ordem))")
-      .eq("aluno_id", id)
-      .eq("status", "ativo")
-      .maybeSingle(),
-  ]);
+  // uma consulta só, com o exercício e o número da série junto.
+  const { data: series } = ids.length
+    ? await supabase
+        .from("serie_registrada")
+        .select("sessao_id, exercicio_id, numero, carga_kg, reps, exercicio (nome)")
+        .in("sessao_id", ids)
+    : { data: [] as unknown[] };
 
   const cruasSerie = (series ?? []) as unknown as SerieCrua[];
 
@@ -144,25 +128,9 @@ export default async function TreinosDoAluno({ params }: { params: Promise<{ id:
     nomes,
   );
 
-  // O mesmo exercício pode estar em dois treinos da ficha com faixas
-  // diferentes; fica a primeira que aparecer. Faixa ilegível ("falha") fica
-  // de fora, e o gráfico só não desenha referência.
-  const faixas: Record<string, { min: number; max: number; texto: string }> = {};
-  const itensDaFicha = (
-    ((fichaAtiva as FichaCrua | null)?.bloco_treino ?? [])
-      .sort((a, b) => a.ordem - b.ordem)
-      .flatMap((b) => [...(b.item_exercicio ?? [])].sort((a, c) => a.ordem - c.ordem))
-  );
-  for (const item of itensDaFicha) {
-    if (faixas[item.exercicio_id]) continue;
-    const f = faixaDeReps(item.reps);
-    if (f) faixas[item.exercicio_id] = { ...f, texto: item.reps.trim() };
-  }
-
   return (
     <VisaoDosTreinosDoAluno
       exercicios={exercicios}
-      faixas={faixas}
       semanas={semanasDeTreino(linhasSessao, linhasSerie, hoje)}
       treinos={treinos.slice(0, 40)}
       primeiroNome={aluno.nome.split(" ")[0]}

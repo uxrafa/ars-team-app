@@ -83,13 +83,11 @@ function Numero({
 
 export function VisaoDosTreinosDoAluno({
   exercicios,
-  faixas,
   semanas,
   treinos,
   primeiroNome,
 }: {
   exercicios: ExercicioComHistorico[];
-  faixas: Record<string, { min: number; max: number; texto: string }>;
   semanas: SemanaDeTreino[];
   treinos: TreinoNaLista[];
   primeiroNome: string;
@@ -188,7 +186,7 @@ export function VisaoDosTreinosDoAluno({
 
       {/* Depois do volume da semana, antes do histórico: do geral para o
           exercício, e do exercício para o treino de um dia. */}
-      {exercicios.length > 0 && <EvolucaoPorExercicio exercicios={exercicios} faixas={faixas} />}
+      {exercicios.length > 0 && <EvolucaoPorExercicio exercicios={exercicios} />}
 
       <section className="flex flex-col gap-3">
         <h2 className="text-lg font-bold">Histórico</h2>
