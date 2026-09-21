@@ -15,12 +15,8 @@ const NOME_DO_PLANO = {
   admin: "Treinador",
 } as const;
 
-/** Ainda não existem. O aluno precisa saber que vêm, e que não sumiram. */
-/**
- * Só os nomes. Descrever em detalhe o que ele ainda não pode usar é vender de
- * novo uma coisa que ele já comprou, e o nome basta para dizer que vem aí.
- */
-const EM_BREVE = ["Semana", "Chat"] as const;
+// Semana e Chat saíram daqui em 21/09: a lista "Em breve" prometia sem data,
+// e o Rafael preferiu esconder até existirem.
 
 function Linha({ nome, valor }: { nome: string; valor: string }) {
   return (
@@ -128,20 +124,6 @@ export default async function Perfil() {
       >
         Falar com o Allisson no WhatsApp
       </BotaoLink>
-
-      <section className="flex flex-col gap-3">
-        <Rotulo>Em breve</Rotulo>
-        <ul className="overflow-hidden rounded-2xl border border-linha bg-tinta-2">
-          {EM_BREVE.map((nome) => (
-            <li
-              key={nome}
-              className="border-t border-linha px-4 py-3.5 font-semibold text-nevoa first:border-t-0"
-            >
-              {nome}
-            </li>
-          ))}
-        </ul>
-      </section>
 
       <BotaoSair rotulo="Sair da conta" />
     </div>

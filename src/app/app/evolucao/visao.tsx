@@ -6,7 +6,15 @@ import { Meta } from "../pecas";
 import { GraficoDePeso, type Ponto } from "./grafico";
 import { RegistroDeMedidas, RegistroDePeso } from "./registro";
 import { Fotos, type FotoNaTela } from "./fotos";
-import { rotuloDaDiferenca, type ChaveDaMedida, type ResumoDasMedidas } from "@/lib/medidas";
+import {
+  PERIODOS,
+  pontosDoPeriodo,
+  rotuloDaDiferenca,
+  variacaoDoPeriodo,
+  type ChaveDaMedida,
+  type Periodo,
+  type ResumoDasMedidas,
+} from "@/lib/medidas";
 
 const ABAS = [
   ["peso", "Peso"],
@@ -33,18 +41,18 @@ export function VisaoDaEvolucao({
 }) {
   const [aba, setAba] = useState<Aba>("peso");
 
+  const [periodo, setPeriodo] = useState<Periodo>("3m");
+
   const ultimo = pontos[pontos.length - 1] ?? null;
 
-  /**
-   * A variação da janela: o ponto mais antigo dentro dos últimos 30 dias, ou o
-   * primeiro que existir. Comparar sempre com o começo de tudo deixaria o
-   * número parado depois de alguns meses.
-   */
-  const limite = ultimo
-    ? new Date(Date.parse(`${ultimo.data}T00:00:00Z`) - 30 * 86400000).toISOString().slice(0, 10)
-    : null;
-  const base = limite ? (pontos.find((p) => p.data >= limite) ?? pontos[0]) : null;
-  const variacao = ultimo && base && base !== ultimo ? ultimo.valor - base.valor : null;
+  // A variação acompanha o período escolhido: "desde quando" é a primeira
+  // pesagem da janela. Antes era fixo em 30 dias e o aluno não via o resto.
+  const doPeriodo = pontosDoPeriodo(pontos, periodo);
+  const base = doPeriodo[0] ?? null;
+  const variacao = variacaoDoPeriodo(doPeriodo);
+  // Filtro só aparece quando muda alguma coisa: com um mês de dados, os
+  // quatro botões mostrariam o mesmo gráfico.
+  const temHistorico = pontosDoPeriodo(pontos, "1m").length < pontos.length;
 
   // Perder peso não é vitória para quem está atrás de massa. O verde só entra
   // quando a direção bate com o objetivo que o aluno declarou na anamnese.
@@ -127,18 +135,62 @@ export function VisaoDaEvolucao({
               <Meta className="mt-1.5 block">Primeiro registro</Meta>
             )}
 
-            {pontos.length >= 2 ? (
+            {temHistorico && (
+              <div role="group" aria-label="Período" className="mt-4 grid grid-cols-4 gap-1.5">
+                {PERIODOS.map((p) => (
+                  <button
+                    key={p.valor}
+                    type="button"
+                    aria-pressed={periodo === p.valor}
+                    onClick={() => setPeriodo(p.valor)}
+                    className={`min-h-11 rounded-[10px] text-[13px] transition-colors ${
+                      periodo === p.valor
+                        ? "border border-contorno bg-tinta-3 font-bold text-papel"
+                        : "text-nevoa hover:text-papel"
+                    }`}
+                  >
+                    {p.nome}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {doPeriodo.length >= 2 ? (
               <>
-                <GraficoDePeso pontos={pontos} />
+                {/* key: trocar de período volta a escolha para a última pesagem. */}
+                <GraficoDePeso key={periodo} pontos={doPeriodo} />
                 <div className="mt-1.5 flex justify-between">
                   <span className="font-mono text-[11px] text-nevoa">
-                    {curtaComMes(pontos[0].data)}
+                    {curtaComMes(doPeriodo[0].data)}
                   </span>
                   <span className="font-mono text-[11px] text-nevoa">
-                    {curtaComMes(pontos[pontos.length - 1].data)}
+                    {curtaComMes(doPeriodo[doPeriodo.length - 1].data)}
                   </span>
                 </div>
+
+                {/* A lista completa fica a um toque, e não na tela: é o que
+                    ele consulta às vezes, não toda vez. */}
+                <details className="mt-3 border-t border-linha pt-1">
+                  <summary className="flex min-h-11 cursor-pointer items-center text-[13px] font-semibold text-nevoa hover:text-papel">
+                    Ver pesagens ({doPeriodo.length})
+                  </summary>
+                  <ul className="pb-2">
+                    {[...doPeriodo].reverse().map((p) => (
+                      <li
+                        key={p.data}
+                        className="flex justify-between border-t border-linha py-2 text-[14px] first:border-t-0"
+                      >
+                        <span className="font-mono text-nevoa">{curtaComMes(p.data)}</span>
+                        <span className="text-papel">{formatarCarga(p.valor)} kg</span>
+                      </li>
+                    ))}
+                  </ul>
+                </details>
               </>
+            ) : pontos.length >= 2 ? (
+              <p className="mb-2 mt-3 text-[13.5px] leading-[1.5] text-nevoa">
+                Só uma pesagem nesse período. Escolha um período maior.
+              </p>
             ) : (
               <p className="mb-2 mt-3 text-[13.5px] leading-[1.5] text-nevoa">
                 A linha começa no segundo registro. Pese uma vez por semana, sempre no mesmo dia e

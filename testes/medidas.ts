@@ -1,5 +1,12 @@
 import assert from "node:assert/strict";
-import { resumoDasMedidas, rotuloDaDiferenca, type LinhaMedida } from "../src/lib/medidas.ts";
+import {
+  indiceMaisProximo,
+  pontosDoPeriodo,
+  resumoDasMedidas,
+  rotuloDaDiferenca,
+  variacaoDoPeriodo,
+  type LinhaMedida,
+} from "../src/lib/medidas.ts";
 
 let ok = 0;
 function conferir(nome: string, f: () => void) {
@@ -56,6 +63,32 @@ conferir("a seta diz a direcao, sem sinal de mais ou menos", () => {
   assert.equal(rotuloDaDiferenca(-2), "↓ 2");
   assert.equal(rotuloDaDiferenca(1.5), "↑ 1,5");
   assert.equal(rotuloDaDiferenca(0), "=");
+});
+
+const pesos = [
+  { data: "2026-03-01", valor: 80 },
+  { data: "2026-06-25", valor: 78 },
+  { data: "2026-08-25", valor: 77 },
+  { data: "2026-09-20", valor: 76.5 },
+];
+
+conferir("periodo conta a partir da ultima pesagem", () => {
+  assert.deepEqual(pontosDoPeriodo(pesos, "1m").map((p) => p.data), ["2026-08-25", "2026-09-20"]);
+  assert.equal(pontosDoPeriodo(pesos, "3m").length, 3);
+  assert.equal(pontosDoPeriodo(pesos, "tudo").length, 4);
+  assert.deepEqual(pontosDoPeriodo([], "1m"), []);
+});
+
+conferir("variacao do periodo e ultimo menos primeiro da janela", () => {
+  assert.equal(variacaoDoPeriodo(pontosDoPeriodo(pesos, "1m")), -0.5);
+  assert.equal(variacaoDoPeriodo(pesos), -3.5);
+  assert.equal(variacaoDoPeriodo([pesos[0]]), null);
+});
+
+conferir("toque escolhe o ponto mais proximo", () => {
+  assert.equal(indiceMaisProximo([0, 100, 200, 330], 140), 1);
+  assert.equal(indiceMaisProximo([0, 100, 200, 330], 400), 3);
+  assert.equal(indiceMaisProximo([0], 50), 0);
 });
 
 console.log(`\n${ok} verificacoes das medidas, todas passaram.`);
