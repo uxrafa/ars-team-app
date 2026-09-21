@@ -1,8 +1,9 @@
 import { redirect } from "next/navigation";
 import { criarClienteServidor } from "@/lib/supabase/server";
-import { Botao, BotaoLink, Cartao } from "@/components/ui";
+import { BotaoLink, Cartao } from "@/components/ui";
 import { NavDoAluno, type Aba } from "./nav";
 import { TopoDoApp } from "./topo";
+import { BotaoSair } from "@/components/sair";
 
 export const metadata = { title: "ARS Team" };
 
@@ -86,11 +87,7 @@ export default async function LayoutApp({
             Falar com o Allisson
           </BotaoLink>
         </Cartao>
-        <form action="/auth/sair" method="post">
-          <Botao type="submit" aparencia="fantasma" largura="cheia">
-            Sair
-          </Botao>
-        </form>
+        <BotaoSair />
       </div>
     );
   }

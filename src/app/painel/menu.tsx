@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
 import { Logo } from "@/components/logo";
 import { Raio } from "@/components/raio";
+import { BotaoSair } from "@/components/sair";
 
 /**
  * O menu lateral do painel.
@@ -37,7 +38,7 @@ type NomeDoIcone =
 
 // Tracos no estilo do resto do app: 24px de grade, contorno de 1.8, pontas
 // redondas. Inline de proposito -- seis icones nao justificam uma biblioteca.
-const ICONES: Record<NomeDoIcone | "recolher" | "menu" | "fechar" | "sair", ReactNode> = {
+const ICONES: Record<NomeDoIcone | "recolher" | "menu" | "fechar", ReactNode> = {
   painel: (
     <>
       <rect x="3" y="3" width="7" height="7" rx="1.5" />
@@ -92,13 +93,6 @@ const ICONES: Record<NomeDoIcone | "recolher" | "menu" | "fechar" | "sair", Reac
     <>
       <path d="M18 6 6 18" />
       <path d="m6 6 12 12" />
-    </>
-  ),
-  sair: (
-    <>
-      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-      <path d="m16 17 5-5-5-5" />
-      <path d="M21 12H9" />
     </>
   ),
 };
@@ -221,16 +215,7 @@ function Rodape({
           {iniciais}
         </span>
         {!recolhido && <span className="min-w-0 flex-1 truncate text-[15px] font-semibold">{nome}</span>}
-        <form action="/auth/sair" method="post">
-          <button
-            type="submit"
-            aria-label="Sair"
-            title="Sair"
-            className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-contorno text-nevoa transition-colors hover:border-nevoa hover:text-papel"
-          >
-            <Icone nome="sair" />
-          </button>
-        </form>
+        <BotaoSair jeito="icone" />
       </div>
     </div>
   );

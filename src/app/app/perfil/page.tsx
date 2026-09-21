@@ -1,8 +1,9 @@
 import { criarClienteServidor } from "@/lib/supabase/server";
-import { Botao, BotaoLink, Cartao, Pilula, Rotulo } from "@/components/ui";
+import { BotaoLink, Cartao, Pilula, Rotulo } from "@/components/ui";
 import { diasEntre, emReais, hojeSP } from "@/lib/painel";
 import { porExtenso } from "@/lib/treino";
 import { Titulo } from "../visao";
+import { BotaoSair } from "@/components/sair";
 
 export const metadata = { title: "Perfil · ARS Team" };
 
@@ -142,11 +143,7 @@ export default async function Perfil() {
         </ul>
       </section>
 
-      <form action="/auth/sair" method="post">
-        <Botao type="submit" aparencia="fantasma" largura="cheia">
-          Sair da conta
-        </Botao>
-      </form>
+      <BotaoSair rotulo="Sair da conta" />
     </div>
   );
 }

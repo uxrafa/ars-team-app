@@ -1,9 +1,10 @@
-import { Aviso, Botao, BotaoLink, Cartao } from "@/components/ui";
+import { Aviso, BotaoLink, Cartao } from "@/components/ui";
 import { comDiaDaSemana, curtaComMes, type BlocoDoAluno, type DiaDaFaixa } from "@/lib/treino";
 import { CartaoDoTreino } from "./cartao-treino";
 import { CartaoDaPlanilha } from "./cartao-planilha";
 import { Meta, Selo } from "./pecas";
 import type { ProtocoloDoAluno } from "./carregar";
+import { BotaoSair } from "@/components/sair";
 
 /* ------------------------------------------------------------------ */
 /* Peças                                                               */
@@ -385,11 +386,7 @@ export function AcessoSuspenso({ nome }: { nome: string }) {
           Falar com o Allisson
         </BotaoLink>
       </Cartao>
-      <form action="/auth/sair" method="post">
-        <Botao type="submit" aparencia="fantasma" largura="cheia">
-          Sair
-        </Botao>
-      </form>
+      <BotaoSair />
     </div>
   );
 }
