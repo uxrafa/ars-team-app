@@ -22,8 +22,12 @@ export function AbasDoAluno({ alunoId }: { alunoId: string }) {
     { href: `${base}/dieta`, nome: "Dieta" },
   ];
 
+  // O traço da aba ativa ficava 1px abaixo da faixa (-bottom-px) e, com
+  // overflow-x-auto, o navegador criava rolagem vertical por causa dele.
+  // Agora ele fica dentro, e a barra de rolagem some mesmo quando as abas
+  // não cabem no celular: dá para arrastar sem a barra aparecer.
   return (
-    <nav aria-label="Seções do aluno" className="flex gap-1 overflow-x-auto border-b border-linha">
+    <nav aria-label="Seções do aluno" className="flex gap-1 overflow-x-auto overflow-y-hidden border-b border-linha [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
       {abas.map((aba) => {
         // O Resumo só casa exato, senão ficaria aceso em todas as abas.
         const ativa = aba.href === base ? caminho === base : caminho.startsWith(aba.href);
@@ -41,7 +45,7 @@ export function AbasDoAluno({ alunoId }: { alunoId: string }) {
             {ativa && (
               <span
                 aria-hidden="true"
-                className="absolute inset-x-2 -bottom-px h-0.5 rounded-full bg-raio"
+                className="absolute inset-x-2 bottom-0 h-0.5 rounded-full bg-raio"
               />
             )}
           </Link>

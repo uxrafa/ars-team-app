@@ -19,7 +19,9 @@ export const metadata = { title: "ARS Team" };
 // Semana e Chat voltam quando forem construídas; aba apagada frustrava mais do
 // que avisava (Rafael, 21/09).
 const ABAS_CONSULTORIA: Aba[] = [
-  { href: "/app", nome: "Hoje", icone: "hoje" },
+  // "Treino", e não "Hoje": é o que ele vem fazer, e com a aba Dieta ao lado
+  // "Hoje" deixou de dizer do que se trata (Rafael, 21/09).
+  { href: "/app", nome: "Treino", icone: "treino" },
   { href: "/app/evolucao", nome: "Evolução", icone: "evolucao" },
   { href: "/app/perfil", nome: "Perfil", icone: "perfil" },
 ];
