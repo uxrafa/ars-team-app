@@ -14,7 +14,7 @@ import { usePathname } from "next/navigation";
  * toque errado esperando para acontecer.
  */
 
-export type NomeDeIcone = "hoje" | "semana" | "evolucao" | "chat" | "perfil" | "treino" | "videos";
+export type NomeDeIcone = "hoje" | "semana" | "evolucao" | "chat" | "perfil" | "treino" | "videos" | "dieta";
 
 export type Aba = {
   href: string | null;
@@ -46,6 +46,14 @@ const ICONE: Record<NomeDeIcone, React.ReactNode> = {
     </>
   ),
   treino: <path d="M6.5 6.5v11M17.5 6.5v11M3 9.5v5M21 9.5v5M6.5 12h11" />,
+  // Prato com garfo: lê como comida sem precisar de legenda.
+  dieta: (
+    <>
+      <circle cx="13" cy="12" r="7" />
+      <circle cx="13" cy="12" r="3.5" />
+      <path d="M3.5 3v6M3.5 9v12M2 3v4.5a1.5 1.5 0 0 0 3 0V3" />
+    </>
+  ),
   videos: (
     <>
       <rect x="2.5" y="5" width="19" height="14" rx="2.5" />

@@ -20,7 +20,7 @@ const NOME_DO_PLANO = {
  * Só os nomes. Descrever em detalhe o que ele ainda não pode usar é vender de
  * novo uma coisa que ele já comprou, e o nome basta para dizer que vem aí.
  */
-const EM_BREVE = ["Semana", "Orientação alimentar", "Chat"] as const;
+const EM_BREVE = ["Semana", "Chat"] as const;
 
 function Linha({ nome, valor }: { nome: string; valor: string }) {
   return (

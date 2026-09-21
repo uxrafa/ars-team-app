@@ -10,6 +10,7 @@ import {
   LOCAIS,
   NIVEIS,
   OBJETIVOS,
+  SEXOS,
   PERGUNTAS_SAUDE,
   PERIODOS,
   primeiraFalta,
@@ -266,6 +267,26 @@ export function Formulario({
                   className={campo}
                 />
               </label>
+              <div id="campo-sexo" className="flex flex-col gap-1.5">
+                <Rotulo>Sexo</Rotulo>
+                <div className="grid grid-cols-2 gap-2">
+                  {SEXOS.map(([valor, nome]) => (
+                    <button
+                      key={valor}
+                      type="button"
+                      onClick={() => mudar("sexo", valor)}
+                      aria-pressed={dados.sexo === valor}
+                      className={`min-h-12 rounded-xl border px-3 text-[15px] transition-colors ${
+                        dados.sexo === valor
+                          ? "border-raio-solido bg-raio-solido font-semibold text-papel"
+                          : "border-contorno text-nevoa hover:border-nevoa hover:text-papel"
+                      }`}
+                    >
+                      {nome}
+                    </button>
+                  ))}
+                </div>
+              </div>
             </section>
 
             <section id="campo-objetivo" className="flex flex-col gap-3">

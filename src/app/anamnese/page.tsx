@@ -17,6 +17,7 @@ function paraFormulario(linha: Record<string, unknown> | null): DadosAnamnese {
     peso_kg: numero(linha.peso_kg),
     altura_cm: texto(linha.altura_cm),
     nascimento: texto(linha.nascimento),
+    sexo: texto(linha.sexo),
     objetivo: texto(linha.objetivo),
     local_treino: texto(linha.local_treino),
     nivel: texto(linha.nivel),

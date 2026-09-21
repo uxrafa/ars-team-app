@@ -15,6 +15,12 @@ export const OBJETIVOS = [
   ["saude_geral", "Saúde geral"],
 ] as const;
 
+/** Só para a conta de calorias da dieta (a fórmula muda por sexo). */
+export const SEXOS = [
+  ["masculino", "Masculino"],
+  ["feminino", "Feminino"],
+] as const;
+
 export const LOCAIS = [
   ["academia", "Academia"],
   ["casa", "Em casa"],
@@ -94,6 +100,7 @@ export type DadosAnamnese = {
   peso_kg: string;
   altura_cm: string;
   nascimento: string;
+  sexo: string;
   objetivo: string;
   local_treino: string;
   nivel: string;
@@ -124,6 +131,7 @@ export const ANAMNESE_VAZIA: DadosAnamnese = {
   peso_kg: "",
   altura_cm: "",
   nascimento: "",
+  sexo: "",
   objetivo: "",
   local_treino: "",
   nivel: "",
@@ -199,6 +207,9 @@ export function primeiraFalta(d: DadosAnamnese): Falta | null {
   }
   if (altura < 100 || altura > 250) {
     return { etapa: 1, campo: "altura_cm", mensagem: "Confira a altura: o valor parece fora do normal." };
+  }
+  if (!d.sexo) {
+    return { etapa: 1, campo: "sexo", mensagem: "Marque o sexo." };
   }
   if (!d.objetivo) {
     return { etapa: 1, campo: "objetivo", mensagem: "Escolha seu objetivo principal." };

@@ -24,6 +24,10 @@ const ABAS_CONSULTORIA: Aba[] = [
   { href: "/app/perfil", nome: "Perfil", icone: "perfil" },
 ];
 
+// A dieta entra depois de Hoje, e só para quem tem uma publicada: aba que
+// abre vazia frustra mais do que avisa (a mesma regra de 21/09).
+const ABA_DIETA: Aba = { href: "/app/dieta", nome: "Dieta", icone: "dieta" };
+
 // Quem comprou planilha comprou um produto, não acompanhamento: sem evolução,
 // porque sem check-in não existe o que evoluir na tela.
 const ABAS_PLANILHA: Aba[] = [
@@ -49,6 +53,22 @@ export default async function LayoutApp({
       tipo: "admin" | "consultoria" | "planilha";
       arquivado_em: string | null;
     }>();
+
+  // A RLS só devolve orientação publicada: rascunho conta como não ter.
+  const { count: temDieta } =
+    perfil?.tipo === "consultoria"
+      ? await supabase
+          .from("orientacao_alimentar")
+          .select("aluno_id", { count: "exact", head: true })
+          .eq("aluno_id", user.id)
+      : { count: 0 };
+
+  const abas =
+    perfil?.tipo === "planilha"
+      ? ABAS_PLANILHA
+      : temDieta
+        ? [ABAS_CONSULTORIA[0], ABA_DIETA, ...ABAS_CONSULTORIA.slice(1)]
+        : ABAS_CONSULTORIA;
 
   // O treinador tem casa própria.
   if (perfil?.tipo === "admin") redirect("/painel");
@@ -100,7 +120,7 @@ export default async function LayoutApp({
           o último cartão. */}
       <main className="mx-auto max-w-md px-5 pb-[86px] pt-5">{children}</main>
 
-      <NavDoAluno abas={perfil?.tipo === "planilha" ? ABAS_PLANILHA : ABAS_CONSULTORIA} />
+      <NavDoAluno abas={abas} />
     </div>
   );
 }

@@ -21,6 +21,7 @@ function montarLinha(alunoId: string, dados: DadosAnamnese) {
     peso_kg: paraNumero(dados.peso_kg),
     altura_cm: paraNumero(dados.altura_cm),
     nascimento: dados.nascimento || null,
+    sexo: dados.sexo || null,
     objetivo: dados.objetivo || null,
     local_treino: dados.local_treino || null,
     nivel: dados.nivel || null,

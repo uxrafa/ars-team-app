@@ -19,6 +19,7 @@ export function AbasDoAluno({ alunoId }: { alunoId: string }) {
     { href: `${base}/treinos`, nome: "Treinos" },
     { href: `${base}/evolucao`, nome: "Evolução" },
     { href: `${base}/ficha`, nome: "Ficha" },
+    { href: `${base}/dieta`, nome: "Dieta" },
   ];
 
   return (
