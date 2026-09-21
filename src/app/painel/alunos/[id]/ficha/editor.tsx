@@ -261,7 +261,7 @@ export function Editor({
               <p className="mt-2.5 text-[15px] text-nevoa">
                 {r.blocos === 0
                   ? "Nenhum treino ainda."
-                  : `${r.blocos} ${r.blocos === 1 ? "treino" : "treinos"} · ${r.exercicios} exercícios · ${r.series} séries no total`}
+                  : `${r.blocos} ${r.blocos === 1 ? "treino" : "treinos"} · ${r.exercicios} exercícios · ${r.series} séries válidas`}
               </p>
             </div>
             <Pilula tom={ativa ? "ok" : "neutro"}>{ativa ? "No ar para o aluno" : "Rascunho"}</Pilula>

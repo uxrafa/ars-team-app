@@ -15,7 +15,9 @@ import type { Metodo } from "./ficha";
 export type ItemDoTreino = {
   id: string;
   ordem: number;
+  /** Séries válidas. O aquecimento não entra em progresso nem em volume. */
   series: number;
+  series_aquecimento: number;
   reps: string;
   descanso_seg: number;
   metodo: Metodo;
@@ -233,6 +235,14 @@ export function seriesPorExercicio(series: SerieFeita[]): Map<string, SerieFeita
   return mapa;
 }
 
+/**
+ * O exercício está feito quando as VÁLIDAS estão feitas.
+ *
+ * Aquecimento não conta, de propósito: ele vive em outra tabela
+ * (`aquecimento_feito`, migração 0016) e nunca chega aqui. Quem pula o
+ * aquecimento e faz as três válidas terminou o exercício -- o app não vai
+ * segurar o aluno num botão que o Allisson pôs como orientação.
+ */
 export function exercicioCompleto(item: ItemDoTreino, feitas: SerieFeita[] | undefined): boolean {
   return (feitas?.length ?? 0) >= item.series;
 }

@@ -10,6 +10,7 @@ import { carregarFichaAtiva, carregarSeries } from "../carregar";
 import { LinhaDeExercicio, Meta } from "../pecas";
 import { Titulo } from "../visao";
 import { Encerrar } from "./encerrar";
+import { prescricao } from "@/lib/prescricao";
 
 export const metadata = { title: "Treino · ARS Team" };
 
@@ -80,7 +81,7 @@ export default async function TreinoEmAndamento() {
                 grupo={item.grupo}
                 temVideo={Boolean(item.video_url)}
                 meta={
-                  `${item.series} séries × ${item.reps} reps` +
+                  `${prescricao(item)}` +
                   (maior > 0 ? ` · ${formatarCarga(maior)} kg hoje` : "")
                 }
                 marca={

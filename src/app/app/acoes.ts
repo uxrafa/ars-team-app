@@ -188,6 +188,57 @@ export async function apagarSerie(exercicioId: string, numero: number): Promise<
 }
 
 /**
+ * Marca ou desmarca um aquecimento. Sem carga e sem reps: decisão de 21/09, o
+ * aluno não digita nada no aquecimento, só diz que fez.
+ *
+ * Mesmo desenho de `registrarSerie`: o exercício vem da linha do item no
+ * banco, e não da tela, e a RLS só devolve item da ficha ativa do próprio
+ * aluno. O limite do número vem da ficha, para ninguém marcar o aquecimento
+ * número 7 de um exercício que tem dois.
+ */
+export async function marcarAquecimento(
+  itemId: string,
+  numero: number,
+  feito: boolean,
+): Promise<Resultado> {
+  const { supabase, alunoId } = await pegarAluno();
+  if (!alunoId) return { erro: "Sua sessão expirou. Entre de novo." };
+
+  const sessao = await sessaoAbertaDoAluno(supabase, alunoId);
+  if (!sessao) return { erro: "Este treino não está mais aberto." };
+
+  const { data: item } = await supabase
+    .from("item_exercicio")
+    .select("exercicio_id, series_aquecimento")
+    .eq("id", itemId)
+    .maybeSingle<{ exercicio_id: string; series_aquecimento: number }>();
+
+  if (!item) return { erro: "Este exercício não está mais na sua ficha." };
+  if (!Number.isInteger(numero) || numero < 1 || numero > item.series_aquecimento) {
+    return { erro: "Esse aquecimento não está na sua ficha." };
+  }
+
+  const { error } = feito
+    ? await supabase
+        .from("aquecimento_feito")
+        .upsert(
+          { sessao_id: sessao.id, exercicio_id: item.exercicio_id, numero },
+          { onConflict: "sessao_id,exercicio_id,numero", ignoreDuplicates: true },
+        )
+    : await supabase
+        .from("aquecimento_feito")
+        .delete()
+        .eq("sessao_id", sessao.id)
+        .eq("exercicio_id", item.exercicio_id)
+        .eq("numero", numero);
+
+  if (error) return { erro: "Não consegui marcar o aquecimento. Tente de novo." };
+
+  revalidatePath("/app/treino");
+  return { ok: true };
+}
+
+/**
  * Fecha o treino. É isto que o painel do Allisson chama de check-in.
  *
  * O peso do dia, quando informado, também vira ponto no gráfico da Evolução:

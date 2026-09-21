@@ -38,7 +38,10 @@ export type ItemNaTela = {
   exercicio_id: string;
   nome: string;
   grupo: string;
+  /** Séries VÁLIDAS. Só elas contam no volume e no progresso. */
   series: number;
+  /** Aquecimento antes das válidas. O aluno só marca como feito. */
+  series_aquecimento: number;
   reps: string;
   descanso_seg: number;
   metodo: Metodo;
@@ -75,6 +78,9 @@ export function proximoNomeDeBloco(quantos: number): string {
 
 export const ITEM_PADRAO = {
   series: 3,
+  // Zero, e não um: nem todo exercício pede aquecimento (o terceiro de peito
+  // já chega quente), e aquecimento que ninguém pediu vira série fantasma.
+  series_aquecimento: 0,
   reps: "10-12",
   descanso_seg: 60,
   metodo: "normal" as Metodo,

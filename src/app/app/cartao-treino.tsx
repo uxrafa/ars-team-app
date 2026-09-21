@@ -5,6 +5,7 @@ import { BotaoLink } from "@/components/ui";
 import { LinhaDeExercicio, Meta } from "./pecas";
 import { ComecarTreino } from "./comecar";
 import { carga as formatarCarga, duracaoEstimada, type BlocoDoAluno } from "@/lib/treino";
+import { prescricao } from "@/lib/prescricao";
 
 /**
  * O cartão do treino do dia.
@@ -105,7 +106,7 @@ export function CartaoDoTreino({
               grupo={i.grupo}
               temVideo={Boolean(i.video_url)}
               meta={
-                `${i.series} séries × ${i.reps} reps` +
+                `${prescricao(i)}` +
                 (ultima ? ` · última ${formatarCarga(ultima)} kg` : "")
               }
             />

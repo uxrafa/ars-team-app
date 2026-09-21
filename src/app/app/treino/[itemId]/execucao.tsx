@@ -12,7 +12,7 @@ import {
   type SerieFeita,
 } from "@/lib/treino";
 import { CartaoDeNumero, Meta } from "../../pecas";
-import { apagarSerie, registrarSerie } from "../../acoes";
+import { apagarSerie, marcarAquecimento, registrarSerie } from "../../acoes";
 
 type Feita = { numero: number; carga_kg: number | null; reps: number | null };
 type Campo = { carga: string; reps: string };
@@ -56,6 +56,7 @@ export function Execucao({
   proximoId,
   proximoNome,
   feitas,
+  aquecimentosFeitos,
   ultimaVez,
   quandoUltimaVez,
   videoId,
@@ -68,6 +69,7 @@ export function Execucao({
   proximoId: string | null;
   proximoNome: string | null;
   feitas: SerieFeita[];
+  aquecimentosFeitos: number[];
   ultimaVez: { data: string; series: Feita[] } | null;
   quandoUltimaVez: string | null;
   videoId: string | null;
@@ -102,6 +104,36 @@ export function Execucao({
   const [ocupada, setOcupada] = useState<number | null>(null);
   const [, agir] = useTransition();
   const [tocando, setTocando] = useState(false);
+
+  /* --- aquecimento ---------------------------------------------------
+     Só um toque de "feito": o aluno não digita carga nem reps aqui
+     (decisão de 21/09). Otimista: marca na hora e desfaz se o banco
+     recusar, porque esperar a rede para ver um check na academia, com 4G
+     ruim, parece que o botão não pegou. */
+  const aquecimentos = Array.from({ length: item.series_aquecimento }, (_, i) => i + 1);
+  const [aquecidos, setAquecidos] = useState<Set<number>>(() => new Set(aquecimentosFeitos));
+
+  function alternarAquecimento(numero: number) {
+    const feito = !aquecidos.has(numero);
+    const trocar = (marcar: boolean) =>
+      setAquecidos((atual) => {
+        const novo = new Set(atual);
+        if (marcar) novo.add(numero);
+        else novo.delete(numero);
+        return novo;
+      });
+
+    trocar(feito);
+    setErro(null);
+    agir(async () => {
+      const r = await marcarAquecimento(item.id, numero, feito);
+      if (r.erro) {
+        trocar(!feito);
+        setErro(r.erro);
+      }
+    });
+  }
+
 
   /* --- descanso ------------------------------------------------------ */
   const [fim, setFim] = useState<number | null>(null);
@@ -297,7 +329,12 @@ export function Execucao({
         </div>
 
         <div className="flex gap-2">
-          <CartaoDeNumero valor={String(item.series)} rotulo="Séries" />
+          {/* "Válidas" quando existe aquecimento: com os dois na tela,
+              "Séries" deixaria na dúvida se o aquecimento está no 3. */}
+          <CartaoDeNumero
+            valor={String(item.series)}
+            rotulo={item.series_aquecimento > 0 ? "Válidas" : "Séries"}
+          />
           <CartaoDeNumero valor={item.reps} rotulo="Reps" />
           <CartaoDeNumero valor={emMinutos(item.descanso_seg)} rotulo="Descanso" />
         </div>
@@ -339,6 +376,53 @@ export function Execucao({
               </Meta>
             )}
           </div>
+
+          {aquecimentos.length > 0 && (
+            <ul className="flex flex-col gap-2" aria-label="Aquecimento">
+              {aquecimentos.map((n) => {
+                const feito = aquecidos.has(n);
+                return (
+                  <li key={n}>
+                    <button
+                      type="button"
+                      aria-pressed={feito}
+                      onClick={() => alternarAquecimento(n)}
+                      className={`flex min-h-11 w-full items-center gap-3 rounded-[11px] border px-3 text-left transition-colors ${
+                        feito
+                          ? "border-ok/40 bg-ok/10 text-nevoa"
+                          : "border-linha bg-tinta-2 text-papel hover:border-nevoa"
+                      }`}
+                    >
+                      <span className="w-[34px] flex-none text-center font-display text-base leading-none text-nevoa">
+                        A{n}
+                      </span>
+                      <span className="flex-1 text-[15px] font-semibold">
+                        {aquecimentos.length === 1 ? "Aquecimento" : `Aquecimento ${n}`}
+                      </span>
+                      <span
+                        aria-hidden="true"
+                        className={`flex h-7 w-7 flex-none items-center justify-center rounded-lg border ${
+                          feito ? "border-ok/40 bg-ok/15 text-ok" : "border-contorno text-transparent"
+                        }`}
+                      >
+                        <svg
+                          viewBox="0 0 24 24"
+                          className="h-4 w-4"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="3"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <path d="M20 6 9 17l-5-5" />
+                        </svg>
+                      </span>
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
 
           <div className={`${GRADE} px-1`} aria-hidden="true">
             <Meta className="!tracking-[0.08em]">Set</Meta>

@@ -16,6 +16,7 @@ type ItemBruto = {
   id: string;
   ordem: number;
   series: number;
+  series_aquecimento: number;
   reps: string;
   descanso_seg: number;
   metodo: Metodo;
@@ -56,7 +57,7 @@ export async function carregarFichaAtiva(supabase: SupabaseClient, alunoId: stri
   const { data } = await supabase
     .from("bloco_treino")
     .select(
-      "id, nome, foco, ordem, item_exercicio (id, ordem, series, reps, descanso_seg, metodo, observacao, exercicio_id, exercicio (nome, grupo, video_url, instrucoes))",
+      "id, nome, foco, ordem, item_exercicio (id, ordem, series, series_aquecimento, reps, descanso_seg, metodo, observacao, exercicio_id, exercicio (nome, grupo, video_url, instrucoes))",
     )
     .eq("protocolo_id", protocolo.id)
     .order("ordem");
@@ -74,6 +75,7 @@ export async function carregarFichaAtiva(supabase: SupabaseClient, alunoId: stri
           id: i.id,
           ordem: i.ordem,
           series: i.series,
+          series_aquecimento: i.series_aquecimento ?? 0,
           reps: i.reps,
           descanso_seg: i.descanso_seg,
           metodo: i.metodo,
@@ -176,4 +178,25 @@ export async function carregarSeries(
     ...s,
     carga_kg: s.carga_kg === null ? null : Number(s.carga_kg),
   }));
+}
+
+/**
+ * Os aquecimentos já marcados neste treino, de um exercício só.
+ *
+ * Tabela própria (`aquecimento_feito`, migração 0016), e não linha em
+ * `serie_registrada`: assim nenhuma conta de volume ou de carga precisa
+ * lembrar de filtrar aquecimento, porque ele nunca está lá.
+ */
+export async function carregarAquecimentos(
+  supabase: SupabaseClient,
+  sessaoId: string,
+  exercicioId: string,
+): Promise<number[]> {
+  const { data } = await supabase
+    .from("aquecimento_feito")
+    .select("numero")
+    .eq("sessao_id", sessaoId)
+    .eq("exercicio_id", exercicioId);
+
+  return ((data ?? []) as { numero: number }[]).map((a) => a.numero);
 }

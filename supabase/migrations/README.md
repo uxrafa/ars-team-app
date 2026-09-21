@@ -22,6 +22,7 @@ novo e numerado, para o banco poder ser reconstruido do zero.
 | `0013_ultimo_checkin_e_indice.sql` | **Correcao de dado.** View `ultimo_checkin` com uma linha por aluno; antes o aluno sumido nao aparecia na fila. |
 | `0014_pagamento.sql` | Tabela `pagamento`, uma linha por dinheiro recebido. O `acesso_ate` vira consequencia do pagamento, por gatilho. |
 | `0015_arquivar_aluno.sql` | `perfis.arquivado_em`: tira o aluno de circulacao sem apagar nada. |
+| `0016_serie_de_aquecimento.sql` | `item_exercicio.series_aquecimento` e a tabela `aquecimento_feito`. Aquecimento fica fora de todo volume por construcao. |
 
 ## Como o modelo se encaixa
 
@@ -331,6 +332,44 @@ nao se reescreve -- o faturamento de marco nao muda porque alguem saiu em
 setembro; e a conta em `auth.users` e apagada junto, para o e-mail voltar a
 ficar livre para um convite novo. Isso pede a chave `service_role` numa variavel
 da Vercel, nunca no repositorio.
+
+## Aquecimento em tabela propria (0016)
+
+Depois da call de 20/09 em que o Allisson mostrou a treino.io, a ficha passou a
+separar **aquecimento** de **serie valida** -- so as validas contam no volume.
+Dois tipos, e nao os tres da treino.io: ele usa aquecimento e valida (21/09).
+
+**`item_exercicio.series` continua sendo o que era, e agora tem nome:** series
+validas. Nenhum dado mudou de significado, entao nenhuma ficha antiga precisou
+ser reescrita. `series_aquecimento` nasce com zero.
+
+**O aluno so marca o aquecimento como feito** -- sem carga, sem reps (21/09). E o
+"feito" mora em `aquecimento_feito`, **nao** numa coluna `tipo` em
+`serie_registrada`. Com uma coluna, toda conta de volume, carga e historico
+(feed, "ultima vez", cargas que subiram, a tela de treinos, e os graficos que
+vem) teria que lembrar de filtrar `tipo = 'valida'`, e a que esquecesse somaria
+aquecimento sem erro nenhum. Separado, `serie_registrada` e so trabalho de
+verdade por construcao. Mesmo raciocinio de `naAtiva()` na 0015: a regra mora
+onde nao da para esquecer.
+
+**`salvar_ficha` precisou ser reescrita junto**, porque lista as colunas do item
+explicitamente: sem isso o Allisson poria "2" no campo, salvaria, e o banco
+gravaria zero sem reclamar. No update, **chave ausente preserva o valor
+existente** -- e para a janela do deploy, quando um navegador com a tela velha
+aberta salva sem mandar `series_aquecimento` e nao pode zerar o que a tela nova
+gravou.
+
+**O exercicio termina quando as validas terminam.** `exercicioCompleto()` nunca
+ve aquecimento. Quem pula o aquecimento e faz as tres validas terminou; o app
+nao segura o aluno num botao que o Allisson pos como orientacao.
+
+Validada em 21/09/2026 com 11 verificacoes com as contas reais, em transacao
+abortada: o `salvar_ficha` grava o aquecimento; **a tela velha salvando sem a
+chave nao zera**; o item preserva o id; 11 aquecimentos e recusado; o aluno le
+o aquecimento da propria ficha, marca e desmarca na propria sessao, **nao**
+marca na sessao alheia, **nao** muda a propria ficha, e o aquecimento nao entra
+em `serie_registrada`; o admin le e **nao** marca aquecimento no treino do aluno.
+Nenhum alerta novo no advisor de seguranca.
 
 ## Nota sobre o banco atual
 

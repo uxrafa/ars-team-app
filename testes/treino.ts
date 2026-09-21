@@ -14,6 +14,7 @@ import {
   type SerieFeita,
   type SessaoDoAluno,
 } from "../src/lib/treino.ts";
+import { prescricao, rotuloDeAquecimento } from "../src/lib/prescricao.ts";
 
 let ok = 0;
 function conferir(nome: string, f: () => void) {
@@ -22,7 +23,7 @@ function conferir(nome: string, f: () => void) {
   console.log("ok  ", nome);
 }
 
-const bloco = (id: string, quantos: number, series = 3): BlocoDoAluno => ({
+const bloco = (id: string, quantos: number, series = 3, aquecimento = 0): BlocoDoAluno => ({
   id,
   nome: id.toUpperCase(),
   foco: null,
@@ -31,6 +32,7 @@ const bloco = (id: string, quantos: number, series = 3): BlocoDoAluno => ({
     id: `${id}-i${i}`,
     ordem: i,
     series,
+    series_aquecimento: aquecimento,
     reps: "10",
     descanso_seg: 60,
     metodo: "normal" as const,
@@ -189,6 +191,53 @@ conferir("duracao estimada arredonda em blocos de cinco", () => {
   const d = duracaoEstimada(A);
   assert.equal(d % 5, 0);
   assert.ok(d >= 10);
+});
+
+/* --- aquecimento (migracao 0016) -------------------------------------- */
+
+conferir("aquecimento nao conta no progresso: tres validas feitas terminam o exercicio", () => {
+  // Aquecimento mora em aquecimento_feito e nunca chega como SerieFeita. Quem
+  // pula o aquecimento e faz as tres validas terminou -- o app nao segura o
+  // aluno num botao que o Allisson pos como orientacao.
+  const comAquecimento = bloco("q", 1, 3, 2);
+  const feitas: SerieFeita[] = [1, 2, 3].map((n) => ({
+    id: `s${n}`,
+    exercicio_id: "q-e0",
+    numero: n,
+    carga_kg: 40,
+    reps: 10,
+  }));
+  const p = progresso(comAquecimento, feitas);
+  assert.equal(p.feitos, 1);
+  assert.equal(p.seriesPrescritas, 3); // e nao 5
+  assert.equal(p.fracao, 1);
+  assert.equal(proximoItem(comAquecimento, feitas), null);
+});
+
+conferir("a prescricao se le com o aquecimento na frente, na ordem em que acontece", () => {
+  assert.equal(
+    prescricao({ series: 3, series_aquecimento: 1, reps: "6-10" }),
+    "1 aquecimento + 3 séries × 6-10 reps",
+  );
+  assert.equal(
+    prescricao({ series: 4, series_aquecimento: 2, reps: "8" }),
+    "2 aquecimentos + 4 séries × 8 reps",
+  );
+});
+
+conferir("sem aquecimento, a prescricao fica como sempre foi", () => {
+  // Toda ficha montada antes da 0016 tem zero na coluna nova, e o aluno nao
+  // pode ver texto nenhum mudar por causa disso.
+  assert.equal(prescricao({ series: 3, series_aquecimento: 0, reps: "10-12" }), "3 séries × 10-12 reps");
+  assert.equal(prescricao({ series: 3, reps: "10-12" }), "3 séries × 10-12 reps");
+  assert.equal(prescricao({ series: 1, series_aquecimento: 0, reps: "falha" }), "1 série × falha reps");
+});
+
+conferir("rotulo de aquecimento: singular, plural e nada", () => {
+  assert.equal(rotuloDeAquecimento(0), null);
+  assert.equal(rotuloDeAquecimento(1), "1 aquecimento");
+  assert.equal(rotuloDeAquecimento(3), "3 aquecimentos");
+  assert.equal(rotuloDeAquecimento(Number.NaN), null);
 });
 
 console.log(`\n${ok} verificacoes, todas passaram.`);

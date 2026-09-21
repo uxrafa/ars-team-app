@@ -3,7 +3,7 @@ import { criarClienteServidor } from "@/lib/supabase/server";
 import { idDoYoutube } from "@/lib/biblioteca";
 import { hojeSP, quandoFoi } from "@/lib/painel";
 import { vizinhos } from "@/lib/treino";
-import { carregarFichaAtiva, carregarSeries } from "../../carregar";
+import { carregarAquecimentos, carregarFichaAtiva, carregarSeries } from "../../carregar";
 import { Execucao } from "./execucao";
 
 export const metadata = { title: "Exercício · ARS Team" };
@@ -43,7 +43,12 @@ export default async function PaginaDoExercicio({
   const item = bloco.itens.find((i) => i.id === itemId);
   if (!item) notFound();
 
-  const series = await carregarSeries(supabase, sessao.id);
+  const [series, aquecimentos] = await Promise.all([
+    carregarSeries(supabase, sessao.id),
+    item.series_aquecimento > 0
+      ? carregarAquecimentos(supabase, sessao.id, item.exercicio_id)
+      : Promise.resolve([] as number[]),
+  ]);
 
   /**
    * O que ele fez da última vez neste exercício.
@@ -90,6 +95,7 @@ export default async function PaginaDoExercicio({
       proximoId={proximo?.id ?? null}
       proximoNome={proximo?.nome ?? null}
       feitas={series.filter((s) => s.exercicio_id === item.exercicio_id)}
+      aquecimentosFeitos={aquecimentos}
       ultimaVez={ultimaVez}
       quandoUltimaVez={ultimaData ? quandoFoi(ultimaData, hojeSP()) : null}
       videoId={idDoYoutube(item.video_url)}

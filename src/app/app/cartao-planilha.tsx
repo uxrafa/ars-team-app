@@ -4,6 +4,7 @@ import { useState } from "react";
 import { NOME_DO_METODO, emMinutos } from "@/lib/ficha";
 import type { BlocoDoAluno } from "@/lib/treino";
 import { LinhaDeExercicio, Meta } from "./pecas";
+import { prescricao } from "@/lib/prescricao";
 
 /**
  * A planilha do aluno que comprou o produto.
@@ -71,7 +72,7 @@ export function CartaoDaPlanilha({
             href={i.video_url ?? undefined}
             externo
             meta={
-              `${i.series} séries × ${i.reps} reps · descanso ${emMinutos(i.descanso_seg)}` +
+              `${prescricao(i)} · descanso ${emMinutos(i.descanso_seg)}` +
               (i.metodo !== "normal" ? ` · ${NOME_DO_METODO[i.metodo]}` : "")
             }
           />

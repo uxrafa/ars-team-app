@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { criarClienteServidor } from "@/lib/supabase/server";
 import type { BlocoNaTela } from "@/lib/ficha";
 import { carregarBlocos } from "./carregar";
+import { MAX_AQUECIMENTO } from "@/lib/prescricao";
 
 export type Resultado = { erro?: string; ok?: boolean };
 
@@ -79,6 +80,13 @@ export async function salvarFicha(d: DadosFicha): Promise<ResultadoComBlocos> {
       if (!Number.isFinite(i.series) || i.series < 1 || i.series > 20) {
         return { erro: `Confira as séries de ${i.nome}: o banco aceita de 1 a 20.` };
       }
+      if (
+        !Number.isFinite(i.series_aquecimento) ||
+        i.series_aquecimento < 0 ||
+        i.series_aquecimento > MAX_AQUECIMENTO
+      ) {
+        return { erro: `Confira o aquecimento de ${i.nome}: de 0 a ${MAX_AQUECIMENTO}.` };
+      }
       if (!i.reps.trim()) {
         return { erro: `Escreva as repetições de ${i.nome}.` };
       }
@@ -104,6 +112,7 @@ export async function salvarFicha(d: DadosFicha): Promise<ResultadoComBlocos> {
         exercicio_id: i.exercicio_id,
         ordem: ordemItem,
         series: i.series,
+        series_aquecimento: i.series_aquecimento,
         reps: i.reps,
         descanso_seg: i.descanso_seg,
         metodo: i.metodo,
@@ -194,7 +203,7 @@ export async function copiarFicha(
 
   const { data: blocos, error: erroLeitura } = await supabase
     .from("bloco_treino")
-    .select("nome, foco, ordem, item_exercicio (exercicio_id, ordem, series, reps, descanso_seg, metodo, observacao)")
+    .select("nome, foco, ordem, item_exercicio (exercicio_id, ordem, series, series_aquecimento, reps, descanso_seg, metodo, observacao)")
     .eq("protocolo_id", protocoloOrigem)
     .order("ordem");
 
@@ -215,6 +224,7 @@ export async function copiarFicha(
     exercicio_id: string;
     ordem: number;
     series: number;
+    series_aquecimento: number;
     reps: string;
     descanso_seg: number;
     metodo: string;
@@ -238,6 +248,9 @@ export async function copiarFicha(
         exercicio_id: i.exercicio_id,
         ordem: ordemItem,
         series: i.series,
+        // "Copiar de outro aluno" é como o Allisson vai montar as 25 fichas.
+        // Sem esta linha, toda cópia chegaria sem aquecimento.
+        series_aquecimento: i.series_aquecimento ?? 0,
         reps: i.reps,
         descanso_seg: i.descanso_seg,
         metodo: i.metodo,

@@ -10,6 +10,7 @@ import {
   type ItemNaTela,
   type Metodo,
 } from "@/lib/ficha";
+import { MAX_AQUECIMENTO, prescricao } from "@/lib/prescricao";
 
 function Seta({ para }: { para: "esquerda" | "direita" }) {
   return (
@@ -74,7 +75,7 @@ export function BlocoLeitura({ bloco, indice }: { bloco: BlocoNaTela; indice: nu
           <table className="w-full min-w-[640px] border-collapse text-left">
             <thead>
               <tr className="bg-tinta-3">
-                {["", "Exercício", "Séries", "Reps", "Descanso", "Método"].map((t, i) => (
+                {["", "Exercício", "Aquec.", "Válidas", "Reps", "Descanso", "Método"].map((t, i) => (
                   <th
                     key={i}
                     scope="col"
@@ -96,6 +97,11 @@ export function BlocoLeitura({ bloco, indice }: { bloco: BlocoNaTela; indice: nu
                         {item.observacao}
                       </span>
                     )}
+                  </td>
+                  {/* Zero vira travessão: "0" numa coluna de número parece dado
+                      faltando, e "—" diz "não tem" sem ninguém ter que pensar. */}
+                  <td className="px-4 py-3.5 font-mono text-[13px] tabular text-nevoa">
+                    {item.series_aquecimento > 0 ? item.series_aquecimento : "—"}
                   </td>
                   <td className="px-4 py-3.5 font-mono text-[13px] tabular text-papel">
                     {item.series || "?"}
@@ -181,7 +187,7 @@ function Item({
         <span className="min-w-0 flex-1">
           <span className="block text-base font-semibold text-papel">{item.nome}</span>
           <span className="mt-0.5 block text-sm text-nevoa">
-            {item.series || 0} x {item.reps || "?"} · descanso {emMinutos(item.descanso_seg)}
+            {prescricao(item)} · descanso {emMinutos(item.descanso_seg)}
           </span>
         </span>
 
@@ -210,9 +216,22 @@ function Item({
 
       {/* Tudo numa linha só no desktop, observação incluída: com 8 exercícios
           por treino, cada campo em linha separada vira uma página de rolagem. */}
-      <div className="mt-3.5 grid gap-3 sm:grid-cols-2 xl:grid-cols-[repeat(4,minmax(0,1fr))_1.6fr]">
+      <div className="mt-3.5 grid gap-3 sm:grid-cols-2 xl:grid-cols-[repeat(5,minmax(0,1fr))_1.6fr]">
+        {/* Aquecimento vem antes de Válidas porque é a ordem em que acontece
+            na academia. E "Válidas", não "Séries": com os dois campos lado a
+            lado, "Séries" deixaria na dúvida se o aquecimento está incluído. */}
         <label className="flex flex-col gap-1.5">
-          <Rotulo>Séries</Rotulo>
+          <Rotulo>Aquecimento</Rotulo>
+          <Numero
+            valor={item.series_aquecimento}
+            min={0}
+            max={MAX_AQUECIMENTO}
+            aoMudar={(v) => aoMudar({ ...item, series_aquecimento: v })}
+          />
+        </label>
+
+        <label className="flex flex-col gap-1.5">
+          <Rotulo>Válidas</Rotulo>
           <Numero
             valor={item.series}
             min={1}

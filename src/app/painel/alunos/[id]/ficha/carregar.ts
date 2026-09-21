@@ -6,6 +6,7 @@ type ItemBruto = {
   exercicio_id: string;
   ordem: number;
   series: number;
+  series_aquecimento: number;
   reps: string;
   descanso_seg: number;
   metodo: Metodo;
@@ -38,7 +39,7 @@ export async function carregarBlocos(
   const { data } = await supabase
     .from("bloco_treino")
     .select(
-      "id, nome, foco, ordem, item_exercicio (id, exercicio_id, ordem, series, reps, descanso_seg, metodo, observacao, exercicio (nome, grupo))",
+      "id, nome, foco, ordem, item_exercicio (id, exercicio_id, ordem, series, series_aquecimento, reps, descanso_seg, metodo, observacao, exercicio (nome, grupo))",
     )
     .eq("protocolo_id", protocoloId)
     .order("ordem");
@@ -57,6 +58,7 @@ export async function carregarBlocos(
           nome: i.exercicio?.nome ?? "Exercício",
           grupo: i.exercicio?.grupo ?? "outros",
           series: i.series,
+          series_aquecimento: i.series_aquecimento ?? 0,
           reps: i.reps,
           descanso_seg: i.descanso_seg,
           metodo: i.metodo,
