@@ -15,11 +15,12 @@ export const metadata = { title: "ARS Team" };
  * nos artboards. No desktop a mesma coluna fica centrada, sem virar outra tela.
  */
 
+// Só o que já existe, na ordem de uso: o treino do dia, o progresso, a conta.
+// Semana e Chat voltam quando forem construídas; aba apagada frustrava mais do
+// que avisava (Rafael, 21/09).
 const ABAS_CONSULTORIA: Aba[] = [
   { href: "/app", nome: "Hoje", icone: "hoje" },
-  { href: null, nome: "Semana", icone: "semana" },
   { href: "/app/evolucao", nome: "Evolução", icone: "evolucao" },
-  { href: null, nome: "Chat", icone: "chat" },
   { href: "/app/perfil", nome: "Perfil", icone: "perfil" },
 ];
 
@@ -27,7 +28,6 @@ const ABAS_CONSULTORIA: Aba[] = [
 // porque sem check-in não existe o que evoluir na tela.
 const ABAS_PLANILHA: Aba[] = [
   { href: "/app", nome: "Treino", icone: "treino" },
-  { href: null, nome: "Vídeos", icone: "videos" },
   { href: "/app/perfil", nome: "Perfil", icone: "perfil" },
 ];
 

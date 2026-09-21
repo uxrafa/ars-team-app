@@ -6,10 +6,8 @@ import { usePathname } from "next/navigation";
 /**
  * Navegação de baixo, que é onde o polegar chega.
  *
- * Cinco abas na consultoria e três na planilha, como no desenho aprovado. As
- * que ainda não existem ficam apagadas e sem link, em vez de sumirem: o aluno
- * precisa saber que elas vêm, e aba que some hoje e reaparece amanhã bagunça a
- * memória de posição.
+ * Só abas que já funcionam. Até 21/09 as que ainda não existiam ficavam
+ * apagadas, para o aluno saber que viriam; na prática pareciam quebradas.
  *
  * Some inteira na tela de execução: lá o aluno está no meio da série, com o
  * celular apoiado em algum lugar, e qualquer coisa clicável fora do registro é
