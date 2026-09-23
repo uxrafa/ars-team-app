@@ -40,10 +40,13 @@ const TAMANHO: Record<Tamanho, string> = {
   sm: "min-h-11 px-4 text-[15px]",
 };
 
+// O `active:scale` é o feedback de toque: sem ele, no celular, o dedo cobre o
+// botão e nada parece ter acontecido até a tela mudar (Rafael, 23/09).
+// `prefers-reduced-motion` zera a transição, e aí o botão só não encolhe.
 const BASE =
   "inline-flex items-center justify-center gap-2 rounded-xl font-sans font-semibold " +
-  "leading-none transition-colors duration-150 " +
-  "disabled:cursor-not-allowed disabled:opacity-50";
+  "leading-none transition-[color,background-color,border-color,transform] duration-150 " +
+  "active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 disabled:active:scale-100";
 
 type BotaoProps = {
   aparencia?: Aparencia;
@@ -105,7 +108,7 @@ export function BotaoIcone({
       {...resto}
       aria-label={rotulo}
       title={rotulo}
-      className={`inline-flex h-11 w-11 flex-none items-center justify-center rounded-xl border border-contorno text-nevoa transition-colors duration-150 hover:border-nevoa hover:text-papel ${className}`}
+      className={`inline-flex h-11 w-11 flex-none items-center justify-center rounded-xl border border-contorno text-nevoa transition-[color,border-color,transform] duration-150 hover:border-nevoa hover:text-papel active:scale-95 ${className}`}
     >
       {children}
     </button>
@@ -123,7 +126,7 @@ export function LinkIcone({
       {...resto}
       aria-label={rotulo}
       title={rotulo}
-      className={`inline-flex h-11 w-11 flex-none items-center justify-center rounded-xl border border-contorno text-nevoa transition-colors duration-150 hover:border-nevoa hover:text-papel ${className}`}
+      className={`inline-flex h-11 w-11 flex-none items-center justify-center rounded-xl border border-contorno text-nevoa transition-[color,border-color,transform] duration-150 hover:border-nevoa hover:text-papel active:scale-95 ${className}`}
     >
       {children}
     </a>

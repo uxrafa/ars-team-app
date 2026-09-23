@@ -127,3 +127,46 @@ export function indiceMaisProximo(xs: number[], x: number): number {
   }
   return melhor;
 }
+
+/* ------------------------------------------------------------------ */
+/* A mudança foi boa ou ruim?                                          */
+/* ------------------------------------------------------------------ */
+
+export type TomDaMudanca = "ok" | "ruim" | "neutro";
+
+/**
+ * Verde ou vermelho pela direção QUE INTERESSA AO OBJETIVO do aluno (Rafael,
+ * 23/09). Até aqui a seta era sempre cinza, porque a mesma mudança significa
+ * coisas opostas: cintura descendo é ótimo para quem emagrece, e braço
+ * descendo é péssimo para quem quer massa.
+ *
+ * Então a cor não julga a medida sozinha, julga o par medida + objetivo:
+ *
+ * - emagrecimento: peso, cintura e quadril descendo é bom; braço e coxa
+ *   descendo é massa indo embora junto, então é ruim.
+ * - hipertrofia: peso, braço e coxa subindo é bom; cintura subindo é gordura
+ *   no ganho, então é ruim. Quadril não diz nada sozinho.
+ * - condicionamento e saúde geral: só a cintura tem direção óbvia (descer é
+ *   melhor para saúde). O resto fica cinza, como era.
+ *
+ * Sem objetivo declarado, vale a regra de saúde geral.
+ */
+export function tomDaMudanca(
+  chave: ChaveDaMedida | "peso_kg",
+  diferenca: number,
+  objetivo: string | null,
+): TomDaMudanca {
+  if (diferenca === 0) return "neutro";
+  const subiu = diferenca > 0;
+
+  const bomSubir: Partial<Record<ChaveDaMedida | "peso_kg", boolean>> =
+    objetivo === "emagrecimento"
+      ? { peso_kg: false, cintura_cm: false, quadril_cm: false, braco_cm: true, coxa_cm: true }
+      : objetivo === "hipertrofia"
+        ? { peso_kg: true, cintura_cm: false, braco_cm: true, coxa_cm: true }
+        : { cintura_cm: false };
+
+  const esperado = bomSubir[chave];
+  if (esperado === undefined) return "neutro";
+  return subiu === esperado ? "ok" : "ruim";
+}

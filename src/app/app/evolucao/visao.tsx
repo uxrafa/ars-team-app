@@ -10,6 +10,7 @@ import {
   PERIODOS,
   pontosDoPeriodo,
   rotuloDaDiferenca,
+  tomDaMudanca,
   variacaoDoPeriodo,
   type ChaveDaMedida,
   type Periodo,
@@ -54,16 +55,9 @@ export function VisaoDaEvolucao({
   // quatro botões mostrariam o mesmo gráfico.
   const temHistorico = pontosDoPeriodo(pontos, "1m").length < pontos.length;
 
-  // Perder peso não é vitória para quem está atrás de massa. O verde só entra
-  // quando a direção bate com o objetivo que o aluno declarou na anamnese.
-  const noRumo =
-    variacao === null
-      ? false
-      : objetivo === "emagrecimento"
-        ? variacao < 0
-        : objetivo === "hipertrofia"
-          ? variacao > 0
-          : false;
+  // Perder peso não é vitória para quem está atrás de massa: a cor sai do par
+  // medida + objetivo, na mesma regra que a aba Medidas usa.
+  const tomDoPeso = variacao === null ? "neutro" : tomDaMudanca("peso_kg", variacao, objetivo);
 
   return (
     <div className="flex flex-col gap-[22px]">
@@ -77,7 +71,7 @@ export function VisaoDaEvolucao({
               role="tab"
               aria-selected={atual}
               onClick={() => setAba(valor)}
-              className={`min-h-11 flex-1 rounded-[10px] px-2 text-[13px] transition-colors ${
+              className={`min-h-11 flex-1 rounded-[10px] px-2 text-[13px] transition-[color,background-color,border-color,transform] duration-150 active:scale-[0.97] ${
                 atual
                   ? "bg-raio-solido font-bold text-papel"
                   : "border border-contorno text-nevoa hover:text-papel"
@@ -105,7 +99,11 @@ export function VisaoDaEvolucao({
               {variacao !== null && Math.abs(variacao) >= 0.1 && (
                 <span
                   className={`ml-auto flex flex-none items-center gap-1.5 rounded-full border px-2.5 py-1.5 text-xs font-bold ${
-                    noRumo ? "border-ok/30 bg-ok/[0.14] text-ok" : "border-contorno text-nevoa"
+                    tomDoPeso === "ok"
+                      ? "border-ok/30 bg-ok/[0.14] text-ok"
+                      : tomDoPeso === "ruim"
+                        ? "border-raio/40 bg-raio/[0.12] text-raio-forte"
+                        : "border-contorno text-nevoa"
                   }`}
                 >
                   <svg
@@ -259,14 +257,26 @@ export function VisaoDaEvolucao({
                     <dd className="mt-0.5 font-mono text-[15px] tabular text-papel">
                       {m.atual !== null ? formatarCarga(m.atual) : "-"}
                     </dd>
-                    {/* Seta sem cor: cintura descendo é ótimo para quem
-                        emagrece e braço subindo é ótimo para quem ganha massa.
-                        Pintar de verde ou vermelho seria julgar pelo aluno. */}
-                    {m.diferenca !== null && (
-                      <dd className="mt-0.5 font-mono text-[13px] tabular text-nevoa">
-                        {rotuloDaDiferenca(m.diferenca)}
-                      </dd>
-                    )}
+                    {/* A seta ganha cor pela direção que interessa ao objetivo
+                        do aluno (ver tomDaMudanca). Cinza quando a medida não
+                        diz nada sozinha. */}
+                    {m.diferenca !== null &&
+                      (() => {
+                        const tom = tomDaMudanca(m.chave, m.diferenca, objetivo);
+                        return (
+                          <dd
+                            className={`mt-0.5 font-mono text-[13px] font-semibold tabular ${
+                              tom === "ok"
+                                ? "text-ok"
+                                : tom === "ruim"
+                                  ? "text-raio-forte"
+                                  : "text-nevoa"
+                            }`}
+                          >
+                            {rotuloDaDiferenca(m.diferenca)}
+                          </dd>
+                        );
+                      })()}
                   </div>
                 ))}
               </dl>

@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Aviso, Botao } from "@/components/ui";
+import { Modal } from "@/components/modal";
 import { ANGULOS } from "@/lib/anamnese";
 import { caminhoDaFoto, comprimir } from "@/lib/foto";
 import { criarClienteNavegador } from "@/lib/supabase/client";
@@ -28,6 +29,9 @@ export function Fotos({ alunoId, fotos }: { alunoId: string; fotos: FotoNaTela[]
   const [escolhidas, setEscolhidas] = useState<Record<string, Escolhida>>({});
   const [erro, setErro] = useState<string | null>(null);
   const [subindo, setSubindo] = useState(false);
+  // Comprimir uma foto de 4 MB leva um tempo visível no celular; sem isto o
+  // quadro ficava igual e parecia que o toque não pegou.
+  const [preparando, setPreparando] = useState<string | null>(null);
   const [enviando, setEnviando] = useState(false);
   const entradas = useRef<Record<string, HTMLInputElement | null>>({});
 
@@ -52,11 +56,18 @@ export function Fotos({ alunoId, fotos }: { alunoId: string; fotos: FotoNaTela[]
   async function escolher(angulo: string, arquivo: File | undefined) {
     if (!arquivo) return;
     setErro(null);
-    const blob = await comprimir(arquivo);
-    setEscolhidas((e) => {
-      if (e[angulo]) URL.revokeObjectURL(e[angulo].previa);
-      return { ...e, [angulo]: { blob, previa: URL.createObjectURL(blob) } };
-    });
+    setPreparando(angulo);
+    try {
+      const blob = await comprimir(arquivo);
+      setEscolhidas((e) => {
+        if (e[angulo]) URL.revokeObjectURL(e[angulo].previa);
+        return { ...e, [angulo]: { blob, previa: URL.createObjectURL(blob) } };
+      });
+    } catch {
+      setErro("Não consegui abrir essa imagem. Tente outra foto.");
+    } finally {
+      setPreparando(null);
+    }
   }
 
   async function enviar() {
@@ -121,7 +132,7 @@ export function Fotos({ alunoId, fotos }: { alunoId: string; fotos: FotoNaTela[]
               type="button"
               onClick={() => setSelecionada(data)}
               aria-pressed={atual}
-              className="w-[78px] flex-none text-center"
+              className="w-[78px] flex-none text-center transition-transform duration-150 active:scale-[0.96]"
             >
               <span
                 className={`block h-[104px] w-full overflow-hidden rounded-xl border ${
@@ -150,9 +161,9 @@ export function Fotos({ alunoId, fotos }: { alunoId: string; fotos: FotoNaTela[]
 
         <button
           type="button"
-          onClick={() => setEnviando((v) => !v)}
+          onClick={() => setEnviando(true)}
           aria-expanded={enviando}
-          className="w-[78px] flex-none text-center"
+          className="w-[78px] flex-none text-center transition-transform duration-150 active:scale-[0.96]"
         >
           <span className="flex h-[104px] w-full items-center justify-center rounded-xl border border-dashed border-linha hover:border-nevoa">
             <svg
@@ -210,16 +221,34 @@ export function Fotos({ alunoId, fotos }: { alunoId: string; fotos: FotoNaTela[]
         </div>
       )}
 
-      {/* Envio */}
-      {(enviando || !datas.length) && (
-        <div className="rounded-2xl border border-linha bg-tinta-2 p-[18px]">
+      {/* Sem nenhuma foto ainda, o convite fica na tela; com fotos, o envio
+          abre no modal, em cima do que ele está vendo. */}
+      {!datas.length && !enviando && (
+        <div className="rounded-2xl border border-dashed border-contorno p-[18px] text-center">
           <p className="text-[13.5px] leading-[1.5] text-nevoa">
-            {datas.length
-              ? "Tire as fotos de hoje no mesmo lugar e na mesma luz da primeira vez. É o que faz a comparação valer."
-              : "Mande as três primeiras fotos. São elas que a comparação usa daqui para a frente. Só o Allisson vê."}
+            Mande as três primeiras fotos. São elas que a comparação usa daqui para a frente. Só o
+            Allisson vê.
           </p>
+          <Botao className="mt-4" largura="cheia" onClick={() => setEnviando(true)}>
+            Enviar as primeiras fotos
+          </Botao>
+        </div>
+      )}
 
-          <div className="mt-4 grid grid-cols-3 gap-2">
+      {enviando && (
+        <Modal
+          titulo={datas.length ? "Fotos de hoje" : "Suas primeiras fotos"}
+          descricao={
+            datas.length
+              ? "Tire no mesmo lugar e na mesma luz da primeira vez. É o que faz a comparação valer."
+              : "Só o Allisson vê. Elas viram a referência das próximas."
+          }
+          aoFechar={() => {
+            if (subindo) return;
+            setEnviando(false);
+          }}
+        >
+          <div className="grid grid-cols-3 gap-2">
             {ANGULOS.map(([valor, nome]) => {
               const foto = escolhidas[valor];
               return (
@@ -236,11 +265,14 @@ export function Fotos({ alunoId, fotos }: { alunoId: string; fotos: FotoNaTela[]
                   <button
                     type="button"
                     onClick={() => entradas.current[valor]?.click()}
-                    className={`flex aspect-[3/4] w-full items-center justify-center overflow-hidden rounded-xl border text-[13px] font-semibold transition-colors ${
+                    disabled={preparando === valor}
+                    className={`relative flex aspect-[3/4] w-full items-center justify-center overflow-hidden rounded-xl border text-[13px] font-semibold transition-[border-color,transform] duration-150 active:scale-[0.97] ${
                       foto ? "border-raio" : "border-dashed border-contorno hover:border-nevoa"
                     }`}
                   >
-                    {foto ? (
+                    {preparando === valor ? (
+                      <span className="h-5 w-5 animate-spin rounded-full border-2 border-contorno border-t-raio" />
+                    ) : foto ? (
                       /* eslint-disable-next-line @next/next/no-img-element */
                       <img
                         src={foto.previa}
@@ -249,6 +281,16 @@ export function Fotos({ alunoId, fotos }: { alunoId: string; fotos: FotoNaTela[]
                       />
                     ) : (
                       <span className="text-nevoa">{nome}</span>
+                    )}
+                    {foto && !subindo && (
+                      <span
+                        aria-hidden="true"
+                        className="absolute bottom-1.5 right-1.5 flex h-6 w-6 items-center justify-center rounded-full bg-raio-solido text-papel"
+                      >
+                        <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M5 13l4 4L19 7" />
+                        </svg>
+                      </span>
                     )}
                   </button>
                 </div>
@@ -262,12 +304,20 @@ export function Fotos({ alunoId, fotos }: { alunoId: string; fotos: FotoNaTela[]
             </div>
           )}
 
-          {Object.keys(escolhidas).length > 0 && (
-            <Botao largura="cheia" className="mt-4" disabled={subindo} onClick={enviar}>
-              {subindo ? "Enviando…" : "Enviar fotos de hoje"}
-            </Botao>
+          <Botao
+            largura="cheia"
+            className="mt-5"
+            disabled={subindo || !Object.keys(escolhidas).length}
+            onClick={enviar}
+          >
+            {subindo ? "Enviando…" : "Enviar fotos"}
+          </Botao>
+          {!Object.keys(escolhidas).length && (
+            <p className="mt-2.5 text-center text-[13px] text-nevoa">
+              Toque nos quadros acima para escolher as fotos.
+            </p>
           )}
-        </div>
+        </Modal>
       )}
     </section>
   );

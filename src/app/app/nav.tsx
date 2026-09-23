@@ -105,15 +105,23 @@ export function NavDoAluno({ abas }: { abas: Aba[] }) {
           );
 
           return (
-            <li key={aba.nome} className="flex-1">
+            <li key={aba.nome} className="relative flex-1">
               {aba.href ? (
                 <Link
                   href={aba.href}
                   aria-current={ativa ? "page" : undefined}
-                  className={`flex h-[66px] flex-col items-center justify-center gap-1 transition-colors ${
+                  className={`flex h-[66px] flex-col items-center justify-center gap-1 transition-[color,transform] duration-150 active:scale-[0.94] ${
                     ativa ? "text-raio" : "text-nevoa hover:text-papel"
                   }`}
                 >
+                  {/* Barra em cima da aba ativa: o ícone vermelho sozinho some
+                      no meio de quatro ícones (Rafael, 23/09). */}
+                  {ativa && (
+                    <span
+                      aria-hidden="true"
+                      className="absolute inset-x-5 top-0 h-[3px] rounded-b-full bg-raio"
+                    />
+                  )}
                   {miolo}
                 </Link>
               ) : (

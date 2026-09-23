@@ -137,3 +137,29 @@ h3 {
   padding-left: env(safe-area-inset-left);
   padding-right: env(safe-area-inset-right);
 }
+
+/* Movimento de entrada do modal e da sua cortina (Rafael, 23/09: toda ação
+   precisa de resposta visual). Duração curta de propósito: o aluno está de pé
+   na academia, e animação longa vira espera. O bloco de
+   `prefers-reduced-motion` acima zera as duas para quem pediu menos
+   movimento. */
+@keyframes surgir {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes subir {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+}
+
+.cortina {
+  animation: surgir 0.15s ease-out;
+}
+
+.painel-modal {
+  animation: subir 0.18s ease-out;
+}

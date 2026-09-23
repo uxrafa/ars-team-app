@@ -4,6 +4,7 @@ import {
   pontosDoPeriodo,
   resumoDasMedidas,
   rotuloDaDiferenca,
+  tomDaMudanca,
   variacaoDoPeriodo,
   type LinhaMedida,
 } from "../src/lib/medidas.ts";
@@ -89,6 +90,27 @@ conferir("toque escolhe o ponto mais proximo", () => {
   assert.equal(indiceMaisProximo([0, 100, 200, 330], 140), 1);
   assert.equal(indiceMaisProximo([0, 100, 200, 330], 400), 3);
   assert.equal(indiceMaisProximo([0], 50), 0);
+});
+
+conferir("cor da mudanca depende do objetivo", () => {
+  // Emagrecimento: cintura descendo e bom, braco descendo e massa indo embora.
+  assert.equal(tomDaMudanca("cintura_cm", -2, "emagrecimento"), "ok");
+  assert.equal(tomDaMudanca("cintura_cm", 2, "emagrecimento"), "ruim");
+  assert.equal(tomDaMudanca("braco_cm", -1, "emagrecimento"), "ruim");
+  assert.equal(tomDaMudanca("peso_kg", -3, "emagrecimento"), "ok");
+
+  // Hipertrofia: o contrario no peso e no braco; cintura subindo continua ruim.
+  assert.equal(tomDaMudanca("peso_kg", 3, "hipertrofia"), "ok");
+  assert.equal(tomDaMudanca("braco_cm", 1, "hipertrofia"), "ok");
+  assert.equal(tomDaMudanca("cintura_cm", 1.5, "hipertrofia"), "ruim");
+  assert.equal(tomDaMudanca("quadril_cm", 1, "hipertrofia"), "neutro");
+
+  // Sem objetivo declarado, so a cintura tem direcao obvia.
+  assert.equal(tomDaMudanca("cintura_cm", -1, null), "ok");
+  assert.equal(tomDaMudanca("coxa_cm", 2, "saude_geral"), "neutro");
+
+  // Sem mudanca, sem cor.
+  assert.equal(tomDaMudanca("peso_kg", 0, "hipertrofia"), "neutro");
 });
 
 console.log(`\n${ok} verificacoes das medidas, todas passaram.`);
