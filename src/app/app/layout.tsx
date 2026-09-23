@@ -118,9 +118,15 @@ export default async function LayoutApp({
     <div className="min-h-dvh">
       <TopoDoApp />
 
-      {/* pb-[86px] é o espaço da navegação de 66px mais folga, senão ela cobre
-          o último cartão. */}
-      <main className="mx-auto max-w-md px-5 pb-[86px] pt-5">{children}</main>
+      {/* Folga de baixo = navegação de 66px + 20px de respiro + a área segura
+          do aparelho. A área segura entrou em 23/09: instalado na tela de
+          início do iPhone, a navegação cresce ~34px por causa da barra de
+          gestos (o `pb-[env(safe-area-inset-bottom)]` dela), e a folga fixa
+          de 86px deixava o fim de toda tela escondido atrás dela -- as
+          orientações da Dieta e o "Sair da conta" do Perfil. No navegador e
+          no Android sem barra de gestos a área segura vale zero, então a
+          conta serve para todos sem detectar aparelho. */}
+      <main className="mx-auto max-w-md px-5 pb-[calc(86px+env(safe-area-inset-bottom))] pt-5">{children}</main>
 
       <NavDoAluno abas={abas} />
     </div>
