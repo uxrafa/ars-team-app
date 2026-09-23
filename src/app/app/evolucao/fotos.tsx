@@ -2,7 +2,7 @@
 
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Aviso, Botao } from "@/components/ui";
+import { Aviso, Botao, Rotulo } from "@/components/ui";
 import { Modal } from "@/components/modal";
 import { ANGULOS } from "@/lib/anamnese";
 import { caminhoDaFoto, comprimir } from "@/lib/foto";
@@ -111,9 +111,9 @@ export function Fotos({ alunoId, fotos }: { alunoId: string; fotos: FotoNaTela[]
   return (
     <section className="flex flex-col gap-3">
       <div className="flex items-baseline justify-between gap-3">
-        <span className="text-xs font-bold uppercase tracking-[0.07em] text-nevoa">
+        <Rotulo>
           Fotos de evolução
-        </span>
+        </Rotulo>
         {datas.length > 0 && (
           <Meta tom="raio">
             {datas.length} {datas.length === 1 ? "registro" : "registros"}

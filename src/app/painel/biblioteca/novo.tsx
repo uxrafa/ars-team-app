@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, useState } from "react";
-import { Aviso, Botao, CLASSE_CAMPO, Rotulo } from "@/components/ui";
+import { Aviso, Botao, CLASSE_CAMPO, Rotulo, TituloDeCartao } from "@/components/ui";
 import { GRUPOS } from "@/lib/biblioteca";
 import { criarExercicio, type Resultado } from "./acoes";
 
@@ -21,7 +21,7 @@ export function Novo() {
 
   return (
     <section className="w-full rounded-2xl border border-linha bg-tinta-2 p-5">
-      <h2 className="text-lg font-semibold">Novo exercício</h2>
+      <TituloDeCartao>Novo exercício</TituloDeCartao>
       <p className="mt-1.5 text-[15px] leading-relaxed text-nevoa">
         Para o que aparecer depois da lista que o Allisson mandou.
       </p>

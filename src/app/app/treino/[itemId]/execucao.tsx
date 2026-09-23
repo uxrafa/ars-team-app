@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState, useTransition } from "react";
-import { Aviso } from "@/components/ui";
+import { Aviso, Rotulo } from "@/components/ui";
 import { NOME_DO_METODO, emMinutos } from "@/lib/ficha";
 import {
   carga as formatarCarga,
@@ -365,9 +365,9 @@ export function Execucao({
         {/* --- séries ------------------------------------------------ */}
         <div className="flex flex-col gap-2.5">
           <div className="flex flex-wrap items-baseline justify-between gap-2">
-            <span className="text-xs font-bold uppercase tracking-[0.07em] text-nevoa">
+            <Rotulo>
               Suas séries
-            </span>
+            </Rotulo>
             {ultimaVez && (
               <Meta>
                 Última vez: {formatarCarga(ultimaVez.series[0]?.carga_kg ?? null) || "-"} kg ×{" "}

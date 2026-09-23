@@ -1,3 +1,4 @@
+import { TituloDeCartao } from "@/components/ui";
 import { carga, curtaComMes, type CargaQueSubiu } from "@/lib/treino";
 import { GraficoDePeso, type Ponto } from "@/app/app/evolucao/grafico";
 
@@ -54,7 +55,7 @@ export function VisaoDaEvolucaoDoAluno({
     <div className="flex flex-col gap-5">
       <div className="grid gap-5 lg:grid-cols-2">
         <section className="rounded-2xl border border-linha bg-tinta-2 p-5">
-          <h2 className="text-lg font-bold">Peso</h2>
+          <TituloDeCartao>Peso</TituloDeCartao>
           {pontos.length === 0 ? (
             <p className="mt-3 text-[15px] leading-relaxed text-nevoa">
               {primeiroNome} ainda não registrou peso.
@@ -89,7 +90,7 @@ export function VisaoDaEvolucaoDoAluno({
         </section>
 
         <section className="rounded-2xl border border-linha bg-tinta-2 p-5">
-          <h2 className="text-lg font-bold">Medidas (cm)</h2>
+          <TituloDeCartao>Medidas (cm)</TituloDeCartao>
           {temMedida ? (
             <>
               <p className="mt-2 font-mono text-[13px] uppercase tabular text-nevoa">
@@ -115,7 +116,7 @@ export function VisaoDaEvolucaoDoAluno({
       </div>
 
       <section className="overflow-hidden rounded-2xl border border-linha bg-tinta-2">
-        <h2 className="border-b border-linha px-5 py-4 text-lg font-bold">Cargas que subiram</h2>
+        <TituloDeCartao className="border-b border-linha px-5 py-4">Cargas que subiram</TituloDeCartao>
         {subiram.length === 0 ? (
           <Vazio texto="Nenhuma carga subiu ainda, ou não há treino repetido suficiente para comparar." />
         ) : (
@@ -150,7 +151,7 @@ export function VisaoDaEvolucaoDoAluno({
       </section>
 
       <section className="overflow-hidden rounded-2xl border border-linha bg-tinta-2">
-        <h2 className="border-b border-linha px-5 py-4 text-lg font-bold">Fotos</h2>
+        <TituloDeCartao className="border-b border-linha px-5 py-4">Fotos</TituloDeCartao>
         {porData.size === 0 ? (
           <Vazio
             texto={`${primeiroNome} ainda não enviou foto. Elas são opcionais na anamnese e podem ser enviadas depois, pela aba Evolução do app.`}

@@ -174,6 +174,38 @@ export function Rotulo({ children, className = "" }: { children: ReactNode; clas
   );
 }
 
+/**
+ * Título de cartão. A hierarquia do app tem três degraus, e só três
+ * (Rafael, 23/09, depois de ver "Ficha", "Anamnese", "Atenção na saúde" e
+ * "Como o aluno vê" lado a lado, cada um num tamanho e numa fonte):
+ *
+ * - Tanker em caixa alta: título da PÁGINA e do estado vazio grande.
+ * - Este: título de CARTÃO. 18px, corpo, seminegrito.
+ * - `Rotulo`: nome de CAMPO, de número, de coluna. 12px em caixa alta.
+ *
+ * `tom` muda só a cor, nunca o tamanho: um cartão de alerta continua sendo um
+ * cartão.
+ */
+export function TituloDeCartao({
+  children,
+  tom = "normal",
+  className = "",
+}: {
+  children: ReactNode;
+  tom?: "normal" | "urgente" | "ok" | "apagado";
+  className?: string;
+}) {
+  const cor =
+    tom === "urgente"
+      ? "text-raio-forte"
+      : tom === "ok"
+        ? "text-ok"
+        : tom === "apagado"
+          ? "text-nevoa"
+          : "text-papel";
+  return <h2 className={`text-lg font-semibold leading-snug ${cor} ${className}`}>{children}</h2>;
+}
+
 /** Dado que precisa alinhar em coluna: peso, data, contagem. */
 export function Dado({ children, className = "" }: { children: ReactNode; className?: string }) {
   return (

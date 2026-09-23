@@ -65,30 +65,36 @@ export const PERGUNTAS_SAUDE = [
     campo: "coracao",
     detalhe: "coracao_detalhe",
     texto: "Algum médico já disse que você tem problema no coração?",
+    // Como aparece para o Allisson no alerta de saúde: o fato, não a pergunta.
+    curto: "Problema no coração",
     dica: "Qual, e desde quando?",
   },
   {
     campo: "dor_peito",
     detalhe: "dor_peito_detalhe",
     texto: "Sente dor no peito ou falta de ar ao fazer esforço?",
+    curto: "Dor no peito ou falta de ar no esforço",
     dica: "Em que situação costuma acontecer?",
   },
   {
     campo: "pressao_alta",
     detalhe: "pressao_alta_detalhe",
     texto: "Já teve pressão alta diagnosticada?",
+    curto: "Pressão alta",
     dica: "Está controlada? Toma remédio para isso?",
   },
   {
     campo: "cirurgia_12m",
     detalhe: "cirurgia_12m_detalhe",
     texto: "Fez alguma cirurgia nos últimos 12 meses?",
+    curto: "Cirurgia nos últimos 12 meses",
     dica: "Qual, e há quanto tempo?",
   },
   {
     campo: "medicacao_continua",
     detalhe: "medicacao_continua_detalhe",
     texto: "Toma algum remédio de uso contínuo?",
+    curto: "Remédio de uso contínuo",
     dica: "Quais?",
   },
 ] as const;

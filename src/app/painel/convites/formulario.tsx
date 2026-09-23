@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, useState } from "react";
-import { Aviso, Botao, CLASSE_CAMPO, Rotulo } from "@/components/ui";
+import { Aviso, Botao, CLASSE_CAMPO, Rotulo, TituloDeCartao } from "@/components/ui";
 import { DIAS_DE_VALIDADE, linkDoConvite, primeiroNome } from "@/lib/convite";
 import { criarConvite, type EstadoConvite } from "./acoes";
 import { BotaoCopiar, BotaoWhatsapp, LinkVisivel } from "./link";
@@ -98,9 +98,9 @@ export function Formulario({ origem }: { origem: string }) {
     <div className="flex flex-col gap-5">
       {estado.criado && link && (
         <section className="rounded-2xl border border-ok/40 bg-ok/[0.07] p-5">
-          <h2 className="text-lg font-semibold text-ok">
+          <TituloDeCartao tom="ok">
             Convite de {primeiroNome(estado.criado.nome)} pronto
-          </h2>
+          </TituloDeCartao>
           <p className="mt-1.5 text-[15px] leading-relaxed text-nevoa">
             Mande o link para ele. Vale por {DIAS_DE_VALIDADE} dias e só funciona uma vez.
           </p>
@@ -121,7 +121,7 @@ export function Formulario({ origem }: { origem: string }) {
       )}
 
       <section className="rounded-2xl border border-linha bg-tinta-2 p-5">
-        <h2 className="text-lg font-semibold">Convidar aluno</h2>
+        <TituloDeCartao>Convidar aluno</TituloDeCartao>
         <p className="mt-1.5 text-[15px] leading-relaxed text-nevoa">
           O que você preencher aqui já entra no cadastro dele. Só a senha é ele quem escolhe.
         </p>

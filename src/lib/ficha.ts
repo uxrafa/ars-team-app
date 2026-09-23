@@ -168,7 +168,10 @@ export function alertasDeSaude(a: LinhaAnamneseFicha | null): string[] {
   for (const p of PERGUNTAS_SAUDE) {
     if (a[p.campo] === true) {
       const detalhe = (a[p.detalhe] ?? "").toString().trim();
-      alertas.push(detalhe ? `${p.texto} ${detalhe}` : p.texto);
+      // O fato, e não a pergunta que o aluno leu: "Pressão alta: controlada"
+      // se lê de relance; "Já teve pressão alta diagnosticada? controlada",
+      // não (Rafael, 23/09).
+      alertas.push(detalhe ? `${p.curto}: ${detalhe}` : p.curto);
     }
   }
 

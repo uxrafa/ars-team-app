@@ -12,7 +12,7 @@ import {
   type LinhaCheckin,
 } from "@/lib/painel";
 import Link from "next/link";
-import { BotaoLink } from "@/components/ui";
+import { BotaoLink, TituloDeCartao } from "@/components/ui";
 import { LinhaAluno, type AlunoNaTela } from "./linha";
 
 export const metadata = { title: "Alunos · ARS Team" };
@@ -166,9 +166,9 @@ export default async function Alunos() {
       {arquivados.length > 0 && (
         <section className="overflow-hidden rounded-2xl border border-linha bg-tinta-2/50">
           <div className="border-b border-linha px-5 py-4">
-            <h2 className="text-lg font-bold text-nevoa">
+            <TituloDeCartao tom="apagado">
               Arquivados · {arquivados.length}
-            </h2>
+            </TituloDeCartao>
             <p className="mt-1 text-sm leading-relaxed text-nevoa">
               Fora das listas e das contas. Nada foi apagado, e dá para reativar na tela de cada
               um.

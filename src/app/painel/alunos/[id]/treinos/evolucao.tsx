@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, type KeyboardEvent } from "react";
-import { CLASSE_CAMPO } from "@/components/ui";
+import { CLASSE_CAMPO, TituloDeCartao } from "@/components/ui";
 import {
   MAX_SERIES_NO_GRAFICO,
   coresDasSeries,
@@ -310,7 +310,7 @@ export function EvolucaoPorExercicio({ exercicios }: { exercicios: ExercicioComH
     <section className="rounded-2xl border border-linha bg-tinta-2 p-5">
       <div className="flex flex-wrap items-end gap-x-4 gap-y-3">
         <div className="mr-auto">
-          <h2 className="text-lg font-bold">Evolução por exercício</h2>
+          <TituloDeCartao>Evolução por exercício</TituloDeCartao>
           {variacoes.length > 0 && (
             <p className="mt-1 text-sm text-nevoa">
               Desde {dataCurta(e.dias[0].data)}:{" "}

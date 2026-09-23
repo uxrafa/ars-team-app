@@ -1,3 +1,4 @@
+import { TituloDeCartao } from "@/components/ui";
 import { emReais } from "@/lib/painel";
 import {
   nomeDoMes,
@@ -135,7 +136,7 @@ export function VisaoFinanceiro({
         <p className="mt-2.5 text-[15px] text-nevoa">
           {/* Não é a mesma coisa que "mensalidades em dia", que era o que o
               painel conseguia dizer antes desta tabela existir. */}
-          Uma linha por dinheiro que entrou. O vencimento do aluno anda sozinho a partir daqui.
+          Cada pagamento registrado aqui já estende o acesso do aluno.
         </p>
       </div>
 
@@ -193,7 +194,7 @@ export function VisaoFinanceiro({
       </div>
 
       <section className="rounded-2xl border border-linha bg-tinta-2 p-5">
-        <h2 className="text-lg font-bold">Últimos seis meses</h2>
+        <TituloDeCartao>Últimos seis meses</TituloDeCartao>
         <div className="mt-5">
           <Barras barras={barras} />
         </div>
@@ -201,7 +202,7 @@ export function VisaoFinanceiro({
 
       <section className="flex flex-col overflow-hidden rounded-2xl border border-linha bg-tinta-2">
         <div className="flex items-center gap-3 border-b border-linha px-5 py-4">
-          <h2 className="text-lg font-bold">Pagamentos de {nomeDoMes(mes.mes)}</h2>
+          <TituloDeCartao>Pagamentos de {nomeDoMes(mes.mes)}</TituloDeCartao>
           {mes.estornados > 0 && (
             <span className="rounded-full border border-contorno px-3 py-1 text-[13px] font-semibold text-nevoa">
               {mes.estornados} {mes.estornados === 1 ? "estornado" : "estornados"}
@@ -228,7 +229,7 @@ export function VisaoFinanceiro({
       {pagamentos.length > doMes.length && (
         <section className="flex flex-col overflow-hidden rounded-2xl border border-linha bg-tinta-2">
           <div className="border-b border-linha px-5 py-4">
-            <h2 className="text-lg font-bold">Meses anteriores</h2>
+            <TituloDeCartao>Meses anteriores</TituloDeCartao>
           </div>
           <ul>
             {pagamentos

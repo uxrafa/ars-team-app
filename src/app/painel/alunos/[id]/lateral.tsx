@@ -1,4 +1,4 @@
-import { Dado, Rotulo } from "@/components/ui";
+import { Pilula, TituloDeCartao } from "@/components/ui";
 import { alertasDeSaude, resumoDaAnamnese, type LinhaAnamneseFicha } from "@/lib/ficha";
 
 function Linha({ rotulo, valor }: { rotulo: string; valor: string | null }) {
@@ -21,9 +21,12 @@ function Linha({ rotulo, valor }: { rotulo: string; valor: string | null }) {
 export function Lateral({
   anamnese,
   alunoNome,
+  fichaNoAr,
 }: {
   anamnese: LinhaAnamneseFicha | null;
   alunoNome: string;
+  /** Só o editor da ficha passa: sem ele, o cartão de publicação não aparece. */
+  fichaNoAr?: boolean;
 }) {
   const r = resumoDaAnamnese(anamnese);
   const alertas = alertasDeSaude(anamnese);
@@ -33,7 +36,7 @@ export function Lateral({
     <aside className="flex flex-col gap-5 xl:sticky xl:top-6">
       {alertas.length > 0 && (
         <section className="rounded-2xl border border-raio/45 bg-raio/[0.08] p-5">
-          <h2 className="text-lg font-semibold text-raio-forte">Atenção na saúde</h2>
+          <TituloDeCartao tom="urgente">Atenção na saúde</TituloDeCartao>
           <ul className="mt-3 flex flex-col gap-2.5">
             {alertas.map((a, i) => (
               <li key={i} className="flex gap-2.5 text-[15px] leading-relaxed text-papel">
@@ -46,7 +49,7 @@ export function Lateral({
       )}
 
       <section className="rounded-2xl border border-linha bg-tinta-2 p-5">
-        <h2 className="text-lg font-semibold">Anamnese</h2>
+        <TituloDeCartao>Anamnese</TituloDeCartao>
 
         {!anamnese ? (
           <p className="mt-2.5 text-[15px] leading-relaxed text-nevoa">
@@ -76,16 +79,31 @@ export function Lateral({
         )}
       </section>
 
-      <section className="rounded-2xl border border-linha bg-tinta-2 p-5">
-        <Rotulo>Como o aluno vê</Rotulo>
-        <p className="mt-2.5 text-[15px] leading-relaxed text-nevoa">
-          Enquanto a ficha estiver em rascunho, ela não aparece no app dele. Quem decide isso é a
-          policy do banco, não a tela: publicar é o que libera.
-        </p>
-        <p className="mt-3">
-          <Dado>rascunho → invisível · ativo → no ar</Dado>
-        </p>
-      </section>
+      {/* Só no editor da ficha: é lá que "publicar" é a decisão do momento.
+          Duas linhas, o estado atual destacado, e nada de explicar como o
+          sistema garante isso -- o Allisson precisa saber o quê, não o como
+          (Rafael, 23/09). */}
+      {fichaNoAr !== undefined && (
+        <section className="rounded-2xl border border-linha bg-tinta-2 p-5">
+          <TituloDeCartao>Como o aluno vê</TituloDeCartao>
+          <ul className="mt-3.5 flex flex-col gap-2">
+            {[
+              { atual: !fichaNoAr, pilula: <Pilula>Rascunho</Pilula>, texto: "Só você vê" },
+              { atual: fichaNoAr, pilula: <Pilula tom="ok">No ar</Pilula>, texto: "Aparece no app do aluno" },
+            ].map((l, k) => (
+              <li
+                key={k}
+                className={`flex items-center gap-3 rounded-xl px-3 py-2.5 ${
+                  l.atual ? "bg-tinta-3 ring-1 ring-contorno" : "opacity-60"
+                }`}
+              >
+                <span className="w-[92px] flex-none">{l.pilula}</span>
+                <span className="text-[15px] text-papel">{l.texto}</span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
     </aside>
   );
 }

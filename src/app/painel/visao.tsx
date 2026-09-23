@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { BotaoLink, Pilula, type Tom } from "@/components/ui";
+import { BotaoLink, Pilula, TituloDeCartao, type Tom } from "@/components/ui";
 import {
   ACAO_MOTIVO,
   ROTULO_MOTIVO,
@@ -228,7 +228,7 @@ export function VisaoDoPainel({ saudacao, mes, atencao, r, alunos, eventos }: Da
       <div className="grid gap-5 lg:grid-cols-[1.75fr_1fr]">
         <section className="flex flex-col overflow-hidden rounded-2xl border border-linha bg-tinta-2">
           <div className="flex items-center gap-3 border-b border-linha px-5 py-4">
-            <h2 className="text-lg font-bold">Precisa da sua atenção</h2>
+            <TituloDeCartao>Precisa da sua atenção</TituloDeCartao>
             {atencao.length > 0 && (
               <span className="rounded-full bg-raio-solido px-3 py-1 text-[13px] font-bold text-papel">
                 {atencao.length}
@@ -314,7 +314,7 @@ export function VisaoDoPainel({ saudacao, mes, atencao, r, alunos, eventos }: Da
 
           <section className="flex flex-1 flex-col overflow-hidden rounded-2xl border border-linha bg-tinta-2">
             <div className="flex items-center gap-3 border-b border-linha px-5 py-4">
-              <h2 className="text-lg font-bold">Check-ins de hoje</h2>
+              <TituloDeCartao>Check-ins de hoje</TituloDeCartao>
               {recadosHoje > 0 && (
                 <span className="rounded-full bg-raio-solido px-3 py-1 text-[13px] font-bold text-papel">
                   {recadosHoje} {recadosHoje === 1 ? "recado" : "recados"}

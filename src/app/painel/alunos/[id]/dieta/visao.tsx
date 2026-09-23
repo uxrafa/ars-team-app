@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState, useTransition } from "react";
-import { Aviso, Botao, BotaoIcone, CLASSE_CAMPO, Cartao, Pilula, Rotulo } from "@/components/ui";
+import { Aviso, Botao, BotaoIcone, Cartao, CLASSE_CAMPO, Pilula, Rotulo, TituloDeCartao } from "@/components/ui";
 import {
   NIVEIS_DE_ATIVIDADE,
   buscarAlimentos,
@@ -362,10 +362,10 @@ export function EditorDeDieta({
 function Secao({ icone, titulo, children }: { icone: NomeIcone; titulo: string; children: React.ReactNode }) {
   return (
     <section className="flex flex-col gap-4">
-      <h2 className="flex items-center gap-2.5 text-lg font-semibold text-papel">
+      <TituloDeCartao className="flex items-center gap-2.5">
         <Icone nome={icone} className="text-raio" />
         {titulo}
-      </h2>
+      </TituloDeCartao>
       {children}
     </section>
   );

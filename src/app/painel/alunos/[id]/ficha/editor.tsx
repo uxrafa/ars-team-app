@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useTransition } from "react";
-import { Aviso, Botao, CLASSE_CAMPO, Pilula, Rotulo } from "@/components/ui";
+import { Aviso, Botao, CLASSE_CAMPO, Pilula, Rotulo, TituloDeCartao } from "@/components/ui";
 import type { ExercicioEscolhivel } from "@/lib/biblioteca";
 import {
   ITEM_PADRAO,
@@ -257,7 +257,7 @@ export function Editor({
             <div className="min-w-0 flex-1">
               {/* "Ficha de Marcos" saiu: o cabeçalho do layout já diz o nome.
                   Aqui basta o que a ficha tem dentro. */}
-              <h2 className="font-display text-2xl uppercase leading-none tracking-wide">Ficha</h2>
+              <TituloDeCartao>Ficha</TituloDeCartao>
               <p className="mt-2.5 text-[15px] text-nevoa">
                 {r.blocos === 0
                   ? "Nenhum treino ainda."
@@ -349,7 +349,7 @@ export function Editor({
             ) : (
               <div className="flex flex-col gap-4">
                 <div>
-                  <h2 className="text-lg font-semibold">Copiar de outro aluno</h2>
+                  <TituloDeCartao>Copiar de outro aluno</TituloDeCartao>
                   <p className="mt-1.5 text-[15px] leading-relaxed text-nevoa">
                     Traz os treinos, exercícios, séries, repetições, descanso e método.{" "}
                     {blocos.length > 0 && (
@@ -513,7 +513,7 @@ export function Editor({
         </section>
       </div>
 
-      <Lateral anamnese={anamnese} alunoNome={alunoNome} />
+      <Lateral anamnese={anamnese} alunoNome={alunoNome} fichaNoAr={ativa} />
     </div>
   );
 }

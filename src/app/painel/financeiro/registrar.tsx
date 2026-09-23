@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Aviso, Botao, CLASSE_CAMPO, Rotulo } from "@/components/ui";
+import { Aviso, Botao, CLASSE_CAMPO, Rotulo, TituloDeCartao } from "@/components/ui";
 import {
   FORMAS_NA_TELA,
   PLANOS_EM_MESES,
@@ -95,7 +95,7 @@ export function Registrar({
 
   return (
     <section className="rounded-2xl border border-linha bg-tinta-2 p-5">
-      <h2 className="text-lg font-bold">Registrar pagamento</h2>
+      <TituloDeCartao>Registrar pagamento</TituloDeCartao>
 
       <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <label className="flex flex-col gap-2">

@@ -1,5 +1,6 @@
 "use client";
 
+import { Rotulo } from "@/components/ui";
 import { useState } from "react";
 import { carga as formatarCarga, curtaComMes, type CargaQueSubiu } from "@/lib/treino";
 import { Meta } from "../pecas";
@@ -201,9 +202,9 @@ export function VisaoDaEvolucao({
 
           {subiram.length > 0 && (
             <section className="flex flex-col gap-3">
-              <span className="text-xs font-bold uppercase tracking-[0.07em] text-nevoa">
+              <Rotulo>
                 Cargas que subiram
-              </span>
+              </Rotulo>
               <ul className="overflow-hidden rounded-[14px] border border-linha bg-tinta-2">
                 {subiram.map((c) => (
                   <li

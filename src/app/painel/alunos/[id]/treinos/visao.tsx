@@ -1,4 +1,4 @@
-import { Pilula } from "@/components/ui";
+import { Pilula, TituloDeCartao } from "@/components/ui";
 import { nomeDoEsforco, tomDoEsforco } from "@/lib/treino";
 import {
   SEMANAS_NO_GRAFICO,
@@ -135,7 +135,7 @@ export function VisaoDosTreinosDoAluno({
 
       <section className="rounded-2xl border border-linha bg-tinta-2 p-5">
         <div className="flex flex-wrap items-baseline gap-3">
-          <h2 className="text-lg font-bold">Volume por semana</h2>
+          <TituloDeCartao>Volume por semana</TituloDeCartao>
           <span className="text-sm text-nevoa">
             últimas {SEMANAS_NO_GRAFICO} semanas · carga vezes repetições, somado
           </span>
@@ -189,7 +189,7 @@ export function VisaoDosTreinosDoAluno({
       {exercicios.length > 0 && <EvolucaoPorExercicio exercicios={exercicios} />}
 
       <section className="flex flex-col gap-3">
-        <h2 className="text-lg font-bold">Histórico</h2>
+        <TituloDeCartao>Histórico</TituloDeCartao>
         <ul className="overflow-hidden rounded-2xl border border-linha bg-tinta-2">
           {treinos.map((t) => (
             <li key={t.id} className="border-t border-linha px-5 py-4 first:border-t-0">

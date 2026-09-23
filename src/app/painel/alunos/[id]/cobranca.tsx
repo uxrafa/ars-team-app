@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Aviso, Botao, BotaoLink, CLASSE_CAMPO, Rotulo } from "@/components/ui";
+import { Aviso, Botao, BotaoLink, CLASSE_CAMPO, Rotulo, TituloDeCartao } from "@/components/ui";
 import { emReais } from "@/lib/painel";
 import { salvarCobranca, type DadosCobranca } from "../acoes";
 
@@ -73,7 +73,7 @@ export function Cobranca({
   return (
     <section className="rounded-2xl border border-linha bg-tinta-2 p-5">
       <div className="flex flex-wrap items-center gap-3">
-        <h2 className="text-lg font-bold">Plano e cobrança</h2>
+        <TituloDeCartao>Plano e cobrança</TituloDeCartao>
         {!editando && (
           <Botao
             type="button"
@@ -150,8 +150,8 @@ export function Cobranca({
           {/* Explica uma ausência, e por isso fica: o campo de vencimento
               estava aqui e sumiu. */}
           <p className="text-sm leading-relaxed text-nevoa">
-            O &ldquo;pago até&rdquo; não se digita mais: ele anda quando um pagamento é
-            registrado no Financeiro.
+            O &ldquo;pago até&rdquo; avança sozinho quando você registra um pagamento no
+            Financeiro.
           </p>
 
           {erro && <Aviso>{erro}</Aviso>}

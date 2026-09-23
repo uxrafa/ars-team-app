@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Aviso, Botao, CLASSE_CAMPO, Rotulo } from "@/components/ui";
+import { Aviso, Botao, CLASSE_CAMPO, Rotulo, TituloDeCartao } from "@/components/ui";
 import { arquivarAluno, reativarAluno } from "../acoes";
 
 function quando(iso: string): string {
@@ -67,7 +67,7 @@ export function Arquivar({
       <section className="rounded-2xl border border-contorno bg-tinta-3/40 p-5">
         <div className="flex flex-wrap items-center gap-3">
           <div>
-            <h2 className="text-lg font-bold">Aluno arquivado</h2>
+            <TituloDeCartao>Aluno arquivado</TituloDeCartao>
             <p className="mt-1.5 text-[15px] text-nevoa">
               Desde {quando(arquivadoEm)}
               {arquivadoMotivo ? ` · ${arquivadoMotivo}` : ""}
@@ -98,7 +98,7 @@ export function Arquivar({
   return (
     <section className="rounded-2xl border border-linha bg-tinta-2 p-5">
       <div className="flex flex-wrap items-center gap-3">
-        <h2 className="text-lg font-bold">Tirar da lista</h2>
+        <TituloDeCartao>Tirar da lista</TituloDeCartao>
         {!pedindo && (
           <Botao
             type="button"
