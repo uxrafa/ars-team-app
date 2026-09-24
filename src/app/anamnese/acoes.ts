@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { criarClienteServidor } from "@/lib/supabase/server";
 import {
   VERSAO_CONSENTIMENTO,
+  dataParaISO,
   paraNumero,
   primeiraFalta,
   type DadosAnamnese,
@@ -20,7 +21,8 @@ function montarLinha(alunoId: string, dados: DadosAnamnese) {
     aluno_id: alunoId,
     peso_kg: paraNumero(dados.peso_kg),
     altura_cm: paraNumero(dados.altura_cm),
-    nascimento: dados.nascimento || null,
+    // A tela guarda "01/07/1989"; o banco, a data. Incompleta vira vazio no rascunho.
+    nascimento: dataParaISO(dados.nascimento),
     sexo: dados.sexo || null,
     objetivo: dados.objetivo || null,
     local_treino: dados.local_treino || null,

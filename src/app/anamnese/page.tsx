@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { criarClienteServidor } from "@/lib/supabase/server";
 import { BotaoLink } from "@/components/ui";
-import { ANAMNESE_VAZIA, paraTexto, type DadosAnamnese } from "@/lib/anamnese";
+import { ANAMNESE_VAZIA, isoParaData, paraTexto, type DadosAnamnese } from "@/lib/anamnese";
 import { Formulario } from "./formulario";
 
 export const metadata = { title: "Anamnese · ARS Team" };
@@ -16,7 +16,7 @@ function paraFormulario(linha: Record<string, unknown> | null): DadosAnamnese {
   return {
     peso_kg: numero(linha.peso_kg),
     altura_cm: texto(linha.altura_cm),
-    nascimento: texto(linha.nascimento),
+    nascimento: isoParaData(texto(linha.nascimento)),
     sexo: texto(linha.sexo),
     objetivo: texto(linha.objetivo),
     local_treino: texto(linha.local_treino),

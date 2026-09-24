@@ -175,6 +175,54 @@ export function paraTexto(valor: number | null | undefined): string {
 }
 
 /* ------------------------------------------------------------------ */
+/* Data de nascimento digitada                                         */
+/* ------------------------------------------------------------------ */
+
+/*
+ * A data de nascimento é digitada, e não escolhida num calendário (24/09).
+ * O calendário do Android abre no mês de hoje: para chegar em 1989 o aluno
+ * volta 37 anos, mês a mês ou ano a ano. Digitar "01071989" no teclado
+ * numérico leva três segundos, em qualquer celular.
+ */
+
+/** "0107198" vira "01/07/198": só dígitos, barra entra sozinha. */
+export function mascararData(texto: string): string {
+  const d = String(texto ?? "").replace(/\D/g, "").slice(0, 8);
+  if (d.length <= 2) return d;
+  if (d.length <= 4) return `${d.slice(0, 2)}/${d.slice(2)}`;
+  return `${d.slice(0, 2)}/${d.slice(2, 4)}/${d.slice(4)}`;
+}
+
+/** "01/07/1989" vira "1989-07-01". Data que não existe (31/02) vira null. */
+export function dataParaISO(texto: string): string | null {
+  const m = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(String(texto ?? "").trim());
+  if (!m) return null;
+  const [, dia, mes, ano] = m.map(Number);
+  const data = new Date(Date.UTC(ano, mes - 1, dia));
+  if (data.getUTCFullYear() !== ano || data.getUTCMonth() !== mes - 1 || data.getUTCDate() !== dia) {
+    return null;
+  }
+  return `${m[3]}-${m[2]}-${m[1]}`;
+}
+
+/** O caminho de volta, para abrir a anamnese com o que já foi salvo. */
+export function isoParaData(iso: string | null | undefined): string {
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(iso ?? ""));
+  return m ? `${m[3]}/${m[2]}/${m[1]}` : "";
+}
+
+/** Idade em anos na data de hoje. Nulo se a data não fecha. */
+export function idadeEm(texto: string, hojeISO: string): number | null {
+  const iso = dataParaISO(texto);
+  if (!iso) return null;
+  const [na, nm, nd] = iso.split("-").map(Number);
+  const [ha, hm, hd] = hojeISO.split("-").map(Number);
+  let anos = ha - na;
+  if (hm < nm || (hm === nm && hd < nd)) anos -= 1;
+  return anos;
+}
+
+/* ------------------------------------------------------------------ */
 /* O que ainda falta responder                                         */
 /* ------------------------------------------------------------------ */
 
@@ -213,6 +261,18 @@ export function primeiraFalta(d: DadosAnamnese): Falta | null {
   }
   if (altura < 100 || altura > 250) {
     return { etapa: 1, campo: "altura_cm", mensagem: "Confira a altura: o valor parece fora do normal." };
+  }
+  // Obrigatória desde 24/09: a meta de calorias da dieta usa a idade.
+  if (!d.nascimento.trim()) {
+    return { etapa: 1, campo: "nascimento", mensagem: "Escreva sua data de nascimento." };
+  }
+  const idade = idadeEm(d.nascimento, new Date().toISOString().slice(0, 10));
+  if (idade === null || idade < 10 || idade > 100) {
+    return {
+      etapa: 1,
+      campo: "nascimento",
+      mensagem: "Confira a data de nascimento: use dia, mês e ano, como 01/07/1989.",
+    };
   }
   if (!d.sexo) {
     return { etapa: 1, campo: "sexo", mensagem: "Marque o sexo." };

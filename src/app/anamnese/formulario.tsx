@@ -13,6 +13,7 @@ import {
   SEXOS,
   PERGUNTAS_SAUDE,
   PERIODOS,
+  mascararData,
   primeiraFalta,
   type DadosAnamnese,
   type Falta,
@@ -258,13 +259,20 @@ export function Formulario({
                   </div>
                 </label>
               </div>
-              <label className="flex flex-col gap-1.5">
+              {/* Digitada, e não num calendário: no Android o calendário abre no
+                  mês de hoje e o aluno teria que voltar décadas. O teclado é o
+                  numérico e a barra entra sozinha. */}
+              <label id="campo-nascimento" className="flex flex-col gap-1.5">
                 <Rotulo>Data de nascimento</Rotulo>
                 <input
-                  type="date"
+                  inputMode="numeric"
+                  autoComplete="bday"
+                  placeholder="dd/mm/aaaa"
+                  maxLength={10}
                   value={dados.nascimento}
-                  onChange={(e) => mudar("nascimento", e.target.value)}
-                  className={campo}
+                  onChange={(e) => mudar("nascimento", mascararData(e.target.value))}
+                  aria-invalid={emFalta === "nascimento" || undefined}
+                  className={`${campo} ${emFalta === "nascimento" ? "border-raio" : ""}`}
                 />
               </label>
               <div id="campo-sexo" className="flex flex-col gap-1.5">

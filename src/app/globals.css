@@ -85,6 +85,23 @@ textarea {
   font-size: 16px;
 }
 
+/* Campo de data com a mesma altura e largura dos outros (24/09).
+   No iPhone o Safari desenha o `type="date"` com o estilo nativo dele e
+   ignora altura e largura: o campo encolhia para o tamanho do texto, com uns
+   30px de altura -- pequeno demais para o dedo. Sem a aparencia nativa ele
+   obedece o `min-h-12 w-full` da classe de campo, e o valor volta a alinhar
+   a esquerda como nos outros campos. */
+input[type="date"] {
+  -webkit-appearance: none;
+  appearance: none;
+  display: block;
+  min-width: 0;
+}
+
+input[type="date"]::-webkit-date-and-time-value {
+  text-align: left;
+}
+
 /* Foco sempre visivel, e com folga suficiente para enxergar */
 :focus-visible {
   outline: 2px solid var(--color-raio-forte);
