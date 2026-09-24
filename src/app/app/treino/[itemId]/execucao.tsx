@@ -84,7 +84,7 @@ export function Execucao({
     const jaFeitas = new Map(feitas.map((s) => [s.numero, s]));
     const anteriores = new Map((ultimaVez?.series ?? []).map((s) => [s.numero, s]));
     // A última série da vez passada serve de palpite para as que ela não tem.
-    const ultima = ultimaVez?.series.at(-1) ?? null;
+    const ultima = ultimaVez ? (ultimaVez.series[ultimaVez.series.length - 1] ?? null) : null;
 
     return Object.fromEntries(
       numeros.map((n) => {

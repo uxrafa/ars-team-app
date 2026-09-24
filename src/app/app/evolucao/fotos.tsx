@@ -42,14 +42,14 @@ export function Fotos({ alunoId, fotos }: { alunoId: string; fotos: FotoNaTela[]
     porData.set(f.data, lista);
   }
   const datas = [...porData.keys()].sort();
-  const [selecionada, setSelecionada] = useState<string | null>(datas.at(-1) ?? null);
+  const [selecionada, setSelecionada] = useState<string | null>(datas[datas.length - 1] ?? null);
 
   const capa = (data: string) => {
     const lista = porData.get(data) ?? [];
     return lista.find((f) => f.angulo === "frente") ?? lista[0];
   };
 
-  const alvo = selecionada ?? datas.at(-1) ?? null;
+  const alvo = selecionada ?? datas[datas.length - 1] ?? null;
   const primeira = datas[0] ?? null;
   const comparando = Boolean(primeira && alvo && primeira !== alvo);
 
