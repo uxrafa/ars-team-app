@@ -117,6 +117,7 @@ export default async function Painel() {
 
     eventos.push({
       id: `sessao-${s.id}`,
+      alunoId: s.aluno_id,
       aluno: nome,
       // Só o nome do bloco. Peso e esforço têm cartão inteiro na tela de
       // Treinos, com o recado junto; nesta coluna estreita eles roubavam a
@@ -138,6 +139,7 @@ export default async function Painel() {
 
     eventos.push({
       id: `chegada-${a.id}`,
+      alunoId: a.id,
       aluno: a.nome,
       detalhe: [chegouHoje ? "primeiro acesso" : null, enviouHoje ? "anamnese enviada" : null]
         .filter(Boolean)

@@ -96,14 +96,24 @@ function LinhaAtencao({ item }: { item: ItemAtencao }) {
 
   return (
     <li className="flex items-center gap-4 border-t border-linha px-5 py-4 first:border-t-0 hover:bg-tinta-3/40">
-      <Avatar nome={aluno.nome} />
-      <div className="min-w-0 flex-1">
-        <p className="truncate text-base font-semibold">{aluno.nome}</p>
-        <p className="mt-1 truncate text-sm text-nevoa">{detalhe}</p>
-      </div>
-      <span className="flex-none">
-        <Pilula tom={TOM_DO_MOTIVO[motivo]}>{ROTULO_MOTIVO[motivo]}</Pilula>
-      </span>
+      {/* Nome, motivo e avatar levam ao aluno (Rafael, 24/09: clicar no nome
+          não fazia nada, só o botão da ação). O botão continua separado ao
+          lado, porque link dentro de link não existe. */}
+      <Link
+        href={`/painel/alunos/${aluno.id}`}
+        className="group flex min-w-0 flex-1 items-center gap-4 rounded-xl"
+      >
+        <Avatar nome={aluno.nome} />
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-base font-semibold underline-offset-4 group-hover:underline">
+            {aluno.nome}
+          </p>
+          <p className="mt-1 truncate text-sm text-nevoa">{detalhe}</p>
+        </div>
+        <span className="flex-none">
+          <Pilula tom={TOM_DO_MOTIVO[motivo]}>{ROTULO_MOTIVO[motivo]}</Pilula>
+        </span>
+      </Link>
       {acionavelPorZap && zap ? (
         <BotaoLink
           href={zap}
@@ -328,10 +338,11 @@ export function VisaoDoPainel({ saudacao, mes, atencao, r, alunos, eventos }: Da
             ) : (
               <ul className="flex-1">
                 {eventos.map((e) => (
-                  <li
-                    key={e.id}
-                    className="flex items-center gap-3 border-t border-linha px-5 py-3 first:border-t-0"
-                  >
+                  <li key={e.id} className="border-t border-linha first:border-t-0">
+                    <Link
+                      href={`/painel/alunos/${e.alunoId}`}
+                      className="group flex items-center gap-3 px-5 py-3 transition-colors hover:bg-tinta-3/40"
+                    >
                     <span
                       aria-hidden="true"
                       className={`flex h-10 w-10 flex-none items-center justify-center rounded-full border bg-tinta-3 text-[13px] font-bold ${
@@ -341,7 +352,7 @@ export function VisaoDoPainel({ saudacao, mes, atencao, r, alunos, eventos }: Da
                       {iniciais(e.aluno)}
                     </span>
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-[15px] font-semibold">{e.aluno}</p>
+                      <p className="truncate text-[15px] font-semibold underline-offset-4 group-hover:underline">{e.aluno}</p>
                       <p className="mt-1 truncate font-mono text-[13px] uppercase text-nevoa">
                         {e.detalhe}
                       </p>
@@ -357,6 +368,7 @@ export function VisaoDoPainel({ saudacao, mes, atencao, r, alunos, eventos }: Da
                         </span>
                       )}
                     </span>
+                    </Link>
                   </li>
                 ))}
               </ul>

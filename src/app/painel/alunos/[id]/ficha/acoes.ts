@@ -281,3 +281,57 @@ export async function copiarFicha(
   recarregar(alunoId);
   return { ok: true, blocos: await carregarBlocos(supabase, protocoloDestino) };
 }
+
+/**
+ * Copia a ficha deste aluno para OUTRO aluno (Rafael, 24/09: o Allisson
+ * procurava "copiar esta ficha para fulano" e só existia o caminho inverso).
+ *
+ * No destino a cópia vira RASCUNHO: se ele já tem uma ficha no ar, ela
+ * continua no ar até o Allisson revisar e publicar a nova. Se já existe um
+ * rascunho, é ele que recebe a cópia (a tela avisa antes).
+ */
+export async function copiarParaAluno(
+  protocoloOrigem: string,
+  destinoAlunoId: string,
+): Promise<Resultado> {
+  const { supabase, erro, user } = await exigirAdmin();
+  if (erro) return { erro };
+
+  const { data: origem } = await supabase
+    .from("protocolo")
+    .select("nome")
+    .eq("id", protocoloOrigem)
+    .maybeSingle<{ nome: string }>();
+  if (!origem) return { erro: "Não achei a ficha de origem." };
+
+  const { data: rascunho } = await supabase
+    .from("protocolo")
+    .select("id")
+    .eq("aluno_id", destinoAlunoId)
+    .eq("status", "rascunho")
+    .limit(1)
+    .maybeSingle<{ id: string }>();
+
+  let destino = rascunho?.id ?? null;
+  if (!destino) {
+    const { data: novo, error } = await supabase
+      .from("protocolo")
+      .insert({
+        aluno_id: destinoAlunoId,
+        nome: origem.nome,
+        status: "rascunho",
+        criado_por: user?.id ?? null,
+      })
+      .select("id")
+      .single<{ id: string }>();
+    if (error || !novo) {
+      console.error("copiarParaAluno:", error?.message);
+      return { erro: "Não consegui abrir a ficha do outro aluno." };
+    }
+    destino = novo.id;
+  }
+
+  const r = await copiarFicha(destinoAlunoId, destino, protocoloOrigem);
+  if (r.erro) return { erro: r.erro };
+  return { ok: true };
+}

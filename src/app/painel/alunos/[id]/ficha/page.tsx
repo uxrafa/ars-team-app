@@ -10,6 +10,9 @@ import { carregarBlocos } from "./carregar";
 
 export const metadata = { title: "Ficha · ARS Team" };
 
+/** Aluno para quem esta ficha pode ser copiada. */
+export type AlunoDestino = { id: string; nome: string; temRascunho: boolean };
+
 export type FichaDeOutro = {
   id: string;
   nome: string;
@@ -49,7 +52,7 @@ export default async function PaginaFicha({ params }: { params: Promise<{ id: st
       }
     | undefined;
 
-  const [{ data: exercicios }, { data: anamnese }, { data: outras }] = await Promise.all([
+  const [{ data: exercicios }, { data: anamnese }, { data: outras }, { data: destinos }, { data: rascunhos }] = await Promise.all([
     // Só os quatro campos que o seletor usa. Antes vinha a linha inteira,
     // com o texto de instruções de cada exercício, para o navegador nunca ler.
     supabase
@@ -74,7 +77,24 @@ export default async function PaginaFicha({ params }: { params: Promise<{ id: st
       .in("status", ["ativo", "encerrado"])
       .order("criado_em", { ascending: false })
       .limit(20),
+    // Para quem dá para mandar esta ficha: alunos na ativa, menos ele.
+    supabase
+      .from("perfis")
+      .select("id, nome")
+      .neq("tipo", "admin")
+      .neq("id", alunoId)
+      .is("arquivado_em", null)
+      .order("nome"),
+    // Só para avisar, na lista, quem já tem rascunho que seria substituído.
+    supabase.from("protocolo").select("aluno_id").eq("status", "rascunho").neq("aluno_id", alunoId),
   ]);
+
+  const comRascunho = new Set(((rascunhos ?? []) as { aluno_id: string }[]).map((r) => r.aluno_id));
+  const alunosDestino: AlunoDestino[] = ((destinos ?? []) as { id: string; nome: string }[]).map((a) => ({
+    id: a.id,
+    nome: a.nome,
+    temRascunho: comRascunho.has(a.id),
+  }));
 
   const fichasDeOutros: FichaDeOutro[] = (
     (outras ?? []) as unknown as {
@@ -97,6 +117,7 @@ export default async function PaginaFicha({ params }: { params: Promise<{ id: st
         nome={aluno.nome}
         temAnamnese={!!anamnese}
         anamneseEnviada={(anamnese as LinhaAnamneseFicha | null)?.status === "enviada"}
+        fichasDeOutros={fichasDeOutros}
       />
     );
   }
@@ -121,6 +142,7 @@ export default async function PaginaFicha({ params }: { params: Promise<{ id: st
         exercicios={(exercicios ?? []) as ExercicioEscolhivel[]}
         anamnese={(anamnese as LinhaAnamneseFicha | null) ?? null}
         fichasDeOutros={fichasDeOutros}
+        alunosDestino={alunosDestino}
       />
     </div>
   );

@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Aviso, Botao, BotaoLink } from "@/components/ui";
-import { criarRascunho } from "./acoes";
+import { Aviso, Botao, BotaoLink, CLASSE_CAMPO } from "@/components/ui";
+import { copiarParaAluno, criarRascunho } from "./acoes";
+import type { FichaDeOutro } from "./page";
 
 /** Estado inicial: o aluno ainda não tem ficha nenhuma. */
 export function Comecar({
@@ -10,14 +11,28 @@ export function Comecar({
   nome,
   temAnamnese,
   anamneseEnviada,
+  fichasDeOutros,
 }: {
   alunoId: string;
   nome: string;
   temAnamnese: boolean;
   anamneseEnviada: boolean;
+  fichasDeOutros: FichaDeOutro[];
 }) {
+  const [origem, setOrigem] = useState("");
   const [erro, setErro] = useState<string | null>(null);
   const [pendente, comecar] = useTransition();
+
+  // Começar copiando: o jeito mais rápido de montar as fichas da migração,
+  // e antes só aparecia depois de abrir uma ficha vazia.
+  function copiar() {
+    if (!origem) return;
+    setErro(null);
+    comecar(async () => {
+      const r = await copiarParaAluno(origem, alunoId);
+      if (r.erro) setErro(r.erro);
+    });
+  }
 
   function criar() {
     setErro(null);
@@ -55,9 +70,39 @@ export function Comecar({
           </div>
         )}
 
+        {fichasDeOutros.length > 0 && (
+          <div className="mt-6 flex flex-col gap-2 text-left">
+            <span className="text-sm text-nevoa">Comece copiando a ficha de outro aluno</span>
+            <div className="grid grid-cols-[1fr_auto] gap-2">
+              <select
+                value={origem}
+                onChange={(e) => setOrigem(e.target.value)}
+                aria-label="Ficha de outro aluno"
+                className={CLASSE_CAMPO}
+              >
+                <option value="">Escolha um aluno</option>
+                {fichasDeOutros.map((f) => (
+                  <option key={f.id} value={f.id}>
+                    {f.aluno} · {f.nome}
+                  </option>
+                ))}
+              </select>
+              <Botao type="button" onClick={copiar} disabled={pendente || !origem}>
+                {pendente && origem ? "Copiando" : "Copiar"}
+              </Botao>
+            </div>
+          </div>
+        )}
+
         <div className="mt-6 flex flex-wrap justify-center gap-2.5">
-          <Botao type="button" onClick={criar} disabled={pendente}>
-            {pendente ? "Abrindo" : "Abrir ficha"}
+          {/* Com a cópia na tela, ela é a ação principal: um primário só. */}
+          <Botao
+            type="button"
+            onClick={criar}
+            disabled={pendente}
+            aparencia={fichasDeOutros.length ? "secundario" : "primario"}
+          >
+            {pendente && !origem ? "Abrindo" : fichasDeOutros.length ? "Começar do zero" : "Abrir ficha"}
           </Botao>
           <BotaoLink href="/painel/alunos" aparencia="secundario">
             Voltar

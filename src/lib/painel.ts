@@ -377,6 +377,8 @@ export function quantosAlunosNaFila(atencao: ItemAtencao[]): number {
 
 export type EventoDoDia = {
   id: string;
+  /** Para a linha levar ao aluno com um clique. */
+  alunoId: string;
   aluno: string;
   /** Linha em caixa alta, no estilo "TREINO B · 82,1 KG · ESFORCO 8". */
   detalhe: string;

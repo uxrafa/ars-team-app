@@ -18,8 +18,8 @@ import { AbasDeTreino } from "./abas";
 import { Bloco, BlocoLeitura } from "./bloco";
 import { Lateral } from "../lateral";
 import { Seletor } from "./seletor";
-import { copiarFicha, encerrarFicha, publicarFicha, salvarFicha } from "./acoes";
-import type { FichaDeOutro } from "./page";
+import { copiarFicha, copiarParaAluno, encerrarFicha, publicarFicha, salvarFicha } from "./acoes";
+import type { AlunoDestino, FichaDeOutro } from "./page";
 
 type Protocolo = {
   id: string;
@@ -53,6 +53,7 @@ export function Editor({
   exercicios,
   anamnese,
   fichasDeOutros,
+  alunosDestino,
 }: {
   alunoId: string;
   alunoNome: string;
@@ -61,6 +62,7 @@ export function Editor({
   exercicios: ExercicioEscolhivel[];
   anamnese: LinhaAnamneseFicha | null;
   fichasDeOutros: FichaDeOutro[];
+  alunosDestino: AlunoDestino[];
 }) {
   const [nome, setNome] = useState(protocolo.nome);
   const [inicio, setInicio] = useState(protocolo.inicio);
@@ -83,8 +85,9 @@ export function Editor({
 
   const [aba, setAba] = useState(0);
   const [seletorAberto, setSeletorAberto] = useState(false);
-  const [copiando, setCopiando] = useState(false);
+  const [copiando, setCopiando] = useState<null | "trazer" | "mandar">(null);
   const [origem, setOrigem] = useState("");
+  const [destino, setDestino] = useState("");
 
   const r = resumoDaFicha(blocos);
   const ativa = protocolo.status === "ativo";
@@ -230,6 +233,23 @@ export function Editor({
     });
   }
 
+  function mandar() {
+    if (!destino) return;
+    const nomeDestino = alunosDestino.find((a) => a.id === destino)?.nome.split(" ")[0] ?? "o aluno";
+    setErro(null);
+    setRecado(null);
+    comecar(async () => {
+      const r = await copiarParaAluno(protocolo.id, destino);
+      if (r.erro) {
+        setErro(r.erro);
+        return;
+      }
+      setCopiando(null);
+      setDestino("");
+      setRecado(`Copiada para ${nomeDestino}, como rascunho. Abra a ficha dele para revisar e publicar.`);
+    });
+  }
+
   function copiar() {
     if (!origem) return;
     setErro(null);
@@ -242,7 +262,7 @@ export function Editor({
       }
       if (r.blocos) setBlocos(r.blocos);
       setSujo(false);
-      setCopiando(false);
+      setCopiando(null);
       setAba(0);
       setRecado("Copiada. Toque em Editar ficha para ajustar o que for diferente.");
     });
@@ -326,47 +346,86 @@ export function Editor({
           )}
         </section>
 
-        {/* Copiar de outra ficha. Só em leitura: é uma ação que grava sozinha,
-            e no meio de uma edição ela atropelaria o que está na tela. */}
-        {!editando && fichasDeOutros.length > 0 && (
+        {/* Copiar ficha, nos dois sentidos. Só em leitura: copiar grava
+            sozinho, e no meio de uma edição atropelaria o que está na tela.
+            "Para outro aluno" entrou em 24/09, porque é assim que o Allisson
+            pensa quando monta as fichas da migração: "a do Marcos serve para
+            a Ana". */}
+        {!editando && (fichasDeOutros.length > 0 || (blocos.length > 0 && alunosDestino.length > 0)) && (
           <section className="rounded-2xl border border-linha bg-tinta-2 p-5">
-            {!copiando ? (
-              <div className="flex flex-wrap items-center gap-3">
-                <p className="min-w-0 flex-1 text-[15px] leading-relaxed text-nevoa">
-                  {blocos.length === 0
-                    ? "Dá para começar a partir da ficha de outro aluno e ajustar o que for diferente."
-                    : "Precisa recomeçar a partir de outra ficha?"}
-                </p>
-                <Botao
-                  type="button"
-                  onClick={() => setCopiando(true)}
-                  aparencia={blocos.length === 0 ? "primario" : "secundario"}
-                  tamanho="sm"
-                >
-                  Copiar de outro aluno
-                </Botao>
-              </div>
-            ) : (
+            {copiando === null && (
               <div className="flex flex-col gap-4">
                 <div>
-                  <TituloDeCartao>Copiar de outro aluno</TituloDeCartao>
+                  <TituloDeCartao>Copiar ficha</TituloDeCartao>
                   <p className="mt-1.5 text-[15px] leading-relaxed text-nevoa">
-                    Traz os treinos, exercícios, séries, repetições, descanso e método.{" "}
+                    Treinos, exercícios, séries, repetições, descanso e método vão juntos.
+                  </p>
+                </div>
+                <div className="flex flex-wrap gap-2.5">
+                  {blocos.length > 0 && alunosDestino.length > 0 && (
+                    <Botao type="button" tamanho="sm" onClick={() => setCopiando("mandar")}>
+                      Copiar para outro aluno
+                    </Botao>
+                  )}
+                  {fichasDeOutros.length > 0 && (
+                    <Botao
+                      type="button"
+                      tamanho="sm"
+                      aparencia={blocos.length === 0 ? "primario" : "secundario"}
+                      onClick={() => setCopiando("trazer")}
+                    >
+                      Trazer de outro aluno
+                    </Botao>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {copiando === "mandar" && (
+              <div className="flex flex-col gap-4">
+                <div>
+                  <TituloDeCartao>Copiar para outro aluno</TituloDeCartao>
+                  <p className="mt-1.5 text-[15px] leading-relaxed text-nevoa">
+                    Vira um rascunho na ficha dele. Você ajusta o que for diferente e publica lá.
+                  </p>
+                </div>
+                <label className="flex flex-col gap-2">
+                  <Rotulo>Para quem</Rotulo>
+                  <select value={destino} onChange={(e) => setDestino(e.target.value)} className={CLASSE_CAMPO}>
+                    <option value="">Escolha um aluno</option>
+                    {alunosDestino.map((a) => (
+                      <option key={a.id} value={a.id}>
+                        {a.nome}
+                        {a.temRascunho ? " · substitui o rascunho dele" : ""}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <div className="flex flex-wrap gap-2.5">
+                  <Botao type="button" onClick={mandar} disabled={pendente || !destino} tamanho="sm">
+                    {pendente ? "Copiando" : "Copiar"}
+                  </Botao>
+                  <Botao type="button" onClick={() => setCopiando(null)} aparencia="secundario" tamanho="sm">
+                    Cancelar
+                  </Botao>
+                </div>
+              </div>
+            )}
+
+            {copiando === "trazer" && (
+              <div className="flex flex-col gap-4">
+                <div>
+                  <TituloDeCartao>Trazer de outro aluno</TituloDeCartao>
+                  <p className="mt-1.5 text-[15px] leading-relaxed text-nevoa">
+                    A ficha escolhida vem para cá.{" "}
                     {blocos.length > 0 && (
-                      <span className="text-alerta">
-                        Substitui o que já está montado nesta ficha.
-                      </span>
+                      <span className="text-alerta">Substitui o que já está montado nesta ficha.</span>
                     )}
                   </p>
                 </div>
-
                 <label className="flex flex-col gap-2">
-                  <Rotulo>Ficha de origem</Rotulo>
-                  <select
-                    value={origem}
-                    onChange={(e) => setOrigem(e.target.value)}
-                    className={CLASSE_CAMPO}
-                  >
+                  <Rotulo>De quem</Rotulo>
+                  <select value={origem} onChange={(e) => setOrigem(e.target.value)} className={CLASSE_CAMPO}>
                     <option value="">Escolha um aluno</option>
                     {fichasDeOutros.map((f) => (
                       <option key={f.id} value={f.id}>
@@ -376,17 +435,11 @@ export function Editor({
                     ))}
                   </select>
                 </label>
-
                 <div className="flex flex-wrap gap-2.5">
                   <Botao type="button" onClick={copiar} disabled={pendente || !origem} tamanho="sm">
-                    {pendente ? "Copiando" : "Copiar para cá"}
+                    {pendente ? "Copiando" : "Trazer para cá"}
                   </Botao>
-                  <Botao
-                    type="button"
-                    onClick={() => setCopiando(false)}
-                    aparencia="secundario"
-                    tamanho="sm"
-                  >
+                  <Botao type="button" onClick={() => setCopiando(null)} aparencia="secundario" tamanho="sm">
                     Cancelar
                   </Botao>
                 </div>
