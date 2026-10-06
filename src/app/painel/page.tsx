@@ -10,6 +10,7 @@ import {
   type LinhaPerfil,
   type LinhaProtocolo,
   type LinhaCheckin,
+  type LinhaNovidade,
   type LinhaSessao,
 } from "@/lib/painel";
 import { VisaoDoPainel } from "./visao";
@@ -32,6 +33,7 @@ export default async function Painel() {
     { data: checkins },
     { data: sessoesDeHoje },
     { data: recebidos },
+    { data: novidades },
   ] = await Promise.all([
       supabase
         .from("perfis")
@@ -74,6 +76,11 @@ export default async function Painel() {
         .select("valor")
         .gte("recebido_em", `${hoje.slice(0, 7)}-01`)
         .is("estornado_em", null),
+      // 4) quem mandou foto ou medida nova desde a ultima vez que o treinador
+      //    olhou. A view (0020) ja devolve so quem tem novidade.
+      supabase
+        .from("evolucao_nova")
+        .select("aluno_id, fotos_novas, ultima_foto_em, medidas_novas, ultima_medida_em"),
     ]);
 
   // `numeric` pode voltar como texto do PostgREST, e somar texto daria
@@ -88,6 +95,7 @@ export default async function Painel() {
     (anamneses ?? []) as LinhaAnamnese[],
     (protocolos ?? []) as LinhaProtocolo[],
     (checkins ?? []) as LinhaCheckin[],
+    (novidades ?? []) as LinhaNovidade[],
   );
 
   const horaSP = Number(

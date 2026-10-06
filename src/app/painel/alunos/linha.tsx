@@ -19,6 +19,8 @@ export type AlunoNaTela = {
   ultimoCheckin: string | null;
   diasSemTreino: number | null;
   anamnese: "nenhuma" | "rascunho" | "enviada";
+  /** Mandou foto ou medida que o treinador ainda não viu. */
+  avaliacaoNova: boolean;
 };
 
 /**
@@ -49,6 +51,11 @@ export function LinhaAluno({ aluno, hoje }: { aluno: AlunoNaTela; hoje: string }
             {iniciais(aluno.nome)}
           </span>
           <p className="truncate text-base font-semibold">{aluno.nome}</p>
+          {aluno.avaliacaoNova && (
+            <span className="flex-none">
+              <Pilula tom="ok">Avaliação nova</Pilula>
+            </span>
+          )}
         </div>
 
         <div className="hidden text-[15px] text-nevoa lg:block">

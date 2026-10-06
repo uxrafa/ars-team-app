@@ -52,6 +52,7 @@ export function Cobranca({
     tipo: aluno.tipo,
     status: aluno.status,
     mensalidade: aluno.mensalidade !== null ? String(aluno.mensalidade).replace(".", ",") : "",
+    acesso_ate: aluno.acesso_ate ?? "",
   };
   const [form, setForm] = useState<DadosCobranca>(inicial);
 
@@ -147,12 +148,22 @@ export function Cobranca({
             </label>
           </div>
 
-          {/* Explica uma ausência, e por isso fica: o campo de vencimento
-              estava aqui e sumiu. */}
-          <p className="text-sm leading-relaxed text-nevoa">
-            O &ldquo;pago até&rdquo; avança sozinho quando você registra um pagamento no
-            Financeiro.
-          </p>
+          {/* O vencimento voltou a ser editável (06/10): os alunos antigos
+              entraram todos com o mesmo 01/12 do convite, e só digitando dá
+              para pôr a data de renovação combinada com cada um. */}
+          <label className="flex flex-col gap-2 sm:max-w-[calc(50%-0.5rem)]">
+            <Rotulo>Pago até</Rotulo>
+            <input
+              type="date"
+              value={form.acesso_ate}
+              onChange={(e) => setForm({ ...form, acesso_ate: e.target.value })}
+              className={CLASSE_CAMPO}
+            />
+            <span className="text-sm leading-relaxed text-nevoa">
+              É o dia em que a renovação vence. Registrar um pagamento no Financeiro
+              também avança essa data sozinho.
+            </span>
+          </label>
 
           {erro && <Aviso>{erro}</Aviso>}
 

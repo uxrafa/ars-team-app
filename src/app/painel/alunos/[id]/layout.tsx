@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { LinkIcone, Pilula } from "@/components/ui";
 import { diasEntre, estadoDoPagamento, hojeSP, iniciais, linkWhatsapp } from "@/lib/painel";
 import { AbasDoAluno } from "./abas";
-import { carregarAluno } from "./carregar";
+import { carregarAluno, carregarNovidade } from "./carregar";
 
 export type { PerfilDoAluno } from "./carregar";
 
@@ -22,7 +22,7 @@ export default async function LayoutDoAluno({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const aluno = await carregarAluno(id);
+  const [aluno, novidade] = await Promise.all([carregarAluno(id), carregarNovidade(id)]);
   if (!aluno) notFound();
 
   const hoje = hojeSP();
@@ -85,7 +85,7 @@ export default async function LayoutDoAluno({
         )}
       </header>
 
-      <AbasDoAluno alunoId={aluno.id} />
+      <AbasDoAluno alunoId={aluno.id} avaliacaoNova={novidade !== null} />
 
       {children}
     </div>

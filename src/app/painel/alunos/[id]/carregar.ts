@@ -38,3 +38,26 @@ export const carregarAluno = cache(async (id: string): Promise<PerfilDoAluno | n
     .maybeSingle<PerfilDoAluno>();
   return data ?? null;
 });
+
+export type NovidadeDoAluno = {
+  vista_em: string | null;
+  fotos_novas: number;
+  ultima_foto_em: string | null;
+  medidas_novas: number;
+  ultima_medida_em: string | null;
+};
+
+/**
+ * Foto ou medida que chegou depois da ultima vez que o treinador olhou a
+ * Evolucao deste aluno. Nulo = nada novo. O layout usa para o ponto na aba, e
+ * a pagina da Evolucao para o aviso; `cache` faz as duas valerem uma consulta.
+ */
+export const carregarNovidade = cache(async (id: string): Promise<NovidadeDoAluno | null> => {
+  const supabase = await criarClienteServidor();
+  const { data } = await supabase
+    .from("evolucao_nova")
+    .select("vista_em, fotos_novas, ultima_foto_em, medidas_novas, ultima_medida_em")
+    .eq("aluno_id", id)
+    .maybeSingle<NovidadeDoAluno>();
+  return data ?? null;
+});

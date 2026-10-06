@@ -18,6 +18,7 @@ import { nomeDoMes } from "@/lib/pagamento";
 const TOM_DO_MOTIVO: Record<string, Tom> = {
   pagamento: "urgente",
   sem_ficha: "urgente",
+  evolucao: "ok",
   ficha_vencendo: "aviso",
   sumido: "neutro",
 };
@@ -128,9 +129,10 @@ function LinhaAtencao({ item }: { item: ItemAtencao }) {
       ) : acionavelPorZap ? (
         <span className="w-[112px] flex-none text-center text-sm text-nevoa">Sem WhatsApp</span>
       ) : (
-        // "Sem ficha" e "Renovar" levam direto para o editor daquele aluno.
+        // "Sem ficha" e "Renovar" levam direto para o editor daquele aluno;
+        // "Avaliação" leva para a Evolução, onde estão as fotos novas.
         <BotaoLink
-          href={`/painel/alunos/${aluno.id}/ficha`}
+          href={`/painel/alunos/${aluno.id}/${motivo === "evolucao" ? "evolucao" : "ficha"}`}
           aparencia={URGENTE[motivo] ? "primario" : "secundario"}
           tamanho="sm"
           className="w-[112px] flex-none"

@@ -26,6 +26,7 @@ novo e numerado, para o banco poder ser reconstruido do zero.
 | `0017_planilha_em_espera.sql` | Gatilho que barra convite de planilha enquanto o plano esta em espera. Para reativar, `drop trigger convite_planilha_em_espera on public.convite`. |
 | `0018_orientacao_alimentar.sql` | Orientacao alimentar: `alimento`, `orientacao_alimentar` > `refeicao_alimentar` > `item_alimentar`, funcao `salvar_orientacao` e `anamnese.sexo`. |
 | `0019_tabela_taco.sql` | Os 597 alimentos da TACO 4a ed., so macros por 100 g. Dado, como a 0011. |
+| `0020_evolucao_vista.sql` | `evolucao_vista` (quando o treinador olhou) e a view `evolucao_nova`: aviso de foto ou medida nova. Foto e medida ganham `atualizado_em`. |
 
 ## Como o modelo se encaixa
 

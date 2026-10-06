@@ -10,6 +10,7 @@ import {
   type LinhaPerfil,
   type LinhaProtocolo,
   type LinhaCheckin,
+  type LinhaNovidade,
 } from "@/lib/painel";
 import Link from "next/link";
 import { BotaoLink, TituloDeCartao } from "@/components/ui";
@@ -26,8 +27,13 @@ export default async function Alunos() {
   const supabase = await criarClienteServidor();
   const hoje = hojeSP();
 
-  const [{ data: perfis }, { data: anamneses }, { data: protocolos }, { data: checkins }] =
-    await Promise.all([
+  const [
+    { data: perfis },
+    { data: anamneses },
+    { data: protocolos },
+    { data: checkins },
+    { data: novidades },
+  ] = await Promise.all([
       supabase
         .from("perfis")
         // Traz arquivado junto: esta e a unica tela onde ele ainda aparece,
@@ -47,6 +53,10 @@ export default async function Alunos() {
       // de todo mundo, e quem tinha parado de treinar caia fora da janela --
       // aparecia como "sem check-in" em vez de aparecer como sumido.
       supabase.from("ultimo_checkin").select("aluno_id, data"),
+      // Quem mandou foto ou medida nova e ainda nao foi visto (migracao 0020).
+      supabase
+        .from("evolucao_nova")
+        .select("aluno_id, fotos_novas, ultima_foto_em, medidas_novas, ultima_medida_em"),
     ]);
 
   const todos = juntarAlunos(
@@ -54,6 +64,7 @@ export default async function Alunos() {
     (anamneses ?? []) as LinhaAnamnese[],
     (protocolos ?? []) as LinhaProtocolo[],
     (checkins ?? []) as LinhaCheckin[],
+    (novidades ?? []) as LinhaNovidade[],
   );
 
   const alunos = naAtiva(todos);
@@ -88,6 +99,7 @@ export default async function Alunos() {
       ultimoCheckin: a.ultimoCheckin?.data ?? null,
       diasSemTreino: a.ultimoCheckin ? diasEntre(a.ultimoCheckin.data, hoje) : null,
       anamnese: a.anamnese ? a.anamnese.status : "nenhuma",
+      avaliacaoNova: a.novidade !== null,
     };
   });
 

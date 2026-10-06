@@ -11,6 +11,8 @@ export type DadosCobranca = {
   tipo: "consultoria" | "planilha";
   status: "ativo" | "carencia" | "suspenso";
   mensalidade: string;
+  /** "aaaa-mm-dd" do <input type="date">, ou "" para ficar sem data. */
+  acesso_ate: string;
 };
 
 function paraNumero(valor: string): number | null {
@@ -21,12 +23,32 @@ function paraNumero(valor: string): number | null {
 }
 
 /**
- * Guarda plano, status e mensalidade de um aluno.
+ * Data de verdade, e num intervalo que faca sentido para vencimento. O ano
+ * com cinco digitos que o <input type="date"> deixa digitar morre aqui.
+ */
+function dataValida(iso: string): boolean {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(iso)) return false;
+  const d = new Date(iso + "T00:00:00Z");
+  if (Number.isNaN(d.getTime()) || d.toISOString().slice(0, 10) !== iso) return false;
+  const ano = d.getUTCFullYear();
+  return ano >= 2024 && ano <= 2035;
+}
+
+/**
+ * Guarda plano, status, mensalidade e vencimento de um aluno.
  *
- * `acesso_ate` NAO entra aqui, e nao e esquecimento: desde a migracao 0014 o
- * vencimento e consequencia de um pagamento registrado, e quem o move e o
- * gatilho no banco. Deixar o campo aberto nesta tela criaria dois donos da
- * mesma data -- e o digitado seria o errado, porque nao teria dinheiro atras.
+ * `acesso_ate` VOLTOU para ca (Rafael, 06/10). A migracao 0014 tinha tirado o
+ * campo da tela para o vencimento so andar com pagamento registrado, e na
+ * pratica isso travou o Allisson: os alunos antigos entraram todos com o
+ * mesmo 01/12 digitado no convite, e nao havia onde corrigir para a data de
+ * renovacao de cada um. Sem lancamento retroativo (decisao de 05/09), a data
+ * combinada com o aluno so pode entrar por digitacao.
+ *
+ * Os dois caminhos convivem: registrar pagamento no Financeiro continua
+ * empurrando a data pelo gatilho, e este campo corrige quando a data
+ * combinada for outra. Um estorno posterior so devolve o vencimento se ele
+ * ainda for o que aquele pagamento gravou (`travar_pagamento`), entao um
+ * ajuste manual feito depois nunca e desfeito por estorno.
  *
  * A trava de verdade e dupla no banco: a RLS so deixa admin tocar em linha
  * alheia, e o gatilho da migracao 0009 impede que um aluno mexa nestes
@@ -58,6 +80,11 @@ export async function salvarCobranca(dados: DadosCobranca): Promise<ResultadoAlu
     return { erro: "Confira a mensalidade: o valor parece alto demais." };
   }
 
+  const acessoAte = dados.acesso_ate.trim();
+  if (acessoAte && !dataValida(acessoAte)) {
+    return { erro: "Confira a data do vencimento." };
+  }
+
   const { error } = await supabase
     .from("perfis")
     .update({
@@ -65,6 +92,7 @@ export async function salvarCobranca(dados: DadosCobranca): Promise<ResultadoAlu
       tipo: dados.tipo,
       status: dados.status,
       mensalidade,
+      acesso_ate: acessoAte || null,
     })
     .eq("id", dados.id);
 
@@ -75,6 +103,7 @@ export async function salvarCobranca(dados: DadosCobranca): Promise<ResultadoAlu
 
   revalidatePath("/painel");
   revalidatePath("/painel/alunos");
+  revalidatePath("/painel/financeiro");
   revalidatePath(`/painel/alunos/${dados.id}`);
   return { ok: true };
 }

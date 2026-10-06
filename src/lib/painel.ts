@@ -60,9 +60,23 @@ export type LinhaCheckin = {
   data: string;
 };
 
+/**
+ * Uma linha por aluno com foto ou medida nova desde a ultima vez que o
+ * treinador olhou. Vem da view `evolucao_nova` (migracao 0020), que ja so
+ * devolve quem tem novidade.
+ */
+export type LinhaNovidade = {
+  aluno_id: string;
+  fotos_novas: number;
+  ultima_foto_em: string | null;
+  medidas_novas: number;
+  ultima_medida_em: string | null;
+};
+
 export type MotivoAtencao =
   | "pagamento"
   | "sem_ficha"
+  | "evolucao"
   | "ficha_vencendo"
   | "sumido";
 
@@ -78,6 +92,7 @@ export type Aluno = LinhaPerfil & {
   anamnese: LinhaAnamnese | null;
   protocolo: LinhaProtocolo | null;
   ultimoCheckin: LinhaCheckin | null;
+  novidade: LinhaNovidade | null;
 };
 
 export const DIAS_PARA_SUMIR = 7;
@@ -128,6 +143,7 @@ export function juntarAlunos(
   anamneses: LinhaAnamnese[],
   protocolos: LinhaProtocolo[],
   checkins: LinhaCheckin[],
+  novidades: LinhaNovidade[] = [],
 ): Aluno[] {
   const porAluno = <T extends { aluno_id: string }>(lista: T[]) => {
     const mapa = new Map<string, T>();
@@ -140,6 +156,7 @@ export function juntarAlunos(
   // Ja vem uma linha por aluno, e ja e a mais recente: quem garante e o
   // `distinct on` da view, nao a ordem em que a lista chegou aqui.
   const mapaCheckin = porAluno(checkins);
+  const mapaNovidade = porAluno(novidades);
 
   return perfis
     .filter((p) => p.tipo !== "admin")
@@ -148,6 +165,7 @@ export function juntarAlunos(
       anamnese: mapaAnamnese.get(p.id) ?? null,
       protocolo: mapaProtocolo.get(p.id) ?? null,
       ultimoCheckin: mapaCheckin.get(p.id) ?? null,
+      novidade: mapaNovidade.get(p.id) ?? null,
     }));
 }
 
@@ -199,7 +217,19 @@ export function montarAtencao(alunos: Aluno[], hoje: string): ItemAtencao[] {
       });
     }
 
-    // 3. ficha perto de vencer
+    // 3. mandou foto ou medida nova e o treinador ainda nao olhou. Na
+    //    rodada de renovacao e isso que destrava ficha nova e cobranca.
+    const nova = aluno.novidade;
+    if (nova && (nova.fotos_novas > 0 || nova.medidas_novas > 0)) {
+      itens.push({
+        aluno,
+        motivo: "evolucao",
+        detalhe: textoDaNovidade(nova, hoje),
+        peso: 2500 - diasDesdeANovidade(nova, hoje),
+      });
+    }
+
+    // 4. ficha perto de vencer
     if (aluno.protocolo?.fim) {
       const faltam = diasEntre(hoje, aluno.protocolo.fim);
       if (faltam <= DIAS_DE_AVISO_DE_FICHA) {
@@ -217,7 +247,7 @@ export function montarAtencao(alunos: Aluno[], hoje: string): ItemAtencao[] {
       }
     }
 
-    // 4. sumiu: tem ficha para seguir e nao aparece
+    // 5. sumiu: tem ficha para seguir e nao aparece
     if (aluno.protocolo) {
       const ultima = aluno.ultimoCheckin?.data ?? null;
       const dias = ultima ? diasEntre(ultima, hoje) : null;
@@ -233,6 +263,34 @@ export function montarAtencao(alunos: Aluno[], hoje: string): ItemAtencao[] {
   }
 
   return itens.sort((a, b) => a.peso - b.peso);
+}
+
+/** Dia (em SP) do carimbo mais recente da novidade. */
+function diaDaNovidade(n: LinhaNovidade): string | null {
+  const maisRecente = [n.ultima_foto_em, n.ultima_medida_em]
+    .filter((x): x is string => Boolean(x))
+    .sort()
+    .pop();
+  if (!maisRecente) return null;
+  return new Intl.DateTimeFormat("en-CA", { timeZone: "America/Sao_Paulo" }).format(
+    new Date(maisRecente),
+  );
+}
+
+function diasDesdeANovidade(n: LinhaNovidade, hoje: string): number {
+  const dia = diaDaNovidade(n);
+  return dia ? Math.max(0, diasEntre(dia, hoje)) : 0;
+}
+
+/** "Mandou 3 fotos e as medidas hoje", "Atualizou as medidas faz 2 dias". */
+export function textoDaNovidade(n: LinhaNovidade, hoje: string): string {
+  const fotos = n.fotos_novas > 0 ? `${n.fotos_novas} ${n.fotos_novas === 1 ? "foto" : "fotos"}` : null;
+  const medidas = n.medidas_novas > 0 ? "as medidas" : null;
+  const oque = fotos && medidas ? `Mandou ${fotos} e ${medidas}` : fotos ? `Mandou ${fotos}` : "Atualizou as medidas";
+
+  const dias = diasDesdeANovidade(n, hoje);
+  const quando = dias === 0 ? "hoje" : dias === 1 ? "ontem" : `faz ${dias} dias`;
+  return `${oque} ${quando}`;
 }
 
 export type Resumo = ReturnType<typeof resumo>;
@@ -290,6 +348,7 @@ export function resumo(
 export const ROTULO_MOTIVO: Record<MotivoAtencao, string> = {
   pagamento: "Pagamento",
   sem_ficha: "Sem ficha",
+  evolucao: "Avaliação",
   ficha_vencendo: "Renovar",
   sumido: "Sumido",
 };
@@ -298,6 +357,7 @@ export const ROTULO_MOTIVO: Record<MotivoAtencao, string> = {
 export const ACAO_MOTIVO: Record<MotivoAtencao, string> = {
   pagamento: "Cobrar",
   sem_ficha: "Montar",
+  evolucao: "Ver",
   ficha_vencendo: "Atualizar",
   sumido: "Mensagem",
 };
@@ -310,6 +370,7 @@ export const ACAO_MOTIVO: Record<MotivoAtencao, string> = {
 export const URGENTE: Record<MotivoAtencao, boolean> = {
   pagamento: true,
   sem_ficha: true,
+  evolucao: false,
   ficha_vencendo: false,
   sumido: false,
 };

@@ -10,7 +10,13 @@ export type MedidaNaTela = {
   coxa_cm: number | null;
 };
 
-export type FotoNaTela = { data: string; angulo: string; url: string };
+export type FotoNaTela = {
+  data: string;
+  angulo: string;
+  url: string;
+  /** Chegou depois da última vez que o treinador marcou a Evolução como vista. */
+  nova?: boolean;
+};
 
 const MEDIDAS = [
   ["cintura_cm", "Cintura"],
@@ -35,12 +41,15 @@ export function VisaoDaEvolucaoDoAluno({
   subiram,
   fotos,
   primeiroNome,
+  aviso = null,
 }: {
   pontos: Ponto[];
   ultimaMedida: MedidaNaTela | null;
   subiram: CargaQueSubiu[];
   fotos: FotoNaTela[];
   primeiroNome: string;
+  /** O aviso de foto ou medida nova, quando houver. Vai no topo. */
+  aviso?: React.ReactNode;
 }) {
   const porData = new Map<string, FotoNaTela[]>();
   for (const f of fotos) {
@@ -53,6 +62,7 @@ export function VisaoDaEvolucaoDoAluno({
 
   return (
     <div className="flex flex-col gap-5">
+      {aviso}
       <div className="grid gap-5 lg:grid-cols-2">
         <section className="rounded-2xl border border-linha bg-tinta-2 p-5">
           <TituloDeCartao>Peso</TituloDeCartao>
@@ -180,7 +190,14 @@ export function VisaoDaEvolucaoDoAluno({
                             sem foto
                           </div>
                         )}
-                        <figcaption className="text-sm text-nevoa">{nome}</figcaption>
+                        <figcaption className="flex items-center gap-2 text-sm text-nevoa">
+                          {nome}
+                          {foto?.nova && (
+                            <span className="rounded-full border border-ok/40 bg-ok/12 px-2 py-0.5 text-xs font-semibold text-ok">
+                              Nova
+                            </span>
+                          )}
+                        </figcaption>
                       </figure>
                     );
                   })}

@@ -1,6 +1,8 @@
 import { notFound } from "next/navigation";
 import { criarClienteServidor } from "@/lib/supabase/server";
-import { carregarAluno } from "../carregar";
+import { carregarAluno, carregarNovidade } from "../carregar";
+import { hojeSP, textoDaNovidade } from "@/lib/painel";
+import { NovidadeNaEvolucao } from "./novidade";
 import { cargasQueSubiram, type SerieHistorica } from "@/lib/treino";
 import type { Ponto } from "@/app/app/evolucao/grafico";
 import { VisaoDaEvolucaoDoAluno, type FotoNaTela, type MedidaNaTela } from "./visao";
@@ -36,7 +38,8 @@ export default async function EvolucaoDoAluno({ params }: { params: Promise<{ id
   const aluno = await carregarAluno(id);
   if (!aluno) notFound();
 
-  const [{ data: medidas }, { data: fotos }, { data: series }] = await Promise.all([
+  const [novidade, { data: medidas }, { data: fotos }, { data: series }] = await Promise.all([
+    carregarNovidade(id),
     supabase
       .from("medida_corporal")
       .select("data, peso_kg, cintura_cm, quadril_cm, braco_cm, coxa_cm")
@@ -45,7 +48,7 @@ export default async function EvolucaoDoAluno({ params }: { params: Promise<{ id
       .limit(180),
     supabase
       .from("foto_evolucao")
-      .select("data, angulo, caminho")
+      .select("data, angulo, caminho, atualizado_em")
       .eq("aluno_id", id)
       .order("data", { ascending: false })
       .limit(12),
@@ -79,7 +82,14 @@ export default async function EvolucaoDoAluno({ params }: { params: Promise<{ id
     : null;
 
   // O bucket é privado: cada foto vira link temporário de uma hora.
-  const caminhos = (fotos ?? []) as { data: string; angulo: string; caminho: string }[];
+  const caminhos = (fotos ?? []) as {
+    data: string;
+    angulo: string;
+    caminho: string;
+    atualizado_em: string;
+  }[];
+  // Foto que chegou depois da ultima vez que o treinador marcou como visto.
+  const novaDesde = novidade?.vista_em ? Date.parse(novidade.vista_em) : null;
   let comUrl: FotoNaTela[] = [];
   if (caminhos.length) {
     const { data: assinadas } = await supabase.storage
@@ -89,7 +99,15 @@ export default async function EvolucaoDoAluno({ params }: { params: Promise<{ id
         60 * 60,
       );
     comUrl = caminhos
-      .map((f, i) => ({ data: f.data, angulo: f.angulo, url: assinadas?.[i]?.signedUrl ?? "" }))
+      .map((f, i) => ({
+        data: f.data,
+        angulo: f.angulo,
+        url: assinadas?.[i]?.signedUrl ?? "",
+        nova:
+          novidade !== null &&
+          novidade.fotos_novas > 0 &&
+          (novaDesde === null || Date.parse(f.atualizado_em) > novaDesde),
+      }))
       .filter((f) => f.url);
   }
 
@@ -109,6 +127,14 @@ export default async function EvolucaoDoAluno({ params }: { params: Promise<{ id
       subiram={cargasQueSubiram(historico, nomes).slice(0, 8)}
       fotos={comUrl}
       primeiroNome={aluno.nome.split(" ")[0]}
+      aviso={
+        novidade ? (
+          <NovidadeNaEvolucao
+            alunoId={id}
+            texto={textoDaNovidade({ aluno_id: id, ...novidade }, hojeSP())}
+          />
+        ) : null
+      }
     />
   );
 }

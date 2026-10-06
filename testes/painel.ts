@@ -6,7 +6,9 @@ import {
   quandoFoi,
   quantosAlunosNaFila,
   resumo,
+  textoDaNovidade,
   type LinhaAnamnese,
+  type LinhaNovidade,
   type LinhaPerfil,
   type LinhaProtocolo,
 } from "../src/lib/painel.ts";
@@ -234,6 +236,74 @@ conferir("desarquivar devolve o aluno inteiro, porque nada saiu", () => {
   // Volta com o mesmo vencimento vencido e a mesma ficha, e a fila reconhece
   // os dois problemas de novo.
   assert.equal(montarAtencao(alunos, HOJE).length, 2);
+});
+
+/* --- avaliacao nova (migracao 0020) ------------------------------------ */
+
+const novidade = (aluno_id: string, troca: Partial<LinhaNovidade> = {}): LinhaNovidade => ({
+  aluno_id,
+  fotos_novas: 3,
+  // 14h em SP do dia HOJE
+  ultima_foto_em: `${HOJE}T17:00:00Z`,
+  medidas_novas: 0,
+  ultima_medida_em: null,
+  ...troca,
+});
+
+conferir("aluno que mandou fotos entra na fila com o motivo de avaliacao", () => {
+  const alunos = juntarAlunos([perfil("a")], [], [], [], [novidade("a")]);
+  const item = montarAtencao(alunos, HOJE).find((i) => i.motivo === "evolucao");
+  assert.ok(item);
+  assert.equal(item.detalhe, "Mandou 3 fotos hoje");
+});
+
+conferir("sem novidade, sem item de avaliacao", () => {
+  const alunos = juntarAlunos([perfil("a")], [], [], []);
+  assert.equal(montarAtencao(alunos, HOJE).some((i) => i.motivo === "evolucao"), false);
+});
+
+conferir("aluno arquivado com foto nova nao gera tarefa", () => {
+  const alunos = juntarAlunos(
+    [perfil("a", { arquivado_em: "2026-08-01T12:00:00Z" })],
+    [],
+    [],
+    [],
+    [novidade("a")],
+  );
+  assert.equal(montarAtencao(alunos, HOJE).length, 0);
+});
+
+conferir("o texto diz o que chegou e quando, no dia de Sao Paulo", () => {
+  assert.equal(
+    textoDaNovidade(novidade("a", { medidas_novas: 1, ultima_medida_em: `${HOJE}T12:00:00Z` }), HOJE),
+    "Mandou 3 fotos e as medidas hoje",
+  );
+  assert.equal(
+    textoDaNovidade(
+      novidade("a", { fotos_novas: 0, ultima_foto_em: null, medidas_novas: 1, ultima_medida_em: "2026-09-02T15:00:00Z" }),
+      HOJE,
+    ),
+    "Atualizou as medidas faz 2 dias",
+  );
+  // 01h de 04/09 em UTC ainda e 22h de 03/09 em SP: foi ontem.
+  assert.equal(
+    textoDaNovidade(novidade("a", { fotos_novas: 1, ultima_foto_em: `${HOJE}T01:00:00Z` }), HOJE),
+    "Mandou 1 foto ontem",
+  );
+});
+
+conferir("pagamento vencido vem antes da avaliacao, e a avaliacao antes de renovar ficha", () => {
+  const alunos = juntarAlunos(
+    [perfil("a", { acesso_ate: "2026-09-01" })],
+    [],
+    [ficha("a", "2026-09-06")],
+    [{ aluno_id: "a", data: HOJE }],
+    [novidade("a")],
+  );
+  assert.deepEqual(
+    montarAtencao(alunos, HOJE).map((i) => i.motivo),
+    ["pagamento", "evolucao", "ficha_vencendo"],
+  );
 });
 
 console.log(`\n${ok} verificacoes do painel, todas passaram.`);

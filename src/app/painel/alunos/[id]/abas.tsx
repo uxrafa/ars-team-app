@@ -10,14 +10,21 @@ import { usePathname } from "next/navigation";
  * ficha entra como aba, e não como tela separada: ela é uma das coisas
  * daquele aluno, não outro lugar.
  */
-export function AbasDoAluno({ alunoId }: { alunoId: string }) {
+export function AbasDoAluno({
+  alunoId,
+  avaliacaoNova = false,
+}: {
+  alunoId: string;
+  /** Foto ou medida nova ainda não vista: acende um ponto na aba Evolução. */
+  avaliacaoNova?: boolean;
+}) {
   const caminho = usePathname();
   const base = `/painel/alunos/${alunoId}`;
 
   const abas = [
     { href: base, nome: "Resumo" },
     { href: `${base}/treinos`, nome: "Treinos" },
-    { href: `${base}/evolucao`, nome: "Evolução" },
+    { href: `${base}/evolucao`, nome: "Evolução", ponto: avaliacaoNova },
     { href: `${base}/ficha`, nome: "Ficha" },
     { href: `${base}/dieta`, nome: "Dieta" },
   ];
@@ -42,6 +49,12 @@ export function AbasDoAluno({ alunoId }: { alunoId: string }) {
             }`}
           >
             {aba.nome}
+            {"ponto" in aba && aba.ponto && (
+              <>
+                <span aria-hidden="true" className="ml-1.5 h-2 w-2 rounded-full bg-ok" />
+                <span className="sr-only"> (avaliação nova)</span>
+              </>
+            )}
             {ativa && (
               <span
                 aria-hidden="true"
