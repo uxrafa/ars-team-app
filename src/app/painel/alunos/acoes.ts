@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { criarClienteServidor } from "@/lib/supabase/server";
+import { vencimentoValido } from "@/lib/pagamento";
 
 export type ResultadoAluno = { erro?: string; ok?: boolean };
 
@@ -23,18 +24,6 @@ function paraNumero(valor: string): number | null {
 }
 
 /**
- * Data de verdade, e num intervalo que faca sentido para vencimento. O ano
- * com cinco digitos que o <input type="date"> deixa digitar morre aqui.
- */
-function dataValida(iso: string): boolean {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(iso)) return false;
-  const d = new Date(iso + "T00:00:00Z");
-  if (Number.isNaN(d.getTime()) || d.toISOString().slice(0, 10) !== iso) return false;
-  const ano = d.getUTCFullYear();
-  return ano >= 2024 && ano <= 2035;
-}
-
-/**
  * Guarda plano, status, mensalidade e vencimento de um aluno.
  *
  * `acesso_ate` VOLTOU para ca (Rafael, 06/10). A migracao 0014 tinha tirado o
@@ -44,11 +33,11 @@ function dataValida(iso: string): boolean {
  * renovacao de cada um. Sem lancamento retroativo (decisao de 05/09), a data
  * combinada com o aluno so pode entrar por digitacao.
  *
- * Os dois caminhos convivem: registrar pagamento no Financeiro continua
- * empurrando a data pelo gatilho, e este campo corrige quando a data
- * combinada for outra. Um estorno posterior so devolve o vencimento se ele
- * ainda for o que aquele pagamento gravou (`travar_pagamento`), entao um
- * ajuste manual feito depois nunca e desfeito por estorno.
+ * Desde a 0021 e uma data so com o pagamento: gravar o vencimento aqui faz o
+ * ultimo pagamento do aluno valer ate a mesma data, pelo gatilho
+ * `ao_corrigir_vencimento`. Sem isso o Financeiro dizia "ate 07/01" e o aluno
+ * "07/12", e nenhum dos dois dava para corrigir o outro. O update sempre
+ * manda `acesso_ate`, entao salvar de novo sem mudar a data tambem alinha.
  *
  * A trava de verdade e dupla no banco: a RLS so deixa admin tocar em linha
  * alheia, e o gatilho da migracao 0009 impede que um aluno mexa nestes
@@ -81,7 +70,7 @@ export async function salvarCobranca(dados: DadosCobranca): Promise<ResultadoAlu
   }
 
   const acessoAte = dados.acesso_ate.trim();
-  if (acessoAte && !dataValida(acessoAte)) {
+  if (acessoAte && !vencimentoValido(acessoAte)) {
     return { erro: "Confira a data do vencimento." };
   }
 

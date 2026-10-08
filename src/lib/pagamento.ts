@@ -65,12 +65,31 @@ export const FORMAS_NA_TELA: readonly FormaPagamento[] = [
   "outro",
 ];
 
-/** Mes, trimestre e semestre. O banco aceita ate 24 se um dia precisar. */
-export const PLANOS_EM_MESES = [
-  { meses: 1, nome: "1 mês" },
-  { meses: 3, nome: "3 meses" },
-  { meses: 6, nome: "6 meses" },
-] as const;
+/**
+ * Quantos meses o pagamento cobre quando ele nao diz outra coisa.
+ *
+ * Era um seletor de 1, 3 ou 6 ate out/2026. Os planos viraram bimestrais e o
+ * 2 nao estava na lista: o numero passou a ser digitado, e o padrao segue o
+ * plano que mais se vende.
+ */
+export const MESES_PADRAO = 2;
+
+/** Os limites da constraint `pagamento.meses` (migracao 0014). */
+export const MESES_MINIMO = 1;
+export const MESES_MAXIMO = 24;
+
+/**
+ * "2", " 3 " e "12" viram numero. Vazio, fracao, zero ou acima de 24 vira
+ * `null` -- e a tela simplesmente nao mostra a previsao enquanto o numero
+ * ainda esta sendo digitado.
+ */
+export function mesesParaNumero(texto: string): number | null {
+  const limpo = String(texto ?? "").trim();
+  if (!/^\d+$/.test(limpo)) return null;
+  const n = Number(limpo);
+  if (n < MESES_MINIMO || n > MESES_MAXIMO) return null;
+  return n;
+}
 
 /* ------------------------------------------------------------------ */
 /* Datas                                                               */
@@ -117,6 +136,21 @@ export function previsaoDeAcesso(
   const base =
     vencimentoAtual && vencimentoAtual > recebidoEm ? vencimentoAtual : recebidoEm;
   return { de: base, ate: somarMeses(base, meses) };
+}
+
+/**
+ * Data de verdade, e num intervalo que faca sentido para vencimento. O ano
+ * com cinco digitos que o <input type="date"> deixa digitar morre aqui.
+ *
+ * Vale para os dois lugares do "Pago ate": a tela do aluno e o registro de
+ * pagamento.
+ */
+export function vencimentoValido(iso: string): boolean {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(iso)) return false;
+  const d = new Date(iso + "T00:00:00Z");
+  if (Number.isNaN(d.getTime()) || d.toISOString().slice(0, 10) !== iso) return false;
+  const ano = d.getUTCFullYear();
+  return ano >= 2024 && ano <= 2035;
 }
 
 /** "2026-09-05" -> "2026-09". */

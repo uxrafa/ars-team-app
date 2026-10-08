@@ -1,12 +1,16 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { CampoPagoAte } from "@/components/pago-ate";
 import { Aviso, Botao, CLASSE_CAMPO, Rotulo, TituloDeCartao } from "@/components/ui";
 import {
   FORMAS_NA_TELA,
-  PLANOS_EM_MESES,
+  MESES_MAXIMO,
+  MESES_MINIMO,
+  MESES_PADRAO,
   ROTULO_FORMA,
   dataCurta,
+  mesesParaNumero,
   previsaoDeAcesso,
   type FormaPagamento,
 } from "@/lib/pagamento";
@@ -48,7 +52,10 @@ export function Registrar({
     valor:
       alunos.find((a) => a.id === alunoDeInicio)?.mensalidade?.toString().replace(".", ",") ?? "",
     recebido_em: hoje,
-    meses: 1,
+    // Texto, e não número: ele precisa poder apagar o 2 para digitar 3 sem o
+    // campo devolver um valor no meio do caminho.
+    meses: String(MESES_PADRAO),
+    pago_ate: null as string | null,
     forma: "pix" as FormaPagamento,
     observacao: "",
   };
@@ -59,10 +66,19 @@ export function Registrar({
   // A consequência do que ele está prestes a gravar, dita antes de gravar.
   // O cálculo que vale é o do banco (gatilho da migração 0014); este é o
   // mesmo, em `lib/pagamento.ts`, só para a tela não guardar segredo.
+  const meses = mesesParaNumero(form.meses);
   const previsao =
-    escolhido && form.recebido_em
-      ? previsaoDeAcesso(escolhido.acesso_ate, form.recebido_em, form.meses)
+    escolhido && form.recebido_em && meses !== null
+      ? previsaoDeAcesso(escolhido.acesso_ate, form.recebido_em, meses)
       : null;
+  const emendado =
+    escolhido?.acesso_ate != null && escolhido.acesso_ate > form.recebido_em;
+
+  // O "Pago até" segue a conta até ele mexer na data. Escolhida à mão, ela
+  // vale (0021) -- é o caminho para o vencimento herdado do convite, que a
+  // emenda levaria adiante. Mudar aluno, dia ou meses volta para a conta.
+  const aMao = form.pago_ate !== null && form.pago_ate !== previsao?.ate;
+  const pagoAte = form.pago_ate ?? previsao?.ate ?? "";
 
   function trocarAluno(id: string) {
     const a = alunos.find((x) => x.id === id) ?? null;
@@ -70,13 +86,24 @@ export function Registrar({
       ...form,
       aluno_id: id,
       valor: a?.mensalidade != null ? String(a.mensalidade).replace(".", ",") : form.valor,
+      pago_ate: null,
     });
   }
 
   function salvar() {
     setErro(null);
+    if (meses === null) {
+      setErro(`Quantos meses esse pagamento cobre? De ${MESES_MINIMO} a ${MESES_MAXIMO}.`);
+      return;
+    }
     comecar(async () => {
-      const r = await registrarPagamento(form);
+      const r = await registrarPagamento({
+        ...form,
+        meses,
+        // Só manda a data quando ela foi escolhida: sem ela, quem calcula é o
+        // banco, com a mesma conta que a tela mostrou.
+        pago_ate: aMao ? form.pago_ate : null,
+      });
       if (r.erro) setErro(r.erro);
       else {
         setForm({ ...inicial, aluno_id: "", valor: "" });
@@ -131,25 +158,35 @@ export function Registrar({
             type="date"
             value={form.recebido_em}
             max={hoje}
-            onChange={(e) => setForm({ ...form, recebido_em: e.target.value })}
+            onChange={(e) => setForm({ ...form, recebido_em: e.target.value, pago_ate: null })}
             className={CLASSE_CAMPO}
           />
         </label>
 
         <label className="flex flex-col gap-2">
-          <Rotulo>Período pago</Rotulo>
-          <select
+          <Rotulo>Meses pagos</Rotulo>
+          <input
             value={form.meses}
-            onChange={(e) => setForm({ ...form, meses: Number(e.target.value) })}
-            className={CLASSE_CAMPO}
-          >
-            {PLANOS_EM_MESES.map((p) => (
-              <option key={p.meses} value={p.meses}>
-                {p.nome}
-              </option>
-            ))}
-          </select>
+            onChange={(e) => setForm({ ...form, meses: e.target.value, pago_ate: null })}
+            inputMode="numeric"
+            placeholder={String(MESES_PADRAO)}
+            className={`${CLASSE_CAMPO} font-mono`}
+          />
         </label>
+
+        <CampoPagoAte
+          valor={pagoAte}
+          aoMudar={(iso) => setForm({ ...form, pago_ate: iso })}
+          apoio={
+            !escolhido || !previsao
+              ? null
+              : aMao
+                ? `Escolhida por você. A conta dava ${dataCurta(previsao.ate)}.`
+                : emendado
+                  ? `Somado ao vencimento atual, ${dataCurta(escolhido.acesso_ate)}. Se ele estiver errado, mude a data.`
+                  : null
+          }
+        />
 
         <label className="flex flex-col gap-2">
           <Rotulo>Forma</Rotulo>
@@ -176,19 +213,6 @@ export function Registrar({
           />
         </label>
       </div>
-
-      {previsao && (
-        <p className="mt-4 rounded-xl border border-linha bg-tinta-3 px-4 py-3.5 text-[15px] leading-relaxed">
-          O acesso de {escolhido!.nome.split(" ")[0]} passa a valer até{" "}
-          <span className="font-mono text-[15px] text-papel">{dataCurta(previsao.ate)}</span>
-          {escolhido!.acesso_ate && escolhido!.acesso_ate > form.recebido_em ? (
-            <span className="text-nevoa">
-              {" "}
-              — emendado no vencimento de {dataCurta(escolhido!.acesso_ate)}, que ainda está de pé.
-            </span>
-          ) : null}
-        </p>
-      )}
 
       {erro && (
         <div className="mt-4">

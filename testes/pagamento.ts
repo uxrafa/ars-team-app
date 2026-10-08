@@ -2,13 +2,16 @@ import assert from "node:assert/strict";
 import {
   dataCurta,
   faturamentoPorMes,
+  MESES_PADRAO,
   mesesAte,
+  mesesParaNumero,
   previsaoDeAcesso,
   resumoDoMes,
   siglaDoMes,
   somarMeses,
   valorParaNumero,
   variacao,
+  vencimentoValido,
   type LinhaPagamento,
 } from "../src/lib/pagamento.ts";
 
@@ -176,6 +179,48 @@ conferir("valor vazio, zero ou negativo nao e pagamento", () => {
   assert.equal(valorParaNumero("0"), null);
   assert.equal(valorParaNumero("-50"), null);
   assert.equal(valorParaNumero("abc"), null);
+});
+
+/* --- meses digitados ---------------------------------------------------- */
+
+conferir("o padrao e o bimestre, e o bimestre soma dois meses", () => {
+  assert.equal(MESES_PADRAO, 2);
+  assert.equal(previsaoDeAcesso(null, "2026-10-08", MESES_PADRAO).ate, "2026-12-08");
+  // Emendado: vence 01/12 e paga hoje, adiantado -> vai a 01/02.
+  assert.equal(previsaoDeAcesso("2026-12-01", "2026-10-08", MESES_PADRAO).ate, "2027-02-01");
+});
+
+conferir("meses aceita de 1 a 24, que e o que o banco aceita", () => {
+  assert.equal(mesesParaNumero("2"), 2);
+  assert.equal(mesesParaNumero(" 12 "), 12);
+  assert.equal(mesesParaNumero("1"), 1);
+  assert.equal(mesesParaNumero("24"), 24);
+});
+
+conferir("meses vazio, zero, fracao ou acima de 24 nao vira numero", () => {
+  // Vazio e o meio da digitacao: ele apagou o 2 para escrever 3. A previsao
+  // some nesse instante em vez de mostrar uma data errada.
+  assert.equal(mesesParaNumero(""), null);
+  assert.equal(mesesParaNumero("0"), null);
+  assert.equal(mesesParaNumero("25"), null);
+  assert.equal(mesesParaNumero("1,5"), null);
+  assert.equal(mesesParaNumero("-2"), null);
+  assert.equal(mesesParaNumero("dois"), null);
+});
+
+/* --- o pago ate --------------------------------------------------------- */
+
+conferir("pago ate aceita data de verdade num intervalo de vencimento", () => {
+  assert.equal(vencimentoValido("2026-12-07"), true);
+  assert.equal(vencimentoValido("2028-02-29"), true);
+});
+
+conferir("pago ate recusa data impossivel ou fora do intervalo", () => {
+  // 31/02 e o ano de cinco digitos que o <input type="date"> deixa digitar.
+  assert.equal(vencimentoValido("2026-02-31"), false);
+  assert.equal(vencimentoValido("20266-12-07"), false);
+  assert.equal(vencimentoValido("2019-12-07"), false);
+  assert.equal(vencimentoValido(""), false);
 });
 
 /* --- rotulos ------------------------------------------------------------ */

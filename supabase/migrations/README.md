@@ -27,6 +27,7 @@ novo e numerado, para o banco poder ser reconstruido do zero.
 | `0018_orientacao_alimentar.sql` | Orientacao alimentar: `alimento`, `orientacao_alimentar` > `refeicao_alimentar` > `item_alimentar`, funcao `salvar_orientacao` e `anamnese.sexo`. |
 | `0019_tabela_taco.sql` | Os 597 alimentos da TACO 4a ed., so macros por 100 g. Dado, como a 0011. |
 | `0020_evolucao_vista.sql` | `evolucao_vista` (quando o treinador olhou) e a view `evolucao_nova`: aviso de foto ou medida nova. Foto e medida ganham `atualizado_em`. |
+| `0021_pago_ate_unico.sql` | "Pago ate" vira uma data so: registro manual pode dizer ate quando, e corrigir o vencimento do aluno corrige o ultimo pagamento. |
 
 ## Como o modelo se encaixa
 
@@ -374,6 +375,31 @@ o aquecimento da propria ficha, marca e desmarca na propria sessao, **nao**
 marca na sessao alheia, **nao** muda a propria ficha, e o aquecimento nao entra
 em `serie_registrada`; o admin le e **nao** marca aquecimento no treino do aluno.
 Nenhum alerta novo no advisor de seguranca.
+
+## Uma data so para "pago ate" (0021)
+
+Os alunos antigos entraram com um vencimento digitado no convite que nao tinha
+sido pago. O primeiro pagamento de verdade emendou nele ("1 mes ate 07/01/27"),
+o Allisson corrigiu o aluno para 07/12, e o Financeiro continuou dizendo 07/01.
+Pagamento so se estorna, e registrar de novo emendaria outra vez.
+
+- **Registro manual pode dizer ate quando.** Com `competencia_ate` preenchido, a
+  data vale; sem ele, a emenda de sempre. Gateway e sempre calculado.
+- **Manual move o vencimento ate para tras.** E a data que ele viu na tela.
+  "Nunca anda para tras" continua para o gateway.
+- **Corrigir o vencimento corrige o ultimo pagamento.** Gatilho
+  `ao_corrigir_vencimento` em `perfis`. Os anteriores nao mudam.
+
+A API continua sem poder mexer na janela do pagamento: `travar_pagamento` so
+deixa `competencia_de/ate` mudarem quando `pg_trigger_depth()` e 2, isto e,
+quando quem muda e o gatilho de `perfis`.
+
+Validada em 08/10/2026 em transacao abortada, com Iris e Vinicius: salvar o
+mesmo vencimento alinha o pagamento (07/01 -> 07/12, inicio no dia do
+dinheiro); update direto na janela e recusado; estorno devolve o vencimento;
+registro com data escolhida antes da emenda grava de 08/10 a 07/12 e move o
+aluno; registro sem data emenda como antes; data antes do pagamento e recusada;
+corrigir o aluno move so o ultimo pagamento.
 
 ## Nota sobre o banco atual
 

@@ -54,8 +54,11 @@ export function LinhaPagamentoNaLista({ p }: { p: PagamentoNaTela }) {
             </Link>
           </p>
           <p className="mt-1 truncate font-mono text-[13px] uppercase text-nevoa">
-            {dataCurta(p.recebido_em)} · {ROTULO_FORMA[p.forma]} · {p.meses}{" "}
-            {p.meses === 1 ? "mês" : "meses"} até {dataCurta(p.competencia_ate)}
+            {/* Sem "N meses": depois que o Pago até é corrigido no aluno
+                (0021), a contagem digitada no registro deixa de bater com a
+                data, e é a data que interessa. */}
+            {dataCurta(p.recebido_em)} · {ROTULO_FORMA[p.forma]} · até{" "}
+            {dataCurta(p.competencia_ate)}
           </p>
         </div>
 

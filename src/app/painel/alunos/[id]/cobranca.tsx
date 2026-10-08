@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { Aviso, Botao, BotaoLink, CLASSE_CAMPO, Rotulo, TituloDeCartao } from "@/components/ui";
+import { CampoPagoAte } from "@/components/pago-ate";
 import { emReais } from "@/lib/painel";
 import { salvarCobranca, type DadosCobranca } from "../acoes";
 
@@ -151,19 +152,12 @@ export function Cobranca({
           {/* O vencimento voltou a ser editável (06/10): os alunos antigos
               entraram todos com o mesmo 01/12 do convite, e só digitando dá
               para pôr a data de renovação combinada com cada um. */}
-          <label className="flex flex-col gap-2 sm:max-w-[calc(50%-0.5rem)]">
-            <Rotulo>Pago até</Rotulo>
-            <input
-              type="date"
-              value={form.acesso_ate}
-              onChange={(e) => setForm({ ...form, acesso_ate: e.target.value })}
-              className={CLASSE_CAMPO}
-            />
-            <span className="text-sm leading-relaxed text-nevoa">
-              É o dia em que a renovação vence. Registrar um pagamento no Financeiro
-              também avança essa data sozinho.
-            </span>
-          </label>
+          <CampoPagoAte
+            valor={form.acesso_ate}
+            aoMudar={(iso) => setForm({ ...form, acesso_ate: iso })}
+            apoio="Corrige também o último pagamento. Pagamento novo se registra no Financeiro."
+            className="sm:max-w-[calc(50%-0.5rem)]"
+          />
 
           {erro && <Aviso>{erro}</Aviso>}
 

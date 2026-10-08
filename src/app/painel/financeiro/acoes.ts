@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { criarClienteServidor } from "@/lib/supabase/server";
 import { hojeSP } from "@/lib/painel";
-import { valorParaNumero, type FormaPagamento } from "@/lib/pagamento";
+import { valorParaNumero, vencimentoValido, type FormaPagamento } from "@/lib/pagamento";
 
 export type Resultado = { erro?: string; ok?: boolean };
 
@@ -12,6 +12,8 @@ export type DadosPagamento = {
   valor: string;
   recebido_em: string;
   meses: number;
+  /** Só quando escolhido à mão; `null` deixa o banco fazer a conta. */
+  pago_ate: string | null;
   forma: FormaPagamento;
   observacao: string;
 };
@@ -48,8 +50,9 @@ async function admin() {
  * O `acesso_ate` do aluno NAO e escrito aqui. Quem move o vencimento e o
  * gatilho `ao_avancar_acesso`, no banco -- porque o webhook de um gateway
  * futuro vai inserir nesta mesma tabela sem passar por esta funcao, e a regra
- * tem que valer para os dois caminhos. Pelo mesmo motivo `competencia_de` e
- * `competencia_ate` nao sao enviados: o banco calcula.
+ * tem que valer para os dois caminhos. Pelo mesmo motivo `competencia_de` nao
+ * e enviado, e `competencia_ate` so vai quando o Allisson escolheu a data a
+ * mao (0021); fora isso o banco calcula.
  */
 export async function registrarPagamento(dados: DadosPagamento): Promise<Resultado> {
   const { supabase, erro, id: quem } = await admin();
@@ -68,11 +71,19 @@ export async function registrarPagamento(dados: DadosPagamento): Promise<Resulta
     return { erro: "O período precisa ser de 1 a 24 meses." };
   }
 
+  if (dados.pago_ate !== null) {
+    if (!vencimentoValido(dados.pago_ate)) return { erro: "Confira a data do Pago até." };
+    if (dados.pago_ate <= dados.recebido_em) {
+      return { erro: "O Pago até precisa ser depois do dia em que o dinheiro entrou." };
+    }
+  }
+
   const { error } = await supabase.from("pagamento").insert({
     aluno_id: dados.aluno_id,
     valor,
     recebido_em: dados.recebido_em,
     meses: dados.meses,
+    competencia_ate: dados.pago_ate,
     forma: dados.forma,
     observacao: dados.observacao.trim() || null,
     registrado_por: quem,
