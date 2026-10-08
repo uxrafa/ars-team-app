@@ -189,7 +189,7 @@ export function VisaoFinanceiro({
             emAberto.quantos === 0
               ? null
               : `${emAberto.quantos} ${emAberto.quantos === 1 ? "aluno vencido" : "alunos vencidos"}${
-                  emAberto.semValor ? ", e falta a mensalidade de alguém" : ""
+                  emAberto.semValor ? ", e falta o valor do plano de alguém" : ""
                 }`
           }
         />

@@ -370,7 +370,7 @@ export function AcessoSuspenso({ nome }: { nome: string }) {
       <Titulo>Acesso pausado</Titulo>
       <Cartao>
         <p className="text-[13.5px] leading-[1.5] text-nevoa">
-          {nome}, sua mensalidade está em aberto e o acesso ao treino ficou pausado. Nada do que
+          {nome}, o pagamento do seu plano está em aberto e o acesso ao treino ficou pausado. Nada do que
           você registrou foi apagado: assim que o pagamento for confirmado, tudo volta como estava.
         </p>
         <p className="mt-3 text-[13.5px] leading-[1.5] text-nevoa">

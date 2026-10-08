@@ -5,6 +5,7 @@ import {
   MESES_PADRAO,
   mesesAte,
   mesesParaNumero,
+  PLANOS_SUGERIDOS,
   previsaoDeAcesso,
   resumoDoMes,
   siglaDoMes,
@@ -207,6 +208,17 @@ conferir("meses vazio, zero, fracao ou acima de 24 nao vira numero", () => {
   assert.equal(mesesParaNumero("1,5"), null);
   assert.equal(mesesParaNumero("-2"), null);
   assert.equal(mesesParaNumero("dois"), null);
+});
+
+/* --- precos sugeridos --------------------------------------------------- */
+
+conferir("os precos sugeridos sao valores que o registro aceita", () => {
+  // O atalho preenche o campo como texto; o texto tem de voltar ao mesmo
+  // numero na hora de gravar.
+  for (const p of PLANOS_SUGERIDOS) {
+    assert.equal(valorParaNumero(String(p.valor)), p.valor);
+  }
+  assert.deepEqual(PLANOS_SUGERIDOS.map((p) => p.valor), [280, 230, 205]);
 });
 
 /* --- o pago ate --------------------------------------------------------- */

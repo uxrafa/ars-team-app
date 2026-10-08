@@ -129,8 +129,8 @@ export default async function Alunos() {
       {semDados > 0 && (
         <p className="rounded-xl border border-alerta/40 bg-alerta/[0.08] px-5 py-4 text-[15px] leading-relaxed text-alerta">
           {semDados === 1
-            ? "1 aluno sem vencimento ou mensalidade."
-            : `${semDados} alunos sem vencimento ou mensalidade.`}{" "}
+            ? "1 aluno sem vencimento ou valor do plano."
+            : `${semDados} alunos sem vencimento ou valor do plano.`}{" "}
           {/* Sai o "toque em Editar", que é instrução de primeira vez e está
               na mesma linha do problema. Fica o porquê, que não é óbvio. */}
           <span className="text-nevoa">

@@ -1,18 +1,90 @@
 "use client";
 
 import { useActionState, useState } from "react";
+import { CampoPagoAte } from "@/components/pago-ate";
 import { Aviso, Botao, CLASSE_CAMPO, Rotulo, TituloDeCartao } from "@/components/ui";
 import { DIAS_DE_VALIDADE, linkDoConvite, primeiroNome } from "@/lib/convite";
+import { MESES_PADRAO, PLANOS_SUGERIDOS, somarMeses } from "@/lib/pagamento";
+import { emReais } from "@/lib/painel";
 import { criarConvite, type EstadoConvite } from "./acoes";
 import { BotaoCopiar, BotaoWhatsapp, LinkVisivel } from "./link";
 
 const INICIAL: EstadoConvite = {};
 
-/** Daqui a 30 dias, em aaaa-mm-dd, que e o que o input date espera. */
-function daquiA(dias: number): string {
-  const d = new Date();
-  d.setDate(d.getDate() + dias);
-  return new Intl.DateTimeFormat("en-CA", { timeZone: "America/Sao_Paulo" }).format(d);
+/** Hoje em São Paulo, em aaaa-mm-dd, que é o que o input date espera. */
+function hojeAqui(): string {
+  return new Intl.DateTimeFormat("en-CA", { timeZone: "America/Sao_Paulo" }).format(new Date());
+}
+
+/**
+ * Valor do plano e vencimento, com os preços de hoje à mão.
+ *
+ * O atalho só preenche: o campo continua digitável para o desconto, e é o
+ * valor, não o nome do plano, que vai para o aluno. Guarda o próprio estado
+ * pelo mesmo motivo do seletor de plano: o `key` do form limpa tudo junto.
+ */
+function ValorEVencimento() {
+  const [valor, setValor] = useState("");
+  // Bimestral é o plano que se vende; o convite já nasce com dois meses.
+  const [pagoAte, setPagoAte] = useState(() => somarMeses(hojeAqui(), MESES_PADRAO));
+
+  return (
+    <div className="flex flex-col gap-5">
+      <div className="flex flex-col gap-2">
+        <Rotulo>Valor do plano</Rotulo>
+        <div className="flex flex-wrap gap-2">
+          {PLANOS_SUGERIDOS.map((p) => {
+            const marcado = valor === String(p.valor);
+            return (
+              <button
+                key={p.nome}
+                type="button"
+                onClick={() => setValor(String(p.valor))}
+                aria-pressed={marcado}
+                className={`inline-flex min-h-11 items-center gap-2 rounded-full border px-4 text-[15px] font-semibold transition-colors ${
+                  marcado
+                    ? "border-raio bg-raio/12 text-papel"
+                    : "border-contorno bg-tinta-3 text-nevoa hover:border-nevoa hover:text-papel"
+                }`}
+              >
+                {p.nome}
+                <span className="font-mono text-[13px] font-normal">{emReais(p.valor)}</span>
+              </button>
+            );
+          })}
+        </div>
+        <span className="relative block sm:max-w-[calc(50%-0.625rem)]">
+            <input
+              name="mensalidade"
+              type="text"
+              inputMode="decimal"
+              autoComplete="off"
+              aria-label="Valor do plano"
+              value={valor}
+              onChange={(e) => setValor(e.target.value)}
+              placeholder="280"
+              className={`${CLASSE_CAMPO} pl-11 font-mono`}
+            />
+            <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[15px] text-nevoa">
+              R$
+            </span>
+        </span>
+        <span className="text-sm text-nevoa">Valor do bimestre. Casal é por pessoa.</span>
+      </div>
+
+      <CampoPagoAte
+        nome="acesso_ate"
+        valor={pagoAte}
+        aoMudar={setPagoAte}
+        className="sm:max-w-[calc(50%-0.625rem)]"
+      />
+
+      <p className="text-sm leading-relaxed text-nevoa">
+        Valor e vencimento são o que faz a fila de cobrança do painel funcionar. Dá para deixar em
+        branco e preencher depois na tela do aluno.
+      </p>
+    </div>
+  );
 }
 
 function Escolha({
@@ -178,39 +250,7 @@ export function Formulario({ origem }: { origem: string }) {
 
           <EscolhaDePlano />
 
-          <div className="grid gap-5 sm:grid-cols-2">
-            <label className="flex flex-col gap-2">
-              <Rotulo>Mensalidade</Rotulo>
-              <span className="relative block">
-                <input
-                  name="mensalidade"
-                  type="text"
-                  inputMode="decimal"
-                  autoComplete="off"
-                  placeholder="250"
-                  className={`${CLASSE_CAMPO} pl-11`}
-                />
-                <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[15px] text-nevoa">
-                  R$
-                </span>
-              </span>
-            </label>
-
-            <label className="flex flex-col gap-2">
-              <Rotulo>Pago até</Rotulo>
-              <input
-                name="acesso_ate"
-                type="date"
-                defaultValue={daquiA(30)}
-                className={CLASSE_CAMPO}
-              />
-            </label>
-          </div>
-
-          <p className="text-sm leading-relaxed text-nevoa">
-            Mensalidade e vencimento são o que faz a fila de cobrança do painel funcionar. Dá para
-            deixar em branco e preencher depois na lista de alunos.
-          </p>
+          <ValorEVencimento />
 
           {estado.erro && <Aviso>{estado.erro}</Aviso>}
 

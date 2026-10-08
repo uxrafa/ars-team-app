@@ -69,7 +69,7 @@ export default async function Perfil() {
         {perfil?.whatsapp && <Linha nome="WhatsApp" valor={perfil.whatsapp} />}
         <Linha nome="Plano" valor={perfil ? NOME_DO_PLANO[perfil.tipo] : "-"} />
         {perfil?.mensalidade ? (
-          <Linha nome="Mensalidade" valor={emReais(Number(perfil.mensalidade))} />
+          <Linha nome="Valor do plano" valor={emReais(Number(perfil.mensalidade))} />
         ) : null}
       </Cartao>
 

@@ -74,6 +74,20 @@ export const FORMAS_NA_TELA: readonly FormaPagamento[] = [
  */
 export const MESES_PADRAO = 2;
 
+/**
+ * Os precos de out/2026, todos do BIMESTRE (Rafael, 08/10).
+ *
+ * So sugestao: tocar num deles preenche o valor do convite, e o valor de cada
+ * aluno continua digitavel -- desconto existe. Por isso o nome do plano nao
+ * vai para o banco; o que fica gravado e o valor (`perfis.mensalidade`).
+ * Mudou o preco, muda aqui.
+ */
+export const PLANOS_SUGERIDOS = [
+  { nome: "Completa", valor: 280, detalhe: "treino e dieta" },
+  { nome: "Só treino", valor: 230, detalhe: "consultoria de treino" },
+  { nome: "Casal", valor: 205, detalhe: "por pessoa" },
+] as const;
+
 /** Os limites da constraint `pagamento.meses` (migracao 0014). */
 export const MESES_MINIMO = 1;
 export const MESES_MAXIMO = 24;

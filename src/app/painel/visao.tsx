@@ -89,7 +89,7 @@ function LinhaAtencao({ item }: { item: ItemAtencao }) {
 
   const mensagem =
     motivo === "pagamento"
-      ? `Oi ${primeiroNome}, tudo bem? Passando para lembrar da mensalidade da consultoria. Qualquer coisa me chama.`
+      ? `Oi ${primeiroNome}, tudo bem? Passando para lembrar da renovação da consultoria. Qualquer coisa me chama.`
       : `Oi ${primeiroNome}, tudo bem? Faz uns dias que nao vejo treino seu. Ta precisando de algum ajuste na ficha?`;
 
   const zap = linkWhatsapp(aluno.whatsapp, mensagem);
@@ -208,7 +208,7 @@ export function VisaoDoPainel({ saudacao, mes, atencao, r, alunos, eventos }: Da
               ? null
               : r.emAberto > 0
                 ? `${emReais(r.emAberto)} em aberto${r.semValor ? " (falta valor de alguém)" : ""}`
-                : "sem valor de mensalidade cadastrado"
+                : "sem valor do plano cadastrado"
           }
         />
         {/* "nos próximos 7 dias" era a definição da métrica, não um dado.
@@ -312,7 +312,7 @@ export function VisaoDoPainel({ saudacao, mes, atencao, r, alunos, eventos }: Da
               {r.emAberto > 0 && (
                 <p className="mt-3 text-sm text-nevoa">
                   {emReais(r.emAberto)} em aberto
-                  {r.semValor ? ", e falta a mensalidade de alguém" : ""}
+                  {r.semValor ? ", e falta o valor do plano de alguém" : ""}
                 </p>
               )}
             </div>
@@ -390,8 +390,8 @@ export function VisaoDoPainel({ saudacao, mes, atencao, r, alunos, eventos }: Da
 
       {r.total > 0 && alunos.every((a) => a.mensalidade === null && a.acesso_ate === null) && (
         <p className="rounded-2xl border border-linha bg-tinta-2 px-5 py-4 text-[15px] leading-relaxed text-nevoa">
-          Nenhum aluno tem mensalidade cadastrada nem pagamento registrado ainda, então a fila de
-          cobrança fica vazia. A mensalidade se preenche na tela do aluno, e o vencimento passa a
+          Nenhum aluno tem valor do plano nem pagamento registrado ainda, então a fila de
+          cobrança fica vazia. O valor do plano se preenche na tela do aluno, e o vencimento passa a
           andar sozinho quando o primeiro pagamento entrar no Financeiro.{" "}
           <span className="text-nevoa">Ver dias sem check-in e fichas vencendo já funciona.</span>
         </p>

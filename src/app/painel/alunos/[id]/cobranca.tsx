@@ -138,7 +138,7 @@ export function Cobranca({
             </label>
 
             <label className="flex flex-col gap-2">
-              <Rotulo>Mensalidade</Rotulo>
+              <Rotulo>Valor do plano</Rotulo>
               <input
                 value={form.mensalidade}
                 onChange={(e) => setForm({ ...form, mensalidade: e.target.value })}
@@ -182,8 +182,8 @@ export function Cobranca({
         <div className="mt-4">
           <Linha rotulo="Plano" valor={aluno.tipo === "planilha" ? "Planilha" : "Consultoria"} />
           <Linha
-            rotulo="Mensalidade"
-            valor={aluno.mensalidade !== null ? emReais(aluno.mensalidade) : "não cadastrada"}
+            rotulo="Valor do plano"
+            valor={aluno.mensalidade !== null ? emReais(aluno.mensalidade) : "não cadastrado"}
           />
           <Linha rotulo="Pago até" valor={curta(aluno.acesso_ate)} />
           <Linha rotulo="WhatsApp" valor={aluno.whatsapp || "não cadastrado"} />

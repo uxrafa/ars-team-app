@@ -63,10 +63,10 @@ export async function salvarCobranca(dados: DadosCobranca): Promise<ResultadoAlu
 
   const mensalidade = paraNumero(dados.mensalidade);
   if (dados.mensalidade.trim() && mensalidade === null) {
-    return { erro: "A mensalidade precisa ser um número. Ex.: 250 ou 250,00" };
+    return { erro: "O valor do plano precisa ser um número. Ex.: 280 ou 280,00" };
   }
   if (mensalidade !== null && mensalidade > 100000) {
-    return { erro: "Confira a mensalidade: o valor parece alto demais." };
+    return { erro: "Confira o valor do plano: parece alto demais." };
   }
 
   const acessoAte = dados.acesso_ate.trim();

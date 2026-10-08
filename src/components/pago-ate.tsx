@@ -13,8 +13,11 @@ export function CampoPagoAte({
   valor,
   aoMudar,
   apoio,
+  nome,
   className = "",
 }: {
+  /** `name` do input, para formulário que envia por `action` (o convite). */
+  nome?: string;
   /** "aaaa-mm-dd", ou "" sem data. */
   valor: string;
   aoMudar: (iso: string) => void;
@@ -27,6 +30,7 @@ export function CampoPagoAte({
       <Rotulo>Pago até</Rotulo>
       <input
         type="date"
+        name={nome}
         value={valor}
         onChange={(e) => aoMudar(e.target.value)}
         className={CLASSE_CAMPO}
