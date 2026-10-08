@@ -50,6 +50,8 @@ export type Alimento = {
   proteina_g: number;
   carboidrato_g: number;
   gordura_g: number;
+  /** Ausente nas telas que só leem a dieta pronta; lá não faz diferença. */
+  ativo?: boolean;
 };
 
 export function macrosDoItem(a: Alimento, gramas: number): Macros {
@@ -322,6 +324,9 @@ export function buscarAlimentos(lista: Alimento[], busca: string, limite = 30): 
   if (!termos.length) return [];
   return lista
     .filter((a) => {
+      // Fora de circulação não se escolhe mais, mas continua na lista do
+      // editor para a dieta que já usa não ficar com item quebrado.
+      if (a.ativo === false) return false;
       const alvo = semAcento(a.nome);
       return termos.every((t) => alvo.includes(t));
     })
@@ -345,4 +350,95 @@ export function proximaRefeicao(horarios: string[], agoraHHMM: string): number |
   const agora = min(agoraHHMM);
   const i = horarios.findIndex((h) => h && min(h) + 60 > agora);
   return i < 0 ? null : i;
+}
+
+/* ------------------------------------------------------------------ */
+/* Biblioteca de alimentos                                             */
+/* ------------------------------------------------------------------ */
+
+export type OrigemNoFiltro = "todos" | "proprio" | "taco";
+
+/** O grupo que a TACO não tem e que é o motivo de existir alimento próprio. */
+export const GRUPO_SUPLEMENTOS = "Suplementos";
+
+/**
+ * A busca da biblioteca: mesma regra da busca do editor (palavra por palavra,
+ * sem acento), mas olha o grupo também e não corta a lista -- aqui ele está
+ * consultando, não escolhendo um item.
+ */
+export function filtrarAlimentos<T extends Alimento>(
+  lista: T[],
+  busca: string,
+  origem: OrigemNoFiltro,
+): T[] {
+  const termos = semAcento(busca).split(/[\s,]+/).filter(Boolean);
+  return lista.filter((a) => {
+    if (origem !== "todos" && a.origem !== origem) return false;
+    const alvo = semAcento(`${a.nome} ${a.grupo ?? ""}`);
+    return termos.every((t) => alvo.includes(t));
+  });
+}
+
+/**
+ * Seções da lista: os dele primeiro, numa seção só, e depois a TACO pelos
+ * grupos dela. Sem isso seriam 597 linhas corridas, e o que ele cadastrou
+ * sumiria no meio.
+ */
+export function secoesDeAlimentos<T extends Alimento>(
+  lista: T[],
+): { titulo: string; proprio: boolean; itens: T[] }[] {
+  const porNome = (a: T, b: T) => a.nome.localeCompare(b.nome, "pt-BR");
+  const seus = lista.filter((a) => a.origem === "proprio").sort(porNome);
+  const grupos = new Map<string, T[]>();
+  for (const a of lista) {
+    if (a.origem !== "taco") continue;
+    const g = a.grupo ?? "Outros";
+    grupos.set(g, [...(grupos.get(g) ?? []), a]);
+  }
+  const taco = [...grupos.entries()]
+    .sort(([a], [b]) => a.localeCompare(b, "pt-BR"))
+    .map(([titulo, itens]) => ({ titulo, proprio: false, itens: itens.sort(porNome) }));
+  return seus.length ? [{ titulo: "Seus alimentos", proprio: true, itens: seus }, ...taco] : taco;
+}
+
+/** Uma casa decimal, que é o que a coluna do banco guarda (numeric 5,1). */
+function umaCasa(n: number): number {
+  return Math.round(n * 10) / 10;
+}
+
+/**
+ * Confere o que ele digitou do rótulo. Campo vazio vale zero: rótulo de whey
+ * nem sempre traz gordura, e obrigar a digitar 0 é atrito à toa.
+ *
+ * Os limites são os da constraint `alimento_macros_validos` (0018), ditos em
+ * português antes de o banco recusar.
+ */
+export function conferirAlimento(d: {
+  nome: string;
+  proteina: string;
+  carboidrato: string;
+  gordura: string;
+}):
+  | { erro: string }
+  | { nome: string; proteina_g: number; carboidrato_g: number; gordura_g: number } {
+  const nome = d.nome.trim().replace(/\s+/g, " ");
+  if (nome.length < 2) return { erro: "Dê um nome ao alimento." };
+  if (nome.length > 120) return { erro: "O nome ficou longo demais." };
+
+  const lidos = [d.proteina, d.carboidrato, d.gordura].map((t) =>
+    String(t ?? "").trim() ? paraNumero(t) : 0,
+  );
+  if (lidos.some((v) => v === null)) return { erro: "Os valores precisam ser números. Ex.: 24 ou 2,5" };
+  const [p, c, g] = (lidos as number[]).map(umaCasa);
+  if ([p, c, g].some((v) => v < 0 || v > 100)) {
+    return { erro: "Por 100 g, cada valor fica entre 0 e 100." };
+  }
+  if (p + c + g > 100.5) return { erro: "Em 100 g, os três juntos não passam de 100 g." };
+
+  return { nome, proteina_g: p, carboidrato_g: c, gordura_g: g };
+}
+
+/** "2,5" e "86": número de rótulo, com vírgula e sem zero sobrando. */
+export function decimal(n: number): string {
+  return String(umaCasa(n)).replace(".", ",");
 }

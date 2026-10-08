@@ -3,9 +3,12 @@ import {
   buscarAlimentos,
   calcularMetas,
   comparacao,
+  conferirAlimento,
+  decimal,
   diaDoAluno,
   distribuicao,
   faltasParaCalcular,
+  filtrarAlimentos,
   fatorSugerido,
   idade,
   kcal,
@@ -14,6 +17,7 @@ import {
   macrosDoDia,
   porHorario,
   proximaRefeicao,
+  secoesDeAlimentos,
   tmbMifflin,
   type Alimento,
   type Refeicao,
@@ -158,6 +162,62 @@ conferir("proxima refeicao tolera uma hora de atraso", () => {
   assert.equal(proximaRefeicao(h, "12:40"), 1);
   assert.equal(proximaRefeicao(h, "13:10"), 2);
   assert.equal(proximaRefeicao(h, "21:30"), null);
+});
+
+/* --- biblioteca de alimentos ------------------------------------------- */
+
+conferir("fora de circulacao nao aparece na busca do editor", () => {
+  // Continua no mapa do editor (a dieta que ja usa nao quebra), so nao se
+  // escolhe mais.
+  const parado = { ...whey, ativo: false };
+  assert.equal(buscarAlimentos([parado], "whey").length, 0);
+  assert.equal(macrosDaRefeicao(
+    { chave: "r", dia: "treino", nome: "Lanche", horario: "", itens: [{ alimento_id: "w", gramas: 30, descricao: "" }] },
+    new Map([["w", parado]]),
+  ).proteina, 24);
+});
+
+conferir("biblioteca filtra por origem e acha pelo grupo, sem acento", () => {
+  const taco = [{ ...arroz, grupo: "Cereais e derivados" }, { ...frango, grupo: "Carnes e derivados" }];
+  const todos = [...taco, { ...whey, grupo: "Suplementos" }];
+  assert.deepEqual(filtrarAlimentos(todos, "", "proprio").map((a) => a.id), ["w"]);
+  assert.deepEqual(filtrarAlimentos(todos, "", "taco").map((a) => a.id), ["a", "f"]);
+  assert.deepEqual(filtrarAlimentos(todos, "suplementos", "todos").map((a) => a.id), ["w"]);
+  assert.deepEqual(filtrarAlimentos(todos, "CEREAIS arroz", "todos").map((a) => a.id), ["a"]);
+});
+
+conferir("biblioteca mostra os seus primeiro, depois a TACO por grupo", () => {
+  const s = secoesDeAlimentos([
+    { ...frango, grupo: "Carnes e derivados" },
+    { ...arroz, grupo: "Cereais e derivados" },
+    whey,
+  ]);
+  assert.deepEqual(s.map((x) => x.titulo), ["Seus alimentos", "Carnes e derivados", "Cereais e derivados"]);
+  // Sem nenhum dele, a secao vazia nao aparece.
+  assert.equal(secoesDeAlimentos([arroz])[0].titulo, "Outros");
+});
+
+conferir("cadastro aceita o rotulo com virgula e vazio vale zero", () => {
+  assert.deepEqual(conferirAlimento({ nome: "  Whey   isolado ", proteina: "86", carboidrato: "4,26", gordura: "" }), {
+    nome: "Whey isolado",
+    proteina_g: 86,
+    carboidrato_g: 4.3,
+    gordura_g: 0,
+  });
+});
+
+conferir("cadastro recusa o que o banco recusaria", () => {
+  assert.ok("erro" in conferirAlimento({ nome: "W", proteina: "1", carboidrato: "", gordura: "" }));
+  assert.ok("erro" in conferirAlimento({ nome: "Whey", proteina: "abc", carboidrato: "", gordura: "" }));
+  assert.ok("erro" in conferirAlimento({ nome: "Whey", proteina: "101", carboidrato: "", gordura: "" }));
+  assert.ok("erro" in conferirAlimento({ nome: "Whey", proteina: "-1", carboidrato: "", gordura: "" }));
+  assert.ok("erro" in conferirAlimento({ nome: "Whey", proteina: "60", carboidrato: "30", gordura: "20" }));
+});
+
+conferir("numero de rotulo sai com virgula e sem zero sobrando", () => {
+  assert.equal(decimal(2.5), "2,5");
+  assert.equal(decimal(86), "86");
+  assert.equal(decimal(4.26), "4,3");
 });
 
 console.log(`\n${ok} conferências passaram.`);

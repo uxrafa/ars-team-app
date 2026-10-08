@@ -18,11 +18,12 @@ export default async function PaginaDieta({ params }: { params: Promise<{ id: st
       carregarAluno(alunoId),
       carregarOrientacao(supabase, alunoId),
       // A base inteira vai para o navegador (~600 linhas, só nome e macros):
-      // a busca fica instantânea e sem ida ao servidor a cada letra.
+      // a busca fica instantânea e sem ida ao servidor a cada letra. Os fora
+      // de circulação vêm junto (a busca os esconde): sem eles, a dieta que
+      // já usa um deles abriria com o item quebrado e a conta zerada.
       supabase
         .from("alimento")
-        .select("id, nome, grupo, origem, proteina_g, carboidrato_g, gordura_g")
-        .eq("ativo", true)
+        .select("id, nome, grupo, origem, proteina_g, carboidrato_g, gordura_g, ativo")
         .order("nome")
         .limit(2000),
       supabase

@@ -28,6 +28,7 @@ novo e numerado, para o banco poder ser reconstruido do zero.
 | `0019_tabela_taco.sql` | Os 597 alimentos da TACO 4a ed., so macros por 100 g. Dado, como a 0011. |
 | `0020_evolucao_vista.sql` | `evolucao_vista` (quando o treinador olhou) e a view `evolucao_nova`: aviso de foto ou medida nova. Foto e medida ganham `atualizado_em`. |
 | `0021_pago_ate_unico.sql` | "Pago ate" vira uma data so: registro manual pode dizer ate quando, e corrigir o vencimento do aluno corrige o ultimo pagamento. |
+| `0022_biblioteca_de_alimentos.sql` | RLS de `alimento`: admin cadastra e corrige so alimento proprio, ninguem apaga. Nome unico entre os proprios. |
 
 ## Como o modelo se encaixa
 
@@ -400,6 +401,18 @@ dinheiro); update direto na janela e recusado; estorno devolve o vencimento;
 registro com data escolhida antes da emenda grava de 08/10 a 07/12 e move o
 aluno; registro sem data emenda como antes; data antes do pagamento e recusada;
 corrigir o aluno move so o ultimo pagamento.
+
+## Alimento so se cadastra e corrige se for proprio (0022)
+
+A policy da 0018 era `for all` para o admin, entao a API deixava o treinador
+editar e apagar os 597 da TACO. A tela nunca ofereceu, mas trava de tela nao e
+trava. Agora: insert e update so com `origem = 'proprio'` (e o update nao vira
+TACO), sem policy de delete. Alimento sai de circulacao com `ativo = false`.
+
+Validada em 08/10/2026 em transacao abortada: admin cadastra proprio; nao
+cadastra TACO; editar TACO afeta 0 linhas; edita e desativa proprio; proprio
+nao vira TACO; apagar afeta 0 linhas; nome repetido (caixa e espaco
+diferentes) e recusado; aluno le a base e nao cadastra.
 
 ## Nota sobre o banco atual
 

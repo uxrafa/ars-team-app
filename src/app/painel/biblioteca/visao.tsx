@@ -13,41 +13,7 @@ import {
 } from "@/lib/biblioteca";
 import { Linha } from "./linha";
 import { Novo } from "./novo";
-
-function Lupa() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
-      <circle cx="11" cy="11" r="7" />
-      <path d="m20 20-3.2-3.2" />
-    </svg>
-  );
-}
-
-/** Pílula de filtro. É botão de verdade, com contorno, não texto solto. */
-function Aba({
-  ativa,
-  onClick,
-  children,
-}: {
-  ativa: boolean;
-  onClick: () => void;
-  children: React.ReactNode;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-pressed={ativa}
-      className={`inline-flex min-h-11 items-center rounded-full border px-4 text-[15px] font-semibold transition-colors ${
-        ativa
-          ? "border-raio-solido bg-raio-solido text-papel"
-          : "border-contorno bg-tinta-3 text-nevoa hover:border-nevoa hover:text-papel"
-      }`}
-    >
-      {children}
-    </button>
-  );
-}
+import { Aba, AbasDaBiblioteca, Lupa } from "./pecas";
 
 export function Visao({ lista }: { lista: LinhaExercicio[] }) {
   const [busca, setBusca] = useState("");
@@ -71,12 +37,16 @@ export function Visao({ lista }: { lista: LinhaExercicio[] }) {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex flex-wrap items-end gap-4">
+      <div className="flex flex-col gap-4">
+        <h1 className="font-display text-3xl uppercase leading-none tracking-wide">Biblioteca</h1>
+        <AbasDaBiblioteca />
+      </div>
+
+      <div className="flex flex-wrap items-center gap-4">
         <div>
-          <h1 className="font-display text-3xl uppercase leading-none tracking-wide">Biblioteca</h1>
           {/* Uma contagem só, que troca de conteúdo quando há filtro. Duas
               faziam ele parar para descobrir qual responde à pergunta dele. */}
-          <p className="mt-2.5 text-[15px] text-nevoa">
+          <p className="text-[15px] text-nevoa">
             {r.total === 0
               ? "Nenhum exercício cadastrado ainda."
               : filtrando
