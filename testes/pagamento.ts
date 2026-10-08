@@ -9,6 +9,7 @@ import {
   resumoDoMes,
   siglaDoMes,
   somarMeses,
+  ultimosPorAluno,
   valorParaNumero,
   variacao,
   vencimentoValido,
@@ -209,6 +210,18 @@ conferir("meses vazio, zero, fracao ou acima de 24 nao vira numero", () => {
 });
 
 /* --- o pago ate --------------------------------------------------------- */
+
+conferir("so o pagamento mais recente e valido de cada aluno se edita", () => {
+  // Em ordem do banco: mais novo primeiro.
+  const lista = [
+    pago({ id: "a3", aluno_id: "a", estornado_em: "2026-10-08T10:00:00Z", estorno_motivo: "x" }),
+    pago({ id: "a2", aluno_id: "a" }),
+    pago({ id: "b1", aluno_id: "b" }),
+    pago({ id: "a1", aluno_id: "a" }),
+  ];
+  // O estornado nao conta; o a2 passa a ser o ultimo do aluno a.
+  assert.deepEqual([...ultimosPorAluno(lista)].sort(), ["a2", "b1"]);
+});
 
 conferir("pago ate aceita data de verdade num intervalo de vencimento", () => {
   assert.equal(vencimentoValido("2026-12-07"), true);

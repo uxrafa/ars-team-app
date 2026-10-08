@@ -195,6 +195,29 @@ export function dataCurta(iso: string | null): string {
   return `${dia}/${mes}/${ano.slice(2)}`;
 }
 
+/**
+ * Qual pagamento de cada aluno ainda acompanha o "Pago ate" dele.
+ *
+ * E so o mais recente que nao foi estornado: e esse que o gatilho
+ * `ao_corrigir_vencimento` (0021) move quando a data muda. Os anteriores sao
+ * historia; oferecer "Editar" neles mudaria outro pagamento, e nao o clicado.
+ *
+ * Espera a lista na ordem do banco -- `recebido_em` e `criado_em`, do mais
+ * novo para o mais velho --, que e a mesma ordem que o gatilho usa.
+ */
+export function ultimosPorAluno(
+  lista: { id: string; aluno_id: string; estornado_em: string | null }[],
+): Set<string> {
+  const vistos = new Set<string>();
+  const ultimos = new Set<string>();
+  for (const p of lista) {
+    if (p.estornado_em !== null || vistos.has(p.aluno_id)) continue;
+    vistos.add(p.aluno_id);
+    ultimos.add(p.id);
+  }
+  return ultimos;
+}
+
 /* ------------------------------------------------------------------ */
 /* Contas                                                              */
 /* ------------------------------------------------------------------ */

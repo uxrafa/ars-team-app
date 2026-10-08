@@ -3,6 +3,7 @@ import { emReais } from "@/lib/painel";
 import {
   nomeDoMes,
   siglaDoMes,
+  ultimosPorAluno,
   variacao,
   type BarraDoMes,
   type PagamentoNaTela,
@@ -128,6 +129,7 @@ export function VisaoFinanceiro({
 }: DadosFinanceiro) {
   const variou = variacao(mes.total, mesAnterior.total);
   const doMes = pagamentos.filter((p) => p.recebido_em.slice(0, 7) === mes.mes);
+  const editaveis = ultimosPorAluno(pagamentos);
 
   return (
     <div className="flex flex-col gap-6">
@@ -220,7 +222,7 @@ export function VisaoFinanceiro({
         ) : (
           <ul>
             {doMes.map((p) => (
-              <LinhaPagamentoNaLista key={p.id} p={p} />
+              <LinhaPagamentoNaLista key={p.id} p={p} editavel={editaveis.has(p.id)} />
             ))}
           </ul>
         )}
@@ -235,7 +237,7 @@ export function VisaoFinanceiro({
             {pagamentos
               .filter((p) => p.recebido_em.slice(0, 7) !== mes.mes)
               .map((p) => (
-                <LinhaPagamentoNaLista key={p.id} p={p} />
+                <LinhaPagamentoNaLista key={p.id} p={p} editavel={editaveis.has(p.id)} />
               ))}
           </ul>
         </section>

@@ -1,11 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useTransition } from "react";
-import { Botao, CLASSE_CAMPO, Pilula } from "@/components/ui";
+import { useCallback, useState, useTransition } from "react";
+import { Modal } from "@/components/modal";
+import { CampoPagoAte } from "@/components/pago-ate";
+import { Aviso, Botao, CLASSE_CAMPO, Pilula } from "@/components/ui";
 import { emReais, iniciais } from "@/lib/painel";
 import { ROTULO_FORMA, dataCurta, type PagamentoNaTela } from "@/lib/pagamento";
-import { estornarPagamento } from "./acoes";
+import { corrigirPagoAte, estornarPagamento } from "./acoes";
 
 /**
  * Uma linha da lista de pagamentos.
@@ -17,13 +19,45 @@ import { estornarPagamento } from "./acoes";
  * erro aconteceu, e o Allisson perderia a única pista de por que o vencimento
  * do aluno voltou.
  */
-export function LinhaPagamentoNaLista({ p }: { p: PagamentoNaTela }) {
+export function LinhaPagamentoNaLista({
+  p,
+  editavel = false,
+}: {
+  p: PagamentoNaTela;
+  /** Só o último pagamento válido do aluno acompanha o Pago até (0021). */
+  editavel?: boolean;
+}) {
   const [pedindo, setPedindo] = useState(false);
   const [motivo, setMotivo] = useState("");
   const [erro, setErro] = useState<string | null>(null);
   const [pendente, comecar] = useTransition();
 
+  const [editando, setEditando] = useState(false);
+  const [pagoAte, setPagoAte] = useState(p.competencia_ate);
+  const [erroData, setErroData] = useState<string | null>(null);
+  const [salvando, salvar] = useTransition();
+
   const estornado = p.estornado_em !== null;
+
+  // Estável de propósito: o Modal refaz o efeito (e puxa o foco para o
+  // painel) quando `aoFechar` muda, e uma função nova a cada letra digitada
+  // tiraria o cursor do campo de data.
+  const fecharEdicao = useCallback(() => setEditando(false), []);
+
+  function abrirEdicao() {
+    setPagoAte(p.competencia_ate);
+    setErroData(null);
+    setEditando(true);
+  }
+
+  function gravarData() {
+    setErroData(null);
+    salvar(async () => {
+      const r = await corrigirPagoAte(p.aluno_id, pagoAte);
+      if (r.erro) setErroData(r.erro);
+      else setEditando(false);
+    });
+  }
 
   function confirmar() {
     setErro(null);
@@ -76,6 +110,12 @@ export function LinhaPagamentoNaLista({ p }: { p: PagamentoNaTela }) {
           {emReais(p.valor)}
         </span>
 
+        {editavel && (
+          <Botao type="button" onClick={abrirEdicao} aparencia="secundario" tamanho="sm">
+            Editar
+          </Botao>
+        )}
+
         <span className="flex w-[112px] flex-none justify-end">
           {estornado ? (
             <Pilula tom="neutro">Estornado</Pilula>
@@ -91,6 +131,32 @@ export function LinhaPagamentoNaLista({ p }: { p: PagamentoNaTela }) {
           )}
         </span>
       </div>
+
+      {editando && (
+        <Modal
+          titulo={`Pago até de ${p.aluno.split(" ")[0]}`}
+          descricao="Muda o vencimento do aluno e este pagamento, juntos."
+          aoFechar={fecharEdicao}
+        >
+          <div className="flex flex-col gap-4">
+            <CampoPagoAte valor={pagoAte} aoMudar={setPagoAte} />
+            {erroData && <Aviso>{erroData}</Aviso>}
+            <div className="flex flex-wrap gap-2.5">
+              <Botao type="button" onClick={gravarData} disabled={salvando} tamanho="sm">
+                {salvando ? "Salvando" : "Salvar"}
+              </Botao>
+              <Botao
+                type="button"
+                onClick={() => setEditando(false)}
+                aparencia="fantasma"
+                tamanho="sm"
+              >
+                Cancelar
+              </Botao>
+            </div>
+          </div>
+        </Modal>
+      )}
 
       {p.observacao && !pedindo && (
         <p className="mt-2 pl-15 text-sm leading-snug text-nevoa">{p.observacao}</p>

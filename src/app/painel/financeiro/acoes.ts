@@ -102,6 +102,34 @@ export async function registrarPagamento(dados: DadosPagamento): Promise<Resulta
 }
 
 /**
+ * Corrige o "Pago até" a partir da linha do pagamento (Rafael, 08/10: era
+ * ali que ele sentia falta de poder mudar).
+ *
+ * Grava no aluno, e não no pagamento: é o mesmo caminho da tela do aluno, e o
+ * gatilho `ao_corrigir_vencimento` (0021) leva a data para o último pagamento.
+ * Pagamento continua sem update direto pela API.
+ */
+export async function corrigirPagoAte(alunoId: string, pagoAte: string): Promise<Resultado> {
+  const { supabase, erro } = await admin();
+  if (erro) return { erro };
+
+  if (!vencimentoValido(pagoAte)) return { erro: "Confira a data do Pago até." };
+
+  const { error } = await supabase.from("perfis").update({ acesso_ate: pagoAte }).eq("id", alunoId);
+
+  if (error) {
+    console.error("corrigirPagoAte:", error.message);
+    return { erro: "Não consegui salvar agora. Tente de novo em instantes." };
+  }
+
+  revalidatePath("/painel");
+  revalidatePath("/painel/financeiro");
+  revalidatePath("/painel/alunos");
+  revalidatePath(`/painel/alunos/${alunoId}`);
+  return { ok: true };
+}
+
+/**
  * Estorna um pagamento. E o unico jeito de corrigir: o gatilho
  * `ao_corrigir_pagamento` recusa reescrever valor, data ou periodo.
  *
